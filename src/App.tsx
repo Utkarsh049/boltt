@@ -42,7 +42,7 @@ interface BoltResponse {
 
 function App() {
   const [method, setMethod] = useState<BoltRequest["method"]>("GET");
-  const [url, setUrl] = useState("https://api.example.com/v1/resource");
+  const [url, setUrl] = useState("https://httpbin.org/get");
   const [isLoading, setIsLoading] = useState(false);
   const [response, setResponse] = useState<BoltResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -52,24 +52,30 @@ function App() {
     setError(null);
     setResponse(null);
 
+    const isPostLike = ["POST", "PUT", "PATCH"].includes(method);
+    const defaultJsonBody = JSON.stringify({
+      hello: "world",
+      project: "Boltt",
+      phase: 2
+    });
+
     const testRequest: BoltRequest = {
-      name: "Phase 1 Test Request",
+      name: "Phase 2 HTTP Request",
       method,
       url,
       headers: [
         { key: "Content-Type", value: "application/json", enabled: true },
-        { key: "Accept", value: "application/json", enabled: true },
+        { key: "User-Agent", value: "BolttClient/0.1.0", enabled: true },
       ],
       params: [
         { key: "limit", value: "20", enabled: true },
+        { key: "page", value: "1", enabled: true },
       ],
-      body: {
-        type: "Json",
-        content: JSON.stringify({ test: "data" }),
-      },
+      body: isPostLike
+        ? { type: "Json", content: defaultJsonBody }
+        : { type: "None" },
       auth: {
-        type: "Bearer",
-        config: { token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." },
+        type: "None",
       },
       ssl_verify: true,
     };
@@ -77,6 +83,7 @@ function App() {
     try {
       const res = await invoke<BoltResponse>("send_request", {
         request: testRequest,
+        env: {}, // Passed as empty map for now, to be substituted in backend
       });
       setResponse(res);
     } catch (err) {
@@ -84,6 +91,16 @@ function App() {
       setError(String(err));
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const renderBody = (body: string) => {
+    if (!body) return "(Empty response)";
+    try {
+      const parsed = JSON.parse(body);
+      return JSON.stringify(parsed, null, 2);
+    } catch {
+      return body; // Fallback to raw text if not valid JSON
     }
   };
 
@@ -99,11 +116,11 @@ function App() {
             Boltt
           </span>
           <span className="text-xs text-[#c0c7d3] bg-[#272a30] px-2 py-0.5 rounded border border-[#30363D]">
-            v0.1 — Phase 1 Scaffold
+            v0.1 — Phase 2 HTTP Engine
           </span>
         </div>
         <div className="flex items-center space-x-3 text-xs text-[#c0c7d3]">
-          <span>Status: <strong className="text-green-400">Bridge Active</strong></span>
+          <span>Status: <strong className="text-green-400">HTTP Engine Ready</strong></span>
         </div>
       </header>
 
@@ -120,12 +137,12 @@ function App() {
                 📁 Main Workspace
               </div>
               <div className="pl-6 py-1 text-xs text-[#8b919d]">
-                📄 Phase 1 Request
+                📄 Real API Request
               </div>
             </div>
           </div>
           <div className="pt-4 border-t border-[#30363D] text-[11px] text-[#8b919d]">
-            Press <kbd className="bg-[#272a30] px-1 rounded text-[#e0e2ea]">Send</kbd> to test connection.
+            Press <kbd className="bg-[#272a30] px-1 rounded text-[#e0e2ea]">Send Request</kbd> to dispatch network call.
           </div>
         </aside>
 
@@ -137,7 +154,13 @@ function App() {
             <div className="flex space-x-2">
               <select
                 value={method}
-                onChange={(e) => setMethod(e.target.value as BoltRequest["method"])}
+                onChange={(e) => {
+                  const m = e.target.value as BoltRequest["method"];
+                  setMethod(m);
+                  if (url === "https://httpbin.org/get" || url === "https://httpbin.org/post") {
+                    setUrl(m === "GET" ? "https://httpbin.org/get" : "https://httpbin.org/post");
+                  }
+                }}
                 className="bg-[#1c2025] text-[#e0e2ea] border border-[#30363D] px-3 py-2 rounded-sm text-xs font-mono focus:outline-none focus:border-[#a1c9ff]"
               >
                 <option value="GET">GET</option>
@@ -153,7 +176,7 @@ function App() {
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 className="flex-1 bg-[#1c2025] text-[#e0e2ea] border border-[#30363D] px-3 py-2 rounded-sm text-xs font-mono focus:outline-none focus:border-[#a1c9ff]"
-                placeholder="https://api.example.com/v1/..."
+                placeholder="https://httpbin.org/get"
               />
               <button
                 onClick={handleTestCall}
@@ -165,32 +188,26 @@ function App() {
             </div>
           </div>
 
-          {/* Detailed Request Details view */}
+          {/* Outgoing Details */}
           <div className="border border-[#30363D] bg-[#161B22] rounded-sm p-4">
             <h3 className="text-xs font-semibold text-[#8b919d] uppercase tracking-wider mb-2">
-              Tauri Command Bridge Payload (Outgoing)
+              Auto-Generated Request Metadata (to Rust)
             </h3>
             <pre className="text-xs font-mono text-[#c0c7d3] bg-[#101419] p-3 rounded border border-[#30363D] overflow-x-auto">
 {JSON.stringify({
-  name: "Phase 1 Test Request",
   method,
   url,
   headers: [
     { key: "Content-Type", value: "application/json", enabled: true },
-    { key: "Accept", value: "application/json", enabled: true },
+    { key: "User-Agent", value: "BolttClient/0.1.0", enabled: true }
   ],
   params: [
-    { key: "limit", value: "20", enabled: true }
+    { key: "limit", value: "20", enabled: true },
+    { key: "page", value: "1", enabled: true }
   ],
-  body: {
-    type: "Json",
-    content: "{\"test\":\"data\"}"
-  },
-  auth: {
-    type: "Bearer",
-    config: { token: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." }
-  },
-  ssl_verify: true
+  body: ["POST", "PUT", "PATCH"].includes(method)
+    ? { type: "Json", content: "{\"hello\":\"world\",\"project\":\"Boltt\",\"phase\":2}" }
+    : { type: "None" }
 }, null, 2)}
             </pre>
           </div>
@@ -203,15 +220,25 @@ function App() {
               </h3>
               {response && (
                 <div className="flex items-center space-x-3 text-xs">
-                  <span className="bg-green-950/40 text-green-400 px-2 py-0.5 rounded font-mono border border-green-800/40">
-                    {response.status} {response.status_text}
+                  <span className={`px-2 py-0.5 rounded font-mono border ${
+                    response.status >= 200 && response.status < 300
+                      ? "bg-green-950/40 text-green-400 border-green-800/40"
+                      : response.status === 0
+                      ? "bg-red-950/40 text-red-400 border-red-800/40"
+                      : "bg-yellow-950/40 text-yellow-400 border-yellow-800/40"
+                  }`}>
+                    {response.status === 0 ? "0 Network Error" : `${response.status} ${response.status_text}`}
                   </span>
-                  <span className="text-[#8b919d] font-mono">
-                    Time: <strong className="text-[#e0e2ea]">{response.time_ms} ms</strong>
-                  </span>
-                  <span className="text-[#8b919d] font-mono">
-                    Size: <strong className="text-[#e0e2ea]">{response.size_bytes} B</strong>
-                  </span>
+                  {response.status !== 0 && (
+                    <>
+                      <span className="text-[#8b919d] font-mono">
+                        Time: <strong className="text-[#e0e2ea]">{response.time_ms} ms</strong>
+                      </span>
+                      <span className="text-[#8b919d] font-mono">
+                        Size: <strong className="text-[#e0e2ea]">{response.size_bytes} B</strong>
+                      </span>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -219,14 +246,14 @@ function App() {
             {isLoading && (
               <div className="flex-1 flex flex-col items-center justify-center py-12 space-y-3">
                 <div className="w-6 h-6 border-2 border-[#a1c9ff] border-t-transparent rounded-full animate-spin"></div>
-                <span className="text-xs text-[#8b919d]">Invoking send_request on Tauri Backend...</span>
+                <span className="text-xs text-[#8b919d]">Dispatching HTTP request through Rust Reqwest client...</span>
               </div>
             )}
 
             {!isLoading && !response && !error && (
               <div className="flex-1 flex flex-col items-center justify-center py-12 text-center">
                 <span className="text-[#8b919d] text-xs">
-                  Ready to fire. Click "Send Request" to test the bridge.
+                  Enter a URL (e.g. `https://httpbin.org/get` or a local server) and click "Send Request".
                 </span>
               </div>
             )}
@@ -239,22 +266,24 @@ function App() {
 
             {response && (
               <div className="space-y-4">
-                <div>
-                  <h4 className="text-[11px] font-semibold text-[#8b919d] uppercase mb-1">Response Headers</h4>
-                  <div className="grid grid-cols-2 gap-1 bg-[#101419] p-2 rounded border border-[#30363D] font-mono text-xs">
-                    {response.headers.map((h, i) => (
-                      <div key={i} className="flex justify-between col-span-2 border-b border-[#1c2025] py-0.5">
-                        <span className="text-[#8b919d]">{h.key}:</span>
-                        <span className="text-[#e0e2ea]">{h.value}</span>
-                      </div>
-                    ))}
+                {response.headers.length > 0 && (
+                  <div>
+                    <h4 className="text-[11px] font-semibold text-[#8b919d] uppercase mb-1">Response Headers</h4>
+                    <div className="grid grid-cols-2 gap-1 bg-[#101419] p-2 rounded border border-[#30363D] font-mono text-xs max-h-40 overflow-y-auto">
+                      {response.headers.map((h, i) => (
+                        <div key={i} className="flex justify-between col-span-2 border-b border-[#1c2025] py-0.5 last:border-0">
+                          <span className="text-[#8b919d]">{h.key}:</span>
+                          <span className="text-[#e0e2ea] text-right break-all pl-4">{h.value}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div>
                   <h4 className="text-[11px] font-semibold text-[#8b919d] uppercase mb-1">Response Body</h4>
-                  <pre className="text-xs font-mono text-green-300 bg-[#101419] p-3 rounded border border-[#30363D] overflow-x-auto">
-                    {JSON.stringify(JSON.parse(response.body), null, 2)}
+                  <pre className="text-xs font-mono text-green-300 bg-[#101419] p-3 rounded border border-[#30363D] overflow-x-auto whitespace-pre-wrap">
+                    {renderBody(response.body)}
                   </pre>
                 </div>
               </div>

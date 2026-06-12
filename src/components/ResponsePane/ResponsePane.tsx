@@ -204,7 +204,7 @@ export const ResponsePane: React.FC = () => {
 
           {/* Resizable Headers vs Body vertically split */}
           <div className="flex-1 bg-[#101419] p-3 border border-[#30363D] rounded-b-sm overflow-hidden min-h-0 flex flex-col">
-            <Group id="response-workspace-layout-v4" orientation="vertical">
+            <Group id="response-workspace-layout-v5" orientation="vertical">
               
               {/* Response Headers (Top) */}
               {response.headers.length > 0 ? (

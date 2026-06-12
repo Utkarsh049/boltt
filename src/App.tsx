@@ -1,15 +1,42 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { UrlBar } from "./components/UrlBar/UrlBar";
 import { RequestPane } from "./components/RequestPane/RequestPane";
-import { Zap, Settings, RefreshCw, Folder, Globe, Clock, Plus } from "lucide-react";
+import { Zap, Settings, RefreshCw, Folder, Globe, Clock, Plus, Eye, EyeOff } from "lucide-react";
 import "./App.css";
-import { Group, Panel, Separator } from "react-resizable-panels";
+import { Group, Panel, Separator, type PanelImperativeHandle } from "react-resizable-panels";
 import { ResponsePane } from "./components/ResponsePane/ResponsePane";
+import { useRequestStore } from "./store/requestStore";
 
 type SidebarTab = "collections" | "environments" | "history";
 
 function App() {
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>("collections");
+  const [isResponseCollapsed, setIsResponseCollapsed] = useState(false);
+  const responsePanelRef = useRef<PanelImperativeHandle>(null);
+
+  const response = useRequestStore((state) => state.response);
+  const isLoading = useRequestStore((state) => state.isLoading);
+
+  // Auto-expand response pane when response is loaded
+  useEffect(() => {
+    if (response && !isLoading) {
+      const panel = responsePanelRef.current;
+      if (panel && panel.isCollapsed()) {
+        panel.expand();
+      }
+    }
+  }, [response, isLoading]);
+
+  const toggleResponsePane = () => {
+    const panel = responsePanelRef.current;
+    if (panel) {
+      if (panel.isCollapsed()) {
+        panel.expand();
+      } else {
+        panel.collapse();
+      }
+    }
+  };
 
 
   return (
@@ -40,13 +67,13 @@ function App() {
 
       {/* Main Resizable Split Workspace */}
       <div className="flex-1 overflow-hidden relative">
-        <Group id="main-workspace-group-v4" orientation="horizontal">
+        <Group id="main-workspace-group-v5" orientation="horizontal">
           
           {/* 1. Sidebar Panel */}
           <Panel
             id="sidebar-panel"
             defaultSize="250px"
-            minSize="220px"
+            minSize="300px"
             maxSize="400px"
             groupResizeBehavior="preserve-pixel-size"
             collapsible={true}
@@ -158,8 +185,27 @@ function App() {
               )}
             </div>
 
-            <div className="p-3 border-t border-[#30363D] text-[11px] text-[#8b919d] bg-[#1c2025]/20 flex-shrink-0">
-              Press <kbd className="bg-[#272a30] px-1 rounded text-[#e0e2ea] font-mono">Ctrl+Enter</kbd> to Send
+            <div className="p-3 border-t border-[#30363D] text-[11px] text-[#8b919d] bg-[#1c2025]/20 flex-shrink-0 flex items-center justify-between">
+              <div>
+                Press <kbd className="bg-[#272a30] px-1 rounded text-[#e0e2ea] font-mono">Ctrl+Enter</kbd> to Send
+              </div>
+              <button
+                onClick={toggleResponsePane}
+                className="flex items-center space-x-1 px-1.5 py-0.5 bg-[#272a30] hover:bg-[#32353b] border border-[#30363D] text-[#e0e2ea] rounded-sm transition cursor-pointer"
+                title={isResponseCollapsed ? "Expand Response Pane" : "Collapse Response Pane"}
+              >
+                {isResponseCollapsed ? (
+                  <>
+                    <Eye size={11} className="text-[#a1c9ff]" />
+                    <span>Show Resp</span>
+                  </>
+                ) : (
+                  <>
+                    <EyeOff size={11} className="text-[#8b919d]" />
+                    <span>Hide Resp</span>
+                  </>
+                )}
+              </button>
             </div>
           </Panel>
 
@@ -170,10 +216,10 @@ function App() {
 
           {/* 2. Main Workstage Panel (Request Stage + Response Stage) */}
           <Panel className="h-full overflow-hidden">
-            <Group id="workstage-group-v4" orientation="horizontal">
+            <Group id="workstage-group-v5" orientation="horizontal">
               
               {/* Left stage: Request Builder Panel */}
-              <Panel defaultSize={55} minSize={40} className="flex flex-col p-4 bg-[#101419] h-full overflow-hidden space-y-4 min-w-0">
+              <Panel defaultSize="55%" minSize="500px" className="flex flex-col p-4 bg-[#101419] h-full overflow-hidden space-y-4 min-w-0">
                 <UrlBar />
                 <RequestPane />
               </Panel>
@@ -185,9 +231,14 @@ function App() {
 
               {/* Right stage: Response Pane Panel */}
               <Panel
+                id="response-panel"
+                panelRef={responsePanelRef}
                 defaultSize={45}
-                minSize={25}
+                minSize="420px"
                 collapsible={true}
+                onResize={(size) => {
+                  setIsResponseCollapsed(size.inPixels === 0);
+                }}
                 className="flex flex-col p-4 bg-[#161B22] h-full overflow-hidden min-w-0"
               >
                 <ResponsePane />

@@ -1,94 +1,107 @@
 import { useState } from "react";
-import { useRequestStore } from "./store/requestStore";
 import { UrlBar } from "./components/UrlBar/UrlBar";
 import { RequestPane } from "./components/RequestPane/RequestPane";
+import { Zap, Settings, RefreshCw, Folder, Globe, Clock, Plus } from "lucide-react";
 import "./App.css";
+import { Group, Panel, Separator } from "react-resizable-panels";
+import { ResponsePane } from "./components/ResponsePane/ResponsePane";
 
 type SidebarTab = "collections" | "environments" | "history";
 
 function App() {
-  const { response, isLoading } = useRequestStore();
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>("collections");
 
-  const renderResponseBody = (body: string) => {
-    if (!body) return "(Empty response)";
-    try {
-      const parsed = JSON.parse(body);
-      return JSON.stringify(parsed, null, 2);
-    } catch {
-      return body; // Fallback to raw text if not valid JSON
-    }
-  };
 
   return (
-    <div className="min-h-screen bg-[#101419] text-[#e0e2ea] flex flex-col font-sans select-none">
+    <div className="h-screen w-screen bg-[#101419] text-[#e0e2ea] flex flex-col font-sans overflow-hidden select-none">
       {/* Header bar */}
-      <header className="h-12 border-b border-[#30363D] flex items-center justify-between px-4 bg-[#1c2025]">
+      <header className="h-12 border-b border-[#30363D] flex items-center justify-between px-4 bg-[#1c2025] flex-shrink-0">
         <div className="flex items-center space-x-2">
-          <div className="w-6 h-6 rounded bg-[#a1c9ff] flex items-center justify-center text-[#00325a] font-bold text-sm">
-            ⚡
-          </div>
+          <Zap size={16} className="text-[#a1c9ff] fill-[#a1c9ff]/20 animate-pulse" />
           <span className="font-semibold text-sm tracking-wider uppercase text-[#a1c9ff]">
             Boltt
           </span>
           <span className="text-xs text-[#c0c7d3] bg-[#272a30] px-2 py-0.5 rounded border border-[#30363D]">
-            v0.1 — Request Builder UI
+            v0.1 — Developer Client
           </span>
         </div>
         <div className="flex items-center space-x-3 text-xs text-[#c0c7d3]">
-          <span>Status: <strong className="text-[#a1c9ff]">Stage Active</strong></span>
+          <button className="p-1 hover:bg-[#272a30] rounded border border-transparent hover:border-[#30363D] transition">
+            <Settings size={14} />
+          </button>
+          <button className="p-1 hover:bg-[#272a30] rounded border border-transparent hover:border-[#30363D] transition">
+            <RefreshCw size={14} />
+          </button>
+          <span className="text-xs">
+            Status: <strong className="text-[#a1c9ff]">Online</strong>
+          </span>
         </div>
       </header>
 
-      {/* Main Workspace Layout */}
-      <div className="flex-1 flex flex-row overflow-hidden">
-        {/* Sidebar */}
-        <aside className="w-64 border-r border-[#30363D] bg-[#161B22] flex flex-col justify-between">
-          <div className="flex flex-col h-full">
-            {/* Sidebar Horizontal Option Tabs */}
-            <div className="flex border-b border-[#30363D] bg-[#1c2025] h-9">
+      {/* Main Resizable Split Workspace */}
+      <div className="flex-1 overflow-hidden relative">
+        <Group id="main-workspace-group-v4" orientation="horizontal">
+          
+          {/* 1. Sidebar Panel */}
+          <Panel
+            id="sidebar-panel"
+            defaultSize="250px"
+            minSize="220px"
+            maxSize="400px"
+            groupResizeBehavior="preserve-pixel-size"
+            collapsible={true}
+            className="flex flex-col bg-[#161B22] h-full overflow-hidden"
+          >
+            {/* Sidebar Horizontal Options Tabs */}
+            <div className="flex border-b border-[#30363D] bg-[#1c2025] h-9 flex-shrink-0">
               <button
                 onClick={() => setSidebarTab("collections")}
-                className={`flex-1 flex items-center justify-center text-[11px] font-semibold transition ${
+                className={`flex-1 flex items-center justify-center text-[11px] font-semibold transition px-2 min-w-0 ${
                   sidebarTab === "collections"
                     ? "bg-[#161B22] text-[#a1c9ff] border-t-2 border-t-[#a1c9ff]"
                     : "text-[#8b919d] hover:text-[#e0e2ea]"
                 }`}
               >
-                📁 Collections
+                <Folder size={13} className="flex-shrink-0" />
+                {sidebarTab === "collections" && <span className="ml-1.5 truncate whitespace-nowrap">Collections</span>}
               </button>
+              
               <button
                 onClick={() => setSidebarTab("environments")}
-                className={`flex-1 flex items-center justify-center text-[11px] font-semibold transition ${
+                className={`flex-1 flex items-center justify-center text-[11px] font-semibold transition px-2 min-w-0 ${
                   sidebarTab === "environments"
                     ? "bg-[#161B22] text-[#a1c9ff] border-t-2 border-t-[#a1c9ff]"
                     : "text-[#8b919d] hover:text-[#e0e2ea]"
                 }`}
               >
-                ⇆ Environments
+                <Globe size={13} className="flex-shrink-0" />
+                {sidebarTab === "environments" && <span className="ml-1.5 truncate whitespace-nowrap">Environments</span>}
               </button>
+              
               <button
                 onClick={() => setSidebarTab("history")}
-                className={`flex-1 flex items-center justify-center text-[11px] font-semibold transition ${
+                className={`flex-1 flex items-center justify-center text-[11px] font-semibold transition px-2 min-w-0 ${
                   sidebarTab === "history"
                     ? "bg-[#161B22] text-[#a1c9ff] border-t-2 border-t-[#a1c9ff]"
                     : "text-[#8b919d] hover:text-[#e0e2ea]"
                 }`}
               >
-                🕒 History
+                <Clock size={13} className="flex-shrink-0" />
+                {sidebarTab === "history" && <span className="ml-1.5 truncate whitespace-nowrap">History</span>}
               </button>
             </div>
 
-            {/* Sidebar Content Area */}
-            <div className="flex-1 p-3 overflow-y-auto">
+            {/* Sidebar Scrollable Content */}
+            <div className="flex-1 p-3 overflow-y-auto min-h-0">
               {sidebarTab === "collections" && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-bold text-[#8b919d] uppercase tracking-wider">
                       Projects
                     </span>
-                    <button className="text-[10px] bg-[#272a30] text-[#a1c9ff] border border-[#30363D] px-1.5 py-0.5 rounded hover:bg-[#32353b]">
-                      + New
+                    <button className="text-[10px] bg-[#272a30] text-[#a1c9ff] border border-[#30363D] px-1.5 py-0.5 rounded hover:bg-[#32353b] flex items-center space-x-1">
+                      <Plus size={10} />
+                      <span>New</span>
                     </button>
                   </div>
                   <div className="space-y-1 font-mono text-xs">
@@ -144,93 +157,46 @@ function App() {
                 </div>
               )}
             </div>
-          </div>
 
-          <div className="p-3 border-t border-[#30363D] text-[11px] text-[#8b919d] bg-[#1c2025]/20">
-            Press <kbd className="bg-[#272a30] px-1 rounded text-[#e0e2ea]">Ctrl+Enter</kbd> to Send
-          </div>
-        </aside>
-
-        {/* Editor Area */}
-        <main className="flex-1 p-5 flex flex-col md:flex-row overflow-hidden space-y-4 md:space-y-0 md:space-x-4 bg-[#101419]">
-          {/* Left panel: Request Builder */}
-          <section className="flex-1 flex flex-col space-y-4 h-full overflow-hidden">
-            <UrlBar />
-            <RequestPane />
-          </section>
-
-          {/* Right panel: Response Viewer */}
-          <section className="w-full md:w-[45%] flex flex-col border border-[#30363D] bg-[#161B22] rounded-sm p-4 h-full overflow-hidden">
-            <div className="flex items-center justify-between border-b border-[#30363D] pb-2 mb-3">
-              <h3 className="text-xs font-semibold text-[#8b919d] uppercase tracking-wider">
-                Response Pane
-              </h3>
-              {response && (
-                <div className="flex items-center space-x-3 text-xs">
-                  <span className={`px-2 py-0.5 rounded font-mono border ${
-                    response.status >= 200 && response.status < 300
-                      ? "bg-green-950/40 text-green-400 border-green-800/40"
-                      : response.status === 0
-                      ? "bg-red-950/40 text-red-400 border-red-800/40"
-                      : "bg-yellow-950/40 text-yellow-400 border-yellow-800/40"
-                  }`}>
-                    {response.status === 0 ? "0 Network Error" : `${response.status} ${response.status_text}`}
-                  </span>
-                  {response.status !== 0 && (
-                    <>
-                      <span className="text-[#8b919d] font-mono">
-                        Time: <strong className="text-[#e0e2ea]">{response.time_ms} ms</strong>
-                      </span>
-                      <span className="text-[#8b919d] font-mono">
-                        Size: <strong className="text-[#e0e2ea]">{response.size_bytes} B</strong>
-                      </span>
-                    </>
-                  )}
-                </div>
-              )}
+            <div className="p-3 border-t border-[#30363D] text-[11px] text-[#8b919d] bg-[#1c2025]/20 flex-shrink-0">
+              Press <kbd className="bg-[#272a30] px-1 rounded text-[#e0e2ea] font-mono">Ctrl+Enter</kbd> to Send
             </div>
+          </Panel>
 
-            {isLoading && (
-              <div className="flex-1 flex flex-col items-center justify-center space-y-3">
-                <div className="w-6 h-6 border-2 border-[#a1c9ff] border-t-transparent rounded-full animate-spin"></div>
-                <span className="text-xs text-[#8b919d]">Dispatching HTTP request...</span>
-              </div>
-            )}
+          {/* Resize Handle 1 */}
+          <Separator className="w-2 hover:bg-[#a1c9ff]/10 active:bg-[#a1c9ff]/20 transition-all cursor-col-resize self-stretch flex-shrink-0 flex items-center justify-center">
+            <div className="w-[1px] h-full bg-[#30363D]" />
+          </Separator>
 
-            {!isLoading && !response && (
-              <div className="flex-1 flex flex-col items-center justify-center text-center p-6 border border-dashed border-[#30363D] rounded-sm bg-[#101419]/50">
-                <span className="text-[#8b919d] text-xs max-w-xs">
-                  Hit Send in the Request Builder to dispatch the request and inspect the response.
-                </span>
-              </div>
-            )}
+          {/* 2. Main Workstage Panel (Request Stage + Response Stage) */}
+          <Panel className="h-full overflow-hidden">
+            <Group id="workstage-group-v4" orientation="horizontal">
+              
+              {/* Left stage: Request Builder Panel */}
+              <Panel defaultSize={55} minSize={40} className="flex flex-col p-4 bg-[#101419] h-full overflow-hidden space-y-4 min-w-0">
+                <UrlBar />
+                <RequestPane />
+              </Panel>
 
-            {response && (
-              <div className="flex-1 flex flex-col space-y-4 overflow-y-auto">
-                {response.headers.length > 0 && (
-                  <div>
-                    <h4 className="text-[11px] font-semibold text-[#8b919d] uppercase mb-1">Response Headers</h4>
-                    <div className="grid grid-cols-2 gap-1 bg-[#101419] p-2 rounded border border-[#30363D] font-mono text-xs max-h-40 overflow-y-auto">
-                      {response.headers.map((h, i) => (
-                        <div key={i} className="flex justify-between col-span-2 border-b border-[#1c2025] py-0.5 last:border-0">
-                          <span className="text-[#8b919d]">{h.key}:</span>
-                          <span className="text-[#e0e2ea] text-right break-all pl-4">{h.value}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
+              {/* Resize Handle 2 */}
+              <Separator className="w-2 hover:bg-[#a1c9ff]/10 active:bg-[#a1c9ff]/20 transition-all cursor-col-resize self-stretch flex-shrink-0 flex items-center justify-center">
+                <div className="w-[1px] h-full bg-[#30363D]" />
+              </Separator>
 
-                <div className="flex-1 flex flex-col min-h-0">
-                  <h4 className="text-[11px] font-semibold text-[#8b919d] uppercase mb-1">Response Body</h4>
-                  <pre className="flex-1 bg-[#101419] text-green-300 p-3 rounded border border-[#30363D] font-mono text-xs overflow-auto whitespace-pre-wrap">
-                    {renderResponseBody(response.body)}
-                  </pre>
-                </div>
-              </div>
-            )}
-          </section>
-        </main>
+              {/* Right stage: Response Pane Panel */}
+              <Panel
+                defaultSize={45}
+                minSize={25}
+                collapsible={true}
+                className="flex flex-col p-4 bg-[#161B22] h-full overflow-hidden min-w-0"
+              >
+                <ResponsePane />
+              </Panel>
+
+            </Group>
+          </Panel>
+
+        </Group>
       </div>
     </div>
   );

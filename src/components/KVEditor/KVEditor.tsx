@@ -1,5 +1,6 @@
 import React from "react";
 import { KeyValue } from "../../store/requestStore";
+import { Trash2 } from "lucide-react";
 
 interface KVEditorProps {
   rows: KeyValue[];
@@ -105,10 +106,10 @@ export const KVEditor: React.FC<KVEditorProps> = ({
               <div className="w-8 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
                   onClick={() => handleRowDelete(index)}
-                  className="text-[#8b919d] hover:text-red-400 font-sans text-sm focus:outline-none"
+                  className="text-[#8b919d] hover:text-red-400 focus:outline-none flex items-center justify-center p-1"
                   title="Delete Row"
                 >
-                  &times;
+                  <Trash2 size={12} />
                 </button>
               </div>
             </div>

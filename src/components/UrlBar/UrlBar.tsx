@@ -1,5 +1,6 @@
 import React from "react";
 import { useRequestStore, HttpMethod } from "../../store/requestStore";
+import { Save, Send } from "lucide-react";
 
 export const UrlBar: React.FC = () => {
   const { activeRequest, setMethod, setUrl, sendRequest, isLoading } = useRequestStore();
@@ -44,22 +45,26 @@ export const UrlBar: React.FC = () => {
         {/* Save Button (Muted/Disabled in Phase 3) */}
         <button
           disabled
-          className="bg-[#272a30] text-[#8b919d] border border-[#30363D] px-4 h-9 rounded-sm text-xs font-semibold hover:bg-[#32353b]/50 transition cursor-not-allowed opacity-60"
+          className="bg-[#272a30] text-[#8b919d] border border-[#30363D] px-4 h-9 rounded-sm text-xs font-semibold hover:bg-[#32353b]/50 transition cursor-not-allowed opacity-60 flex items-center space-x-1.5"
           title="Saving requests will be implemented in Phase 6"
         >
-          Save
+          <Save size={12} />
+          <span>Save</span>
         </button>
 
         {/* Send Button */}
         <button
           onClick={() => sendRequest()}
           disabled={isLoading}
-          className="bg-[#a1c9ff] text-[#00325a] hover:bg-blue-300 px-5 h-9 rounded-sm text-xs font-bold transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center min-w-[70px]"
+          className="bg-[#a1c9ff] text-[#00325a] hover:bg-blue-300 px-5 h-9 rounded-sm text-xs font-bold transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-1.5 min-w-[80px]"
         >
           {isLoading ? (
             <span className="w-4 h-4 border-2 border-[#00325a] border-t-transparent rounded-full animate-spin"></span>
           ) : (
-            "Send"
+            <>
+              <Send size={12} />
+              <span>Send</span>
+            </>
           )}
         </button>
       </div>

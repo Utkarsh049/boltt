@@ -3,6 +3,7 @@ import { useRequestStore, KeyValue, RequestBody } from "../../store/requestStore
 import { KVEditor } from "../KVEditor/KVEditor";
 import CodeMirror from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
+import { ListFilter, Sliders, Code2, KeyRound } from "lucide-react";
 
 type TabType = "params" | "headers" | "body" | "auth";
 
@@ -94,6 +95,7 @@ export const RequestPane: React.FC = () => {
       {/* Horizontal Tabs Header */}
       <div className="flex items-end border-b border-[#30363D] bg-[#1c2025] h-9">
         <button onClick={() => setActiveTab("params")} className={tabClass("params")}>
+          <ListFilter size={13} />
           <span>Params</span>
           {activeParamsCount > 0 && (
             <span className="bg-[#272a30] text-[#a1c9ff] text-[10px] px-1.5 rounded-full border border-[#30363D]">
@@ -102,6 +104,7 @@ export const RequestPane: React.FC = () => {
           )}
         </button>
         <button onClick={() => setActiveTab("headers")} className={tabClass("headers")}>
+          <Sliders size={13} />
           <span>Headers</span>
           {activeHeadersCount > 0 && (
             <span className="bg-[#272a30] text-[#a1c9ff] text-[10px] px-1.5 rounded-full border border-[#30363D]">
@@ -110,12 +113,14 @@ export const RequestPane: React.FC = () => {
           )}
         </button>
         <button onClick={() => setActiveTab("body")} className={tabClass("body")}>
+          <Code2 size={13} />
           <span>Body</span>
           {activeBodyCount > 0 && (
             <span className="w-1.5 h-1.5 bg-[#a1c9ff] rounded-full"></span>
           )}
         </button>
         <button onClick={() => setActiveTab("auth")} className={tabClass("auth")}>
+          <KeyRound size={13} />
           <span>Authorization</span>
           {isAuthActive && (
             <span className="w-1.5 h-1.5 bg-[#a1c9ff] rounded-full animate-pulse"></span>

@@ -13,7 +13,13 @@ pub fn run() {
             commands::send_request,
             environments::load_environments,
             environments::save_environments,
-            environments::get_active_variables
+            environments::get_active_variables,
+            projects::list_projects,
+            projects::save_project,
+            projects::delete_project,
+            projects::save_request_to_project,
+            projects::delete_request_from_project,
+            projects::rename_folder_in_project
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

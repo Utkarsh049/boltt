@@ -56,6 +56,7 @@ interface RequestStore {
   setSslVerify: (sslVerify: boolean) => void;
   sendRequest: (env?: Record<string, string>) => Promise<void>;
   clearResponse: () => void;
+  loadRequest: (request: BoltRequest) => void;
 }
 
 const initialRequest: BoltRequest = {
@@ -147,4 +148,5 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
   },
 
   clearResponse: () => set({ response: null, error: null }),
+  loadRequest: (request) => set({ activeRequest: request, response: null }),
 }));

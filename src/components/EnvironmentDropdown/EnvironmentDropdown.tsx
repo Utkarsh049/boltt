@@ -41,7 +41,7 @@ export const EnvironmentDropdown: React.FC = () => {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center space-x-2 px-3 py-1.5 bg-[#1c2025]/50 border border-[#30363D] hover:bg-[#272a30] hover:border-[#8b919d]/40 rounded text-xs text-[#c0c7d3] hover:text-[#e0e2ea] transition cursor-pointer select-none"
       >
-        <Globe size={13} className={activeId ? "text-green-400 animate-pulse" : "text-[#8b919d]"} />
+        <Globe size={13} className={activeId ? "text-green-400" : "text-[#8b919d]"} />
         <span className="font-mono max-w-[120px] truncate">
           {activeEnv ? activeEnv.name : "No Environment"}
         </span>

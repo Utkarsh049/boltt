@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { UrlBar } from "./components/UrlBar/UrlBar";
 import { RequestPane } from "./components/RequestPane/RequestPane";
-import { Zap, Settings, RefreshCw, Folder, Globe, Clock, Plus, Eye, EyeOff } from "lucide-react";
+import { Zap, Settings, RefreshCw, Folder as FolderIcon, Globe, Clock, Eye, EyeOff } from "lucide-react";
 import "./App.css";
 import { Group, Panel, Separator, type PanelImperativeHandle } from "react-resizable-panels";
 import { ResponsePane } from "./components/ResponsePane/ResponsePane";
@@ -9,6 +9,9 @@ import { useRequestStore } from "./store/requestStore";
 import { useEnvStore } from "./store/envStore";
 import { EnvironmentDropdown } from "./components/EnvironmentDropdown/EnvironmentDropdown";
 import { EnvironmentModal } from "./components/EnvironmentModal/EnvironmentModal";
+import { ProjectsTree } from "./components/ProjectsTree/ProjectsTree";
+import { SaveRequestModal } from "./components/SaveRequestModal/SaveRequestModal";
+import { useProjectsStore, Folder } from "./store/projectsStore";
 
 type SidebarTab = "collections" | "environments" | "history";
 
@@ -25,6 +28,64 @@ function App() {
   useEffect(() => {
     loadEnvironments();
   }, [loadEnvironments]);
+
+  // Global Keyboard Shortcut: Ctrl+S / Cmd+S to save request
+  useEffect(() => {
+    const handleKeyDown = async (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        
+        const { projects, saveRequest, setSaveModalOpen } = useProjectsStore.getState();
+        const activeRequest = useRequestStore.getState().activeRequest;
+        
+        if (!activeRequest.id) {
+          setSaveModalOpen(true);
+          return;
+        }
+
+        // Try to find request in projects to auto-save, otherwise open modal
+        let foundLocation: { projectId: string; folderId: string } | null = null;
+        for (const project of projects) {
+          const findInFolders = (folders: Folder[]): string | null => {
+            for (const folder of folders) {
+              if (folder.requests.some((r) => r.id === activeRequest.id)) {
+                return folder.id;
+              }
+              const sub = findInFolders(folder.subfolders);
+              if (sub) return sub;
+            }
+            return null;
+          };
+          const fid = findInFolders(project.folders);
+          if (fid) {
+            foundLocation = { projectId: project.id, folderId: fid };
+            break;
+          }
+        }
+
+        if (foundLocation) {
+          const savedReq = {
+            id: activeRequest.id,
+            name: activeRequest.name || "Untitled Request",
+            method: activeRequest.method,
+            url: activeRequest.url,
+            headers: activeRequest.headers,
+            params: activeRequest.params,
+            body: activeRequest.body,
+            auth: activeRequest.auth,
+            created_at: Date.now(),
+          };
+          await saveRequest(foundLocation.projectId, foundLocation.folderId, savedReq);
+          console.log("Saved request directly via keyboard shortcut!");
+        } else {
+          setSaveModalOpen(true);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   // Auto-expand response pane when response is loaded
   useEffect(() => {
@@ -95,11 +156,11 @@ function App() {
                 onClick={() => setSidebarTab("collections")}
                 className={`flex-1 flex items-center justify-center text-[11px] font-semibold transition px-2 min-w-0 ${
                   sidebarTab === "collections"
-                    ? "bg-[#161B22] text-[#a1c9ff] border-t-2 border-t-[#a1c9ff]"
+                    ? "bg-[#161B22] text-[#a1c9ff]"
                     : "text-[#8b919d] hover:text-[#e0e2ea]"
                 }`}
               >
-                <Folder size={13} className="flex-shrink-0" />
+                <FolderIcon size={13} className="flex-shrink-0" />
                 {sidebarTab === "collections" && <span className="ml-1.5 truncate whitespace-nowrap">Collections</span>}
               </button>
               
@@ -107,7 +168,7 @@ function App() {
                 onClick={() => setSidebarTab("environments")}
                 className={`flex-1 flex items-center justify-center text-[11px] font-semibold transition px-2 min-w-0 ${
                   sidebarTab === "environments"
-                    ? "bg-[#161B22] text-[#a1c9ff] border-t-2 border-t-[#a1c9ff]"
+                    ? "bg-[#161B22] text-[#a1c9ff]"
                     : "text-[#8b919d] hover:text-[#e0e2ea]"
                 }`}
               >
@@ -119,7 +180,7 @@ function App() {
                 onClick={() => setSidebarTab("history")}
                 className={`flex-1 flex items-center justify-center text-[11px] font-semibold transition px-2 min-w-0 ${
                   sidebarTab === "history"
-                    ? "bg-[#161B22] text-[#a1c9ff] border-t-2 border-t-[#a1c9ff]"
+                    ? "bg-[#161B22] text-[#a1c9ff]"
                     : "text-[#8b919d] hover:text-[#e0e2ea]"
                 }`}
               >
@@ -131,30 +192,7 @@ function App() {
             {/* Sidebar Scrollable Content */}
             <div className="flex-1 p-3 overflow-y-auto min-h-0">
               {sidebarTab === "collections" && (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-[#8b919d] uppercase tracking-wider">
-                      Projects
-                    </span>
-                    <button className="text-[10px] bg-[#272a30] text-[#a1c9ff] border border-[#30363D] px-1.5 py-0.5 rounded hover:bg-[#32353b] flex items-center space-x-1">
-                      <Plus size={10} />
-                      <span>New</span>
-                    </button>
-                  </div>
-                  <div className="space-y-1 font-mono text-xs">
-                    <div className="px-2 py-1 bg-[#1c2025] border border-[#30363D] text-[#e0e2ea] rounded-sm cursor-pointer hover:border-[#a1c9ff]/50">
-                      📁 Main Workspace
-                    </div>
-                    <div className="pl-4 py-1 text-[#8b919d] cursor-pointer hover:text-[#e0e2ea] flex items-center space-x-1.5">
-                      <span className="text-[9px] font-bold text-green-400">GET</span>
-                      <span>list users</span>
-                    </div>
-                    <div className="pl-4 py-1 text-[#8b919d] cursor-pointer hover:text-[#e0e2ea] flex items-center space-x-1.5">
-                      <span className="text-[9px] font-bold text-[#f1c04c]">POST</span>
-                      <span>create user</span>
-                    </div>
-                  </div>
-                </div>
+                <ProjectsTree />
               )}
 
               {sidebarTab === "environments" && (
@@ -260,6 +298,7 @@ function App() {
         </Group>
       </div>
       <EnvironmentModal />
+      <SaveRequestModal />
     </div>
   );
 }

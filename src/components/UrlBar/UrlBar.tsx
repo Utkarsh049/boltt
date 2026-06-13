@@ -1,14 +1,20 @@
 import React from "react";
 import { useRequestStore, HttpMethod } from "../../store/requestStore";
+import { useEnvStore } from "../../store/envStore";
 import { Save, Send } from "lucide-react";
 
 export const UrlBar: React.FC = () => {
   const { activeRequest, setMethod, setUrl, sendRequest, isLoading } = useRequestStore();
+  const getFlatActiveVariables = useEnvStore((state) => state.getFlatActiveVariables);
+
+  const handleSend = () => {
+    sendRequest(getFlatActiveVariables());
+  };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
       e.preventDefault();
-      sendRequest();
+      handleSend();
     }
   };
 
@@ -54,7 +60,7 @@ export const UrlBar: React.FC = () => {
 
         {/* Send Button */}
         <button
-          onClick={() => sendRequest()}
+          onClick={handleSend}
           disabled={isLoading}
           className="bg-[#a1c9ff] text-[#00325a] hover:bg-blue-300 px-5 h-9 rounded-sm text-xs font-bold transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-1.5 min-w-[80px]"
         >

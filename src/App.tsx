@@ -6,6 +6,9 @@ import "./App.css";
 import { Group, Panel, Separator, type PanelImperativeHandle } from "react-resizable-panels";
 import { ResponsePane } from "./components/ResponsePane/ResponsePane";
 import { useRequestStore } from "./store/requestStore";
+import { useEnvStore } from "./store/envStore";
+import { EnvironmentDropdown } from "./components/EnvironmentDropdown/EnvironmentDropdown";
+import { EnvironmentModal } from "./components/EnvironmentModal/EnvironmentModal";
 
 type SidebarTab = "collections" | "environments" | "history";
 
@@ -16,6 +19,12 @@ function App() {
 
   const response = useRequestStore((state) => state.response);
   const isLoading = useRequestStore((state) => state.isLoading);
+  const loadEnvironments = useEnvStore((state) => state.loadEnvironments);
+
+  // Load environments from backend on mount
+  useEffect(() => {
+    loadEnvironments();
+  }, [loadEnvironments]);
 
   // Auto-expand response pane when response is loaded
   useEffect(() => {
@@ -44,8 +53,8 @@ function App() {
       {/* Header bar */}
       <header className="h-12 border-b border-[#30363D] flex items-center justify-between px-4 bg-[#1c2025] flex-shrink-0">
         <div className="flex items-center space-x-2">
-          <Zap size={16} className="text-[#a1c9ff] fill-[#a1c9ff]/20 animate-pulse" />
-          <span className="font-semibold text-sm tracking-wider uppercase text-[#a1c9ff]">
+          <Zap size={16} className="text-[#a1c9ff] fill-[#a1c9ff]" />
+          <span className="font-semibold text-sm tracking-wider text-[#a1c9ff]">
             Boltt
           </span>
           <span className="text-xs text-[#c0c7d3] bg-[#272a30] px-2 py-0.5 rounded border border-[#30363D]">
@@ -53,6 +62,7 @@ function App() {
           </span>
         </div>
         <div className="flex items-center space-x-3 text-xs text-[#c0c7d3]">
+          <EnvironmentDropdown />
           <button className="p-1 hover:bg-[#272a30] rounded border border-transparent hover:border-[#30363D] transition">
             <Settings size={14} />
           </button>
@@ -249,6 +259,7 @@ function App() {
 
         </Group>
       </div>
+      <EnvironmentModal />
     </div>
   );
 }

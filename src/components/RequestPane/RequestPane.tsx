@@ -273,8 +273,8 @@ export const RequestPane: React.FC = () => {
                 </div>
                 {/* Visual token live preview */}
                 <div className="text-[11px] text-[#8b919d] pt-1">
-                  💡 This will be sent as:{" "}
-                  <code className="text-amber-300 font-mono select-all break-all bg-[#101419] px-1.5 py-0.5 rounded border border-[#30363D]">
+                  This will be sent as:{" "}
+                  <code className="text-amber-300 font-mono select-all break-all bg-[#101419] px-1.5 py-1 rounded border border-[#30363D]">
                     Authorization: Bearer {activeRequest.auth.config.token || "<token>"}
                   </code>
                 </div>

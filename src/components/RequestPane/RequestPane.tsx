@@ -1,15 +1,40 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useRequestStore, KeyValue, RequestBody } from "../../store/requestStore";
 import { KVEditor } from "../KVEditor/KVEditor";
 import CodeMirror from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
-import { ListFilter, Sliders, Code2, KeyRound } from "lucide-react";
+import { ListFilter, Sliders, Code2, KeyRound, ShieldOff, Key, User, ChevronDown, Check } from "lucide-react";
 
 type TabType = "params" | "headers" | "body" | "auth";
 
 export const RequestPane: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>("params");
   const { activeRequest, setParams, setHeaders, setBody, setAuth } = useRequestStore();
+
+  const [isAuthDropdownOpen, setIsAuthDropdownOpen] = useState(false);
+  const authDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (authDropdownRef.current && !authDropdownRef.current.contains(event.target as Node)) {
+        setIsAuthDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const authOptions = [
+    { value: "None", label: "Inherit / None", icon: ShieldOff },
+    { value: "Bearer", label: "Bearer Token", icon: Key },
+    { value: "Basic", label: "Basic Auth", icon: User },
+  ] as const;
+
+  const selectedOption = authOptions.find((opt) => opt.value === activeRequest.auth.type) || authOptions[0];
+  const SelectedIcon = selectedOption.icon;
 
   // Active counts
   const activeParamsCount = activeRequest.params.filter((p) => p.enabled && p.key).length;
@@ -123,7 +148,7 @@ export const RequestPane: React.FC = () => {
           <KeyRound size={13} />
           <span>Authorization</span>
           {isAuthActive && (
-            <span className="w-1.5 h-1.5 bg-[#a1c9ff] rounded-full animate-pulse"></span>
+            <span className="w-1.5 h-1.5 bg-[#a1c9ff] rounded-full"></span>
           )}
         </button>
       </div>
@@ -247,15 +272,50 @@ export const RequestPane: React.FC = () => {
             {/* Auth Dropdown selector type */}
             <div className="flex items-center space-x-3 mb-4">
               <label className="text-xs text-[#8b919d]">Auth Type:</label>
-              <select
-                value={activeRequest.auth.type}
-                onChange={(e) => handleAuthTypeChange(e.target.value as "None" | "Bearer" | "Basic")}
-                className="bg-[#1c2025] text-[#e0e2ea] border border-[#30363D] px-2 py-1 rounded-sm text-xs focus:outline-none focus:border-[#a1c9ff] cursor-pointer"
-              >
-                <option value="None">Inherit / None</option>
-                <option value="Bearer">Bearer Token</option>
-                <option value="Basic">Basic Auth</option>
-              </select>
+              <div className="relative inline-block text-left" ref={authDropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setIsAuthDropdownOpen(!isAuthDropdownOpen)}
+                  className="flex items-center justify-between px-3 py-1.5 min-w-[150px] bg-[#1c2025] text-[#e0e2ea] border border-[#30363D] rounded-sm text-xs font-medium cursor-pointer select-none hover:bg-[#272a30] transition duration-150 focus:outline-none focus:border-[#a1c9ff]"
+                >
+                  <div className="flex items-center space-x-2">
+                    <SelectedIcon size={13} className="text-[#8b919d]" />
+                    <span>{selectedOption.label}</span>
+                  </div>
+                  <ChevronDown size={14} className="text-[#8b919d] ml-1 flex-shrink-0" />
+                </button>
+
+                {isAuthDropdownOpen && (
+                  <div className="absolute left-0 mt-1 w-[160px] bg-[#161B22] border border-[#30363D] rounded shadow-2xl z-50 py-1 overflow-hidden font-sans">
+                    {authOptions.map((opt) => {
+                      const Icon = opt.icon;
+                      const isSelected = activeRequest.auth.type === opt.value;
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          onClick={() => {
+                            handleAuthTypeChange(opt.value);
+                            setIsAuthDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between transition cursor-pointer hover:bg-[#1c2025]/60 ${
+                            isSelected ? "text-[#a1c9ff] font-semibold bg-[#1c2025]" : "text-[#e0e2ea]"
+                          }`}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <Icon
+                              size={13}
+                              className={isSelected ? "text-[#a1c9ff]" : "text-[#8b919d]"}
+                            />
+                            <span>{opt.label}</span>
+                          </div>
+                          {isSelected && <Check size={12} className="text-[#a1c9ff]" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Bearer Token Form */}

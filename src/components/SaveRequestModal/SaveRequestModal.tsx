@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useProjectsStore, Project, Folder, SavedRequest } from "../../store/projectsStore";
 import { useRequestStore } from "../../store/requestStore";
-import { X, Save, Plus } from "lucide-react";
+import { X, Save, Plus, ChevronDown, Check, Briefcase, Folder as FolderIcon } from "lucide-react";
 
 export const SaveRequestModal: React.FC = () => {
   const {
@@ -21,6 +21,11 @@ export const SaveRequestModal: React.FC = () => {
   const [selectedProjectId, setSelectedProjectId] = useState("");
   const [selectedFolderId, setSelectedFolderId] = useState("");
 
+  // Custom select dropdowns visibility
+  const [isProjectDropdownOpen, setIsProjectDropdownOpen] = useState(false);
+  const [isFolderDropdownOpen, setIsFolderDropdownOpen] = useState(false);
+  const [isParentFolderDropdownOpen, setIsParentFolderDropdownOpen] = useState(false);
+
   // Inline folder creation state
   const [isCreatingFolder, setIsCreatingFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
@@ -29,6 +34,38 @@ export const SaveRequestModal: React.FC = () => {
   const modalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  const projectDropdownRef = useRef<HTMLDivElement>(null);
+  const folderDropdownRef = useRef<HTMLDivElement>(null);
+  const parentFolderDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close custom dropdowns on click outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        projectDropdownRef.current &&
+        !projectDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsProjectDropdownOpen(false);
+      }
+      if (
+        folderDropdownRef.current &&
+        !folderDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsFolderDropdownOpen(false);
+      }
+      if (
+        parentFolderDropdownRef.current &&
+        !parentFolderDropdownRef.current.contains(event.target as Node)
+      ) {
+        setIsParentFolderDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
   // Initialize fields when modal opens
   useEffect(() => {
     if (isSaveModalOpen) {
@@ -36,6 +73,9 @@ export const SaveRequestModal: React.FC = () => {
       setIsCreatingFolder(false);
       setNewFolderName("");
       setNewFolderParentId("root");
+      setIsProjectDropdownOpen(false);
+      setIsFolderDropdownOpen(false);
+      setIsParentFolderDropdownOpen(false);
 
       // Set default selected project
       if (projects.length > 0) {
@@ -102,13 +142,21 @@ export const SaveRequestModal: React.FC = () => {
     return null;
   };
 
-  // Recursive folder flattener for dropdown
-  const getFlatFolders = (folders: Folder[], depth = 0): { id: string; name: string }[] => {
-    const flat: { id: string; name: string }[] = [];
+  // Flat Folder Interface
+  interface FlatFolder {
+    id: string;
+    name: string;
+    depth: number;
+  }
+
+  // Recursive folder flattener for dropdown with depth representation
+  const getFlatFolders = (folders: Folder[], depth = 0): FlatFolder[] => {
+    const flat: FlatFolder[] = [];
     for (const f of folders) {
       flat.push({
         id: f.id,
-        name: `${"  ".repeat(depth)}📁 ${f.name}`,
+        name: f.name,
+        depth,
       });
       flat.push(...getFlatFolders(f.subfolders, depth + 1));
     }
@@ -120,15 +168,9 @@ export const SaveRequestModal: React.FC = () => {
     const parentId = newFolderParentId === "root" ? null : newFolderParentId;
 
     try {
-      // Capture the project's folders count to verify creation
       const project = projects.find((p) => p.id === selectedProjectId);
       if (!project) return;
 
-      // We generate the folder ID ourselves or rely on the store's uuid generation.
-      // Wait, createFolder generates a random UUID. Let's make sure we find the newly created folder
-      // by comparing the project folders before and after. Or we can modify createFolder to return the ID,
-      // but projectsStore doesn't return it because it's async.
-      // So, let's find the new folder by checking which one is added.
       const getFolderIds = (folders: Folder[]): string[] => {
         const ids: string[] = [];
         for (const f of folders) {
@@ -187,7 +229,6 @@ export const SaveRequestModal: React.FC = () => {
     try {
       await saveRequest(selectedProjectId, selectedFolderId, savedReq);
       
-      // Update active request in the workspace store
       loadRequest({
         ...activeRequest,
         id: savedReq.id,
@@ -208,15 +249,18 @@ export const SaveRequestModal: React.FC = () => {
 
   const currentProject = projects.find((p) => p.id === selectedProjectId);
   const flatFolders = currentProject ? getFlatFolders(currentProject.folders) : [];
+  const selectedProject = projects.find((p) => p.id === selectedProjectId);
+  const selectedFolder = flatFolders.find((f) => f.id === selectedFolderId);
+  const parentFolder = flatFolders.find((f) => f.id === newFolderParentId);
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4 font-sans select-none">
       <div
         ref={modalRef}
-        className="w-[440px] bg-[#161B22] border border-[#30363D] rounded-lg shadow-2xl flex flex-col overflow-hidden animate-slide-up"
+        className="w-[440px] bg-[#161B22] border border-[#30363D] rounded-lg shadow-2xl flex flex-col animate-slide-up"
       >
         {/* Header */}
-        <div className="h-12 border-b border-[#30363D] bg-[#1c2025] flex items-center justify-between px-4 flex-shrink-0">
+        <div className="h-12 border-b border-[#30363D] bg-[#1c2025] flex items-center justify-between px-4 flex-shrink-0 rounded-t-lg">
           <div className="flex items-center space-x-2">
             <Save size={15} className="text-[#a1c9ff]" />
             <span className="font-semibold text-xs uppercase tracking-wider text-[#e0e2ea]">
@@ -250,22 +294,56 @@ export const SaveRequestModal: React.FC = () => {
           </div>
 
           {/* Project Selector */}
-          <div className="space-y-1.5">
+          <div className="space-y-1.5 relative" ref={projectDropdownRef}>
             <label className="text-[10px] font-bold text-[#8b919d] uppercase tracking-wider">
               Project
             </label>
             {projects.length > 0 ? (
-              <select
-                value={selectedProjectId}
-                onChange={(e) => handleProjectChange(e.target.value)}
-                className="w-full bg-[#101419] text-[#e0e2ea] border border-[#30363D] px-3 py-2 rounded text-xs focus:outline-none focus:border-[#a1c9ff] cursor-pointer font-medium"
-              >
-                {projects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    💼 {p.name}
-                  </option>
-                ))}
-              </select>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsProjectDropdownOpen(!isProjectDropdownOpen)}
+                  className="w-full flex items-center justify-between bg-[#101419] text-[#e0e2ea] border border-[#30363D] px-3 py-2 rounded text-xs focus:outline-none focus:border-[#a1c9ff] cursor-pointer font-medium text-left"
+                >
+                  <div className="flex items-center space-x-2 truncate">
+                    <Briefcase size={13} className="text-[#8b919d]" />
+                    <span className="truncate">
+                      {selectedProject ? selectedProject.name : "Select Project"}
+                    </span>
+                  </div>
+                  <ChevronDown size={14} className="text-[#8b919d] flex-shrink-0" />
+                </button>
+
+                {isProjectDropdownOpen && (
+                  <div className="absolute left-0 mt-1 w-full bg-[#161B22] border border-[#30363D] rounded shadow-2xl z-50 py-1 max-h-60 overflow-y-auto">
+                    {projects.map((p) => {
+                      const isSelected = p.id === selectedProjectId;
+                      return (
+                        <button
+                          key={p.id}
+                          type="button"
+                          onClick={() => {
+                            handleProjectChange(p.id);
+                            setIsProjectDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between transition cursor-pointer hover:bg-[#1c2025]/60 ${
+                            isSelected ? "text-[#a1c9ff] font-semibold bg-[#1c2025]" : "text-[#e0e2ea]"
+                          }`}
+                        >
+                          <div className="flex items-center space-x-2 truncate">
+                            <Briefcase
+                              size={13}
+                              className={isSelected ? "text-[#a1c9ff]" : "text-[#8b919d]"}
+                            />
+                            <span className="truncate">{p.name}</span>
+                          </div>
+                          {isSelected && <Check size={12} className="text-[#a1c9ff]" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             ) : (
               <div className="text-xs text-[#8b919d] italic py-1">
                 No projects found. Please create one in the sidebar first.
@@ -275,7 +353,7 @@ export const SaveRequestModal: React.FC = () => {
 
           {/* Folder Selector */}
           {selectedProjectId && (
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 relative" ref={folderDropdownRef}>
               <div className="flex items-center justify-between">
                 <label className="text-[10px] font-bold text-[#8b919d] uppercase tracking-wider">
                   Folder
@@ -307,18 +385,75 @@ export const SaveRequestModal: React.FC = () => {
                   />
                   <div className="space-y-1">
                     <label className="text-[9px] font-semibold text-[#8b919d]">Parent Folder</label>
-                    <select
-                      value={newFolderParentId}
-                      onChange={(e) => setNewFolderParentId(e.target.value)}
-                      className="w-full bg-[#101419] text-[#e0e2ea] border border-[#30363D] px-2 py-1 rounded text-[11px] focus:outline-none cursor-pointer"
-                    >
-                      <option value="root">[Project Root]</option>
-                      {flatFolders.map((f) => (
-                        <option key={f.id} value={f.id}>
-                          {f.name}
-                        </option>
-                      ))}
-                    </select>
+                    <div className="relative w-full" ref={parentFolderDropdownRef}>
+                      <button
+                        type="button"
+                        onClick={() => setIsParentFolderDropdownOpen(!isParentFolderDropdownOpen)}
+                        className="w-full flex items-center justify-between bg-[#101419] text-[#e0e2ea] border border-[#30363D] px-2.5 py-1.5 rounded text-xs focus:outline-none focus:border-[#a1c9ff] cursor-pointer font-medium text-left"
+                      >
+                        <div className="flex items-center space-x-1.5 truncate">
+                          <FolderIcon size={12} className="text-[#8b919d]" />
+                          <span className="truncate">
+                            {newFolderParentId === "root"
+                              ? "[Project Root]"
+                              : parentFolder
+                              ? parentFolder.name
+                              : "[Project Root]"}
+                          </span>
+                        </div>
+                        <ChevronDown size={12} className="text-[#8b919d] flex-shrink-0" />
+                      </button>
+
+                      {isParentFolderDropdownOpen && (
+                        <div className="absolute left-0 mt-1 w-full bg-[#161B22] border border-[#30363D] rounded shadow-2xl z-50 py-1 max-h-40 overflow-y-auto">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setNewFolderParentId("root");
+                              setIsParentFolderDropdownOpen(false);
+                            }}
+                            className={`w-full text-left px-3 py-1.5 text-xs flex items-center justify-between transition cursor-pointer hover:bg-[#1c2025]/60 ${
+                              newFolderParentId === "root"
+                                ? "text-[#a1c9ff] font-semibold bg-[#1c2025]"
+                               : "text-[#e0e2ea]"
+                            }`}
+                          >
+                            <div className="flex items-center space-x-1.5 truncate">
+                              <FolderIcon size={12} className="text-[#8b919d]" />
+                              <span className="truncate">[Project Root]</span>
+                            </div>
+                            {newFolderParentId === "root" && <Check size={12} className="text-[#a1c9ff]" />}
+                          </button>
+
+                          {flatFolders.map((f) => {
+                            const isSelected = f.id === newFolderParentId;
+                            return (
+                              <button
+                                key={f.id}
+                                type="button"
+                                onClick={() => {
+                                  setNewFolderParentId(f.id);
+                                  setIsParentFolderDropdownOpen(false);
+                                }}
+                                className={`w-full text-left px-3 py-1.5 text-xs flex items-center justify-between transition cursor-pointer hover:bg-[#1c2025]/60 ${
+                                  isSelected ? "text-[#a1c9ff] font-semibold bg-[#1c2025]" : "text-[#e0e2ea]"
+                                }`}
+                                style={{ paddingLeft: `${f.depth * 12 + 12}px` }}
+                              >
+                                <div className="flex items-center space-x-1.5 truncate">
+                                  <FolderIcon
+                                    size={12}
+                                    className={isSelected ? "text-[#a1c9ff]" : "text-[#8b919d]"}
+                                  />
+                                  <span className="truncate">{f.name}</span>
+                                </div>
+                                {isSelected && <Check size={12} className="text-[#a1c9ff]" />}
+                              </button>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center justify-end space-x-2 pt-1">
                     <button
@@ -339,17 +474,52 @@ export const SaveRequestModal: React.FC = () => {
                   </div>
                 </div>
               ) : flatFolders.length > 0 ? (
-                <select
-                  value={selectedFolderId}
-                  onChange={(e) => setSelectedFolderId(e.target.value)}
-                  className="w-full bg-[#101419] text-[#e0e2ea] border border-[#30363D] px-3 py-2 rounded text-xs focus:outline-none focus:border-[#a1c9ff] cursor-pointer font-mono font-medium"
-                >
-                  {flatFolders.map((f) => (
-                    <option key={f.id} value={f.id}>
-                      {f.name}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsFolderDropdownOpen(!isFolderDropdownOpen)}
+                    className="w-full flex items-center justify-between bg-[#101419] text-[#e0e2ea] border border-[#30363D] px-3 py-2 rounded text-xs focus:outline-none focus:border-[#a1c9ff] cursor-pointer font-medium text-left"
+                  >
+                    <div className="flex items-center space-x-2 truncate">
+                      <FolderIcon size={13} className="text-[#a1c9ff]" />
+                      <span className="truncate">
+                        {selectedFolder ? selectedFolder.name : "Select Folder"}
+                      </span>
+                    </div>
+                    <ChevronDown size={14} className="text-[#8b919d] flex-shrink-0" />
+                  </button>
+
+                  {isFolderDropdownOpen && (
+                    <div className="absolute left-0 mt-1 w-full bg-[#161B22] border border-[#30363D] rounded shadow-2xl z-50 py-1 max-h-60 overflow-y-auto">
+                      {flatFolders.map((f) => {
+                        const isSelected = f.id === selectedFolderId;
+                        return (
+                          <button
+                            key={f.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedFolderId(f.id);
+                              setIsFolderDropdownOpen(false);
+                            }}
+                            className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between transition cursor-pointer hover:bg-[#1c2025]/60 ${
+                              isSelected ? "text-[#a1c9ff] font-semibold bg-[#1c2025]" : "text-[#e0e2ea]"
+                            }`}
+                            style={{ paddingLeft: `${f.depth * 12 + 12}px` }}
+                          >
+                            <div className="flex items-center space-x-1.5 truncate">
+                              <FolderIcon
+                                size={13}
+                                className={isSelected ? "text-[#a1c9ff]" : "text-[#8b919d]"}
+                              />
+                              <span className="truncate">{f.name}</span>
+                            </div>
+                            {isSelected && <Check size={12} className="text-[#a1c9ff]" />}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
               ) : (
                 <div className="text-xs text-[#8b919d]/75 italic py-1 flex items-center justify-between">
                   <span>No folders in this project.</span>

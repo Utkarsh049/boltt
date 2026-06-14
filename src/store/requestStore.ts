@@ -41,11 +41,22 @@ export interface BoltResponse {
   size_bytes: number;
 }
 
+export interface Tab {
+  id: string;
+  request: BoltRequest;
+  response: BoltResponse | null;
+  isLoading: boolean;
+  error: string | null;
+  isDirty: boolean;
+}
+
 interface RequestStore {
   activeRequest: BoltRequest;
   response: BoltResponse | null;
   isLoading: boolean;
   error: string | null;
+  tabs: Tab[];
+  activeTabId: string | null;
 
   setMethod: (method: HttpMethod) => void;
   setUrl: (url: string) => void;
@@ -57,9 +68,15 @@ interface RequestStore {
   sendRequest: (env?: Record<string, string>) => Promise<void>;
   clearResponse: () => void;
   loadRequest: (request: BoltRequest) => void;
+
+  openTab: (request?: BoltRequest) => void;
+  closeTab: (id: string) => void;
+  setActiveTab: (id: string) => void;
+  markTabClean: (id: string) => void;
 }
 
-const initialRequest: BoltRequest = {
+export const createInitialRequest = (): BoltRequest => ({
+  id: crypto.randomUUID(),
   name: "New Request",
   method: "GET",
   url: "https://httpbin.org/get",
@@ -70,6 +87,17 @@ const initialRequest: BoltRequest = {
   body: { type: "None" },
   auth: { type: "None" },
   ssl_verify: true,
+});
+
+const initialRequest = createInitialRequest();
+const initialTabId = crypto.randomUUID();
+const initialTab: Tab = {
+  id: initialTabId,
+  request: initialRequest,
+  response: null,
+  isLoading: false,
+  error: null,
+  isDirty: false,
 };
 
 export const useRequestStore = create<RequestStore>((set, get) => ({
@@ -77,64 +105,153 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
   response: null,
   isLoading: false,
   error: null,
+  tabs: [initialTab],
+  activeTabId: initialTabId,
 
   setMethod: (method) =>
-    set((state) => ({
-      activeRequest: {
-        ...state.activeRequest,
-        method,
-        // Adapt default body type on method change
-        body: ["POST", "PUT", "PATCH"].includes(method) && state.activeRequest.body.type === "None"
+    set((state) => {
+      const newBody: RequestBody =
+        ["POST", "PUT", "PATCH"].includes(method) && state.activeRequest.body.type === "None"
           ? { type: "Json", content: "{}" }
           : !["POST", "PUT", "PATCH"].includes(method)
           ? { type: "None" }
-          : state.activeRequest.body,
-      },
-    })),
+          : state.activeRequest.body;
+      const updatedActiveRequest = {
+        ...state.activeRequest,
+        method,
+        body: newBody,
+      };
+      const updatedTabs = state.tabs.map((tab) =>
+        tab.id === state.activeTabId
+          ? { ...tab, request: updatedActiveRequest, isDirty: true }
+          : tab
+      );
+      return {
+        activeRequest: updatedActiveRequest,
+        tabs: updatedTabs,
+      };
+    }),
 
   setUrl: (url) =>
-    set((state) => ({
-      activeRequest: { ...state.activeRequest, url },
-    })),
+    set((state) => {
+      const updatedActiveRequest = { ...state.activeRequest, url };
+      const updatedTabs = state.tabs.map((tab) =>
+        tab.id === state.activeTabId
+          ? { ...tab, request: updatedActiveRequest, isDirty: true }
+          : tab
+      );
+      return {
+        activeRequest: updatedActiveRequest,
+        tabs: updatedTabs,
+      };
+    }),
 
   setHeaders: (headers) =>
-    set((state) => ({
-      activeRequest: { ...state.activeRequest, headers },
-    })),
+    set((state) => {
+      const updatedActiveRequest = { ...state.activeRequest, headers };
+      const updatedTabs = state.tabs.map((tab) =>
+        tab.id === state.activeTabId
+          ? { ...tab, request: updatedActiveRequest, isDirty: true }
+          : tab
+      );
+      return {
+        activeRequest: updatedActiveRequest,
+        tabs: updatedTabs,
+      };
+    }),
 
   setParams: (params) =>
-    set((state) => ({
-      activeRequest: { ...state.activeRequest, params },
-    })),
+    set((state) => {
+      const updatedActiveRequest = { ...state.activeRequest, params };
+      const updatedTabs = state.tabs.map((tab) =>
+        tab.id === state.activeTabId
+          ? { ...tab, request: updatedActiveRequest, isDirty: true }
+          : tab
+      );
+      return {
+        activeRequest: updatedActiveRequest,
+        tabs: updatedTabs,
+      };
+    }),
 
   setBody: (body) =>
-    set((state) => ({
-      activeRequest: { ...state.activeRequest, body },
-    })),
+    set((state) => {
+      const updatedActiveRequest = { ...state.activeRequest, body };
+      const updatedTabs = state.tabs.map((tab) =>
+        tab.id === state.activeTabId
+          ? { ...tab, request: updatedActiveRequest, isDirty: true }
+          : tab
+      );
+      return {
+        activeRequest: updatedActiveRequest,
+        tabs: updatedTabs,
+      };
+    }),
 
   setAuth: (auth) =>
-    set((state) => ({
-      activeRequest: { ...state.activeRequest, auth },
-    })),
+    set((state) => {
+      const updatedActiveRequest = { ...state.activeRequest, auth };
+      const updatedTabs = state.tabs.map((tab) =>
+        tab.id === state.activeTabId
+          ? { ...tab, request: updatedActiveRequest, isDirty: true }
+          : tab
+      );
+      return {
+        activeRequest: updatedActiveRequest,
+        tabs: updatedTabs,
+      };
+    }),
 
   setSslVerify: (sslVerify) =>
-    set((state) => ({
-      activeRequest: { ...state.activeRequest, ssl_verify: sslVerify },
-    })),
+    set((state) => {
+      const updatedActiveRequest = { ...state.activeRequest, ssl_verify: sslVerify };
+      const updatedTabs = state.tabs.map((tab) =>
+        tab.id === state.activeTabId
+          ? { ...tab, request: updatedActiveRequest, isDirty: true }
+          : tab
+      );
+      return {
+        activeRequest: updatedActiveRequest,
+        tabs: updatedTabs,
+      };
+    }),
 
   sendRequest: async (env = {}) => {
-    set({ isLoading: true, error: null, response: null });
-    const { activeRequest } = get();
+    const { activeTabId, activeRequest } = get();
+    if (!activeTabId) return;
+
+    set((state) => ({
+      isLoading: true,
+      error: null,
+      response: null,
+      tabs: state.tabs.map((tab) =>
+        tab.id === activeTabId
+          ? { ...tab, isLoading: true, error: null, response: null }
+          : tab
+      ),
+    }));
 
     try {
       const res = await invoke<BoltResponse>("send_request", {
         request: activeRequest,
         env,
       });
-      set({ response: res, isLoading: false });
+
+      set((state) => {
+        const updatedTabs = state.tabs.map((tab) =>
+          tab.id === activeTabId ? { ...tab, response: res, isLoading: false } : tab
+        );
+        if (state.activeTabId === activeTabId) {
+          return {
+            response: res,
+            isLoading: false,
+            tabs: updatedTabs,
+          };
+        }
+        return { tabs: updatedTabs };
+      });
     } catch (err) {
       console.error("send_request failed:", err);
-      // Generate standard synthetic error response
       const errResponse: BoltResponse = {
         status: 0,
         status_text: "Network Error",
@@ -143,10 +260,173 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
         time_ms: 0,
         size_bytes: 0,
       };
-      set({ response: errResponse, error: String(err), isLoading: false });
+      set((state) => {
+        const updatedTabs = state.tabs.map((tab) =>
+          tab.id === activeTabId
+            ? { ...tab, response: errResponse, error: String(err), isLoading: false }
+            : tab
+        );
+        if (state.activeTabId === activeTabId) {
+          return {
+            response: errResponse,
+            error: String(err),
+            isLoading: false,
+            tabs: updatedTabs,
+          };
+        }
+        return { tabs: updatedTabs };
+      });
     }
   },
 
-  clearResponse: () => set({ response: null, error: null }),
-  loadRequest: (request) => set({ activeRequest: request, response: null }),
+  clearResponse: () =>
+    set((state) => {
+      const updatedTabs = state.tabs.map((tab) =>
+        tab.id === state.activeTabId ? { ...tab, response: null, error: null } : tab
+      );
+      return {
+        response: null,
+        error: null,
+        tabs: updatedTabs,
+      };
+    }),
+
+  loadRequest: (request) => {
+    const { tabs, activeTabId, setActiveTab } = get();
+
+    // 1. Check if a tab with this request ID already exists
+    const existingTab = tabs.find((t) => t.request.id === request.id);
+    if (existingTab) {
+      setActiveTab(existingTab.id);
+      return;
+    }
+
+    // 2. Check if the active tab is a clean default tab we can reuse
+    const activeTab = tabs.find((t) => t.id === activeTabId);
+    const isCleanDefault =
+      activeTab &&
+      !activeTab.isDirty &&
+      activeTab.request.name === "New Request" &&
+      activeTab.request.url === "https://httpbin.org/get" &&
+      activeTab.response === null;
+
+    if (isCleanDefault && activeTabId) {
+      set((state) => {
+        const updatedTabs = state.tabs.map((t) =>
+          t.id === activeTabId ? { ...t, request, isDirty: false } : t
+        );
+        return {
+          tabs: updatedTabs,
+          activeRequest: request,
+          response: null,
+          isLoading: false,
+          error: null,
+        };
+      });
+    } else {
+      const newTabId = crypto.randomUUID();
+      const newTab: Tab = {
+        id: newTabId,
+        request,
+        response: null,
+        isLoading: false,
+        error: null,
+        isDirty: false,
+      };
+      set((state) => ({
+        tabs: [...state.tabs, newTab],
+        activeTabId: newTabId,
+        activeRequest: request,
+        response: null,
+        isLoading: false,
+        error: null,
+      }));
+    }
+  },
+
+  openTab: (request) => {
+    const req = request || createInitialRequest();
+    const { tabs, setActiveTab } = get();
+
+    if (request && request.id) {
+      const existingTab = tabs.find((t) => t.request.id === request.id);
+      if (existingTab) {
+        setActiveTab(existingTab.id);
+        return;
+      }
+    }
+
+    const newTabId = crypto.randomUUID();
+    const newTab: Tab = {
+      id: newTabId,
+      request: req,
+      response: null,
+      isLoading: false,
+      error: null,
+      isDirty: false,
+    };
+
+    set((state) => ({
+      tabs: [...state.tabs, newTab],
+      activeTabId: newTabId,
+      activeRequest: req,
+      response: null,
+      isLoading: false,
+      error: null,
+    }));
+  },
+
+  closeTab: (id) => {
+    const { tabs, activeTabId, setActiveTab } = get();
+    const tabToClose = tabs.find((t) => t.id === id);
+    if (!tabToClose) return;
+
+    if (tabToClose.isDirty) {
+      const confirmClose = window.confirm(
+        `"${tabToClose.request.name || "Request"}" has unsaved changes. Close anyway?`
+      );
+      if (!confirmClose) return;
+    }
+
+    const newTabs = tabs.filter((t) => t.id !== id);
+
+    let newActiveTabId = activeTabId;
+    if (activeTabId === id) {
+      if (newTabs.length > 0) {
+        const closedIdx = tabs.findIndex((t) => t.id === id);
+        const nextActiveIdx = Math.min(closedIdx, newTabs.length - 1);
+        newActiveTabId = newTabs[nextActiveIdx].id;
+      } else {
+        newActiveTabId = null;
+      }
+    }
+
+    set({ tabs: newTabs, activeTabId: newActiveTabId });
+    if (newActiveTabId) {
+      setActiveTab(newActiveTabId);
+    } else {
+      get().openTab();
+    }
+  },
+
+  setActiveTab: (id) => {
+    const { tabs } = get();
+    const tab = tabs.find((t) => t.id === id);
+    if (!tab) return;
+    set({
+      activeTabId: id,
+      activeRequest: tab.request,
+      response: tab.response,
+      isLoading: tab.isLoading,
+      error: tab.error,
+    });
+  },
+
+  markTabClean: (id) => {
+    set((state) => ({
+      tabs: state.tabs.map((t) =>
+        t.request.id === id || t.id === id ? { ...t, isDirty: false } : t
+      ),
+    }));
+  },
 }));

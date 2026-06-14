@@ -59,7 +59,7 @@ const getMethodColors = (method: string) => {
 };
 
 export const UrlBar: React.FC = () => {
-  const { activeRequest, setMethod, setUrl, sendRequest, isLoading } = useRequestStore();
+  const { activeRequest, setMethod, setUrl, sendRequest, isLoading, markTabClean } = useRequestStore();
   const getFlatActiveVariables = useEnvStore((state) => state.getFlatActiveVariables);
   const { projects, saveRequest, setSaveModalOpen } = useProjectsStore();
 
@@ -131,6 +131,7 @@ export const UrlBar: React.FC = () => {
         created_at: Date.now(),
       };
       await saveRequest(foundLocation.projectId, foundLocation.folderId, savedReq);
+      markTabClean(savedReq.id);
       console.log("Saved request directly!");
     } else {
       setSaveModalOpen(true);

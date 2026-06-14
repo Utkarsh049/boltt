@@ -11,6 +11,7 @@ import { EnvironmentDropdown } from "./components/EnvironmentDropdown/Environmen
 import { EnvironmentModal } from "./components/EnvironmentModal/EnvironmentModal";
 import { ProjectsTree } from "./components/ProjectsTree/ProjectsTree";
 import { SaveRequestModal } from "./components/SaveRequestModal/SaveRequestModal";
+import { TabBar } from "./components/TabBar/TabBar";
 import { useProjectsStore, Folder } from "./store/projectsStore";
 
 type SidebarTab = "collections" | "environments" | "history";
@@ -29,9 +30,37 @@ function App() {
     loadEnvironments();
   }, [loadEnvironments]);
 
-  // Global Keyboard Shortcut: Ctrl+S / Cmd+S to save request
+  // Global Keyboard Shortcut: Ctrl+S / Cmd+S to save request, tabs management
   useEffect(() => {
     const handleKeyDown = async (e: KeyboardEvent) => {
+      // switch tabs by index (Ctrl/Cmd + 1..9)
+      if ((e.ctrlKey || e.metaKey) && e.key >= "1" && e.key <= "9") {
+        e.preventDefault();
+        const tabIdx = parseInt(e.key) - 1;
+        const { tabs, setActiveTab } = useRequestStore.getState();
+        if (tabs[tabIdx]) {
+          setActiveTab(tabs[tabIdx].id);
+        }
+        return;
+      }
+
+      // open new tab (Ctrl/Cmd + T)
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "t") {
+        e.preventDefault();
+        useRequestStore.getState().openTab();
+        return;
+      }
+
+      // close active tab (Ctrl/Cmd + W)
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "w") {
+        e.preventDefault();
+        const { activeTabId, closeTab } = useRequestStore.getState();
+        if (activeTabId) {
+          closeTab(activeTabId);
+        }
+        return;
+      }
+
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
         e.preventDefault();
         
@@ -267,9 +296,12 @@ function App() {
             <Group id="workstage-group-v5" orientation="horizontal">
               
               {/* Left stage: Request Builder Panel */}
-              <Panel defaultSize="55%" minSize="500px" className="flex flex-col p-4 bg-[#101419] h-full overflow-hidden space-y-4 min-w-0">
-                <UrlBar />
-                <RequestPane />
+              <Panel defaultSize="55%" minSize="500px" className="flex flex-col bg-[#101419] h-full overflow-hidden min-w-0">
+                <TabBar />
+                <div className="flex-1 flex flex-col p-4 space-y-4 overflow-hidden min-h-0">
+                  <UrlBar />
+                  <RequestPane />
+                </div>
               </Panel>
 
               {/* Resize Handle 2 */}

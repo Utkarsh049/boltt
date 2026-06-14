@@ -14,7 +14,7 @@ export const SaveRequestModal: React.FC = () => {
     setActiveRequest,
   } = useProjectsStore();
 
-  const { activeRequest, loadRequest } = useRequestStore();
+  const { activeRequest, loadRequest, markTabClean } = useRequestStore();
 
   // Dialog fields
   const [requestName, setRequestName] = useState("");
@@ -193,6 +193,8 @@ export const SaveRequestModal: React.FC = () => {
         id: savedReq.id,
         name: savedReq.name,
       });
+
+      markTabClean(savedReq.id);
 
       setActiveProject(selectedProjectId);
       setActiveRequest(savedReq.id);

@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { invoke } from "@tauri-apps/api/core";
+import { useHistoryStore } from "./historyStore";
 
 export interface KeyValue {
   key: string;
@@ -250,6 +251,9 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
         }
         return { tabs: updatedTabs };
       });
+
+      // Refresh recent requests history
+      useHistoryStore.getState().loadHistory();
     } catch (err) {
       console.error("send_request failed:", err);
       const errResponse: BoltResponse = {
@@ -276,6 +280,9 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
         }
         return { tabs: updatedTabs };
       });
+
+      // Refresh recent requests history
+      useHistoryStore.getState().loadHistory();
     }
   },
 

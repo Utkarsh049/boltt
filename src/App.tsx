@@ -13,6 +13,8 @@ import { ProjectsTree } from "./components/ProjectsTree/ProjectsTree";
 import { SaveRequestModal } from "./components/SaveRequestModal/SaveRequestModal";
 import { TabBar } from "./components/TabBar/TabBar";
 import { useProjectsStore, Folder } from "./store/projectsStore";
+import { useHistoryStore } from "./store/historyStore";
+import { HistoryPanel } from "./components/HistoryPanel/HistoryPanel";
 
 type SidebarTab = "collections" | "environments" | "history";
 
@@ -25,9 +27,10 @@ function App() {
   const isLoading = useRequestStore((state) => state.isLoading);
   const loadEnvironments = useEnvStore((state) => state.loadEnvironments);
 
-  // Load environments from backend on mount
+  // Load environments and history from backend on mount
   useEffect(() => {
     loadEnvironments();
+    useHistoryStore.getState().loadHistory();
   }, [loadEnvironments]);
 
   // Global Keyboard Shortcut: Ctrl+S / Cmd+S to save request, tabs management
@@ -221,7 +224,12 @@ function App() {
             {/* Sidebar Scrollable Content */}
             <div className="flex-1 p-3 overflow-y-auto min-h-0">
               {sidebarTab === "collections" && (
-                <ProjectsTree />
+                <div className="space-y-4">
+                  <ProjectsTree />
+                  <div className="border-t border-[#30363D]/40 pt-2">
+                    <HistoryPanel limit={8} />
+                  </div>
+                </div>
               )}
 
               {sidebarTab === "environments" && (
@@ -247,16 +255,12 @@ function App() {
               )}
 
               {sidebarTab === "history" && (
-                <div className="space-y-2">
-                  <div className="text-[10px] font-bold text-[#8b919d] uppercase tracking-wider mb-2">
+                <div className="h-full flex flex-col">
+                  <div className="text-[10px] font-bold text-[#8b919d] uppercase tracking-wider mb-2 flex-shrink-0">
                     Recent Requests
                   </div>
-                  <div className="space-y-1 font-mono text-[11px] text-[#8b919d]">
-                    <div className="p-1.5 border border-[#30363D] bg-[#1c2025]/20 rounded-sm hover:border-[#a1c9ff]/40 cursor-pointer flex justify-between items-center">
-                      <span className="text-green-400 font-bold">GET</span>
-                      <span className="truncate flex-1 pl-2 text-left">/get</span>
-                      <span className="text-[10px] text-[#8b919d]">200 OK</span>
-                    </div>
+                  <div className="flex-1 min-h-0">
+                    <HistoryPanel alwaysExpanded={true} limit={100} />
                   </div>
                 </div>
               )}

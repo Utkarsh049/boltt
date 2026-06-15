@@ -22,7 +22,8 @@ pub fn run() {
             projects::rename_folder_in_project,
             history::load_history,
             history::clear_history,
-            history::append_history
+            history::append_history,
+            commands::export_folder_pdf
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

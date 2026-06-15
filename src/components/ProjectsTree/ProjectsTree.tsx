@@ -13,8 +13,18 @@ import {
   Copy, 
   FolderPlus, 
   FilePlus,
-  Briefcase
+  Briefcase,
+  FileDown
 } from "lucide-react";
+import { ExportPDFModal } from "../ExportPDFModal/ExportPDFModal";
+
+const countRequestsRecursive = (folder: Folder): number => {
+  let count = folder.requests.length;
+  for (const sub of folder.subfolders) {
+    count += countRequestsRecursive(sub);
+  }
+  return count;
+};
 
 export const ProjectsTree: React.FC = () => {
   const {
@@ -59,6 +69,14 @@ export const ProjectsTree: React.FC = () => {
     folderId?: string; // parent folder when creating subfolder/request, or target folder when renaming
     requestId?: string; // target request when renaming
     request?: SavedRequest;
+  } | null>(null);
+
+  const [pdfExportModal, setPdfExportModal] = useState<{
+    isOpen: boolean;
+    projectId: string;
+    folderId: string;
+    folderName: string;
+    requestsCount: number;
   } | null>(null);
 
   const inputRef = useRef<HTMLInputElement>(null);
@@ -610,6 +628,24 @@ export const ProjectsTree: React.FC = () => {
               <div className="my-1 border-t border-[#30363D]"></div>
               <button
                 onClick={() => {
+                  if (contextMenu.folder) {
+                    setPdfExportModal({
+                      isOpen: true,
+                      projectId: contextMenu.projectId,
+                      folderId: contextMenu.folderId!,
+                      folderName: contextMenu.folder.name,
+                      requestsCount: countRequestsRecursive(contextMenu.folder),
+                    });
+                    setContextMenu(null);
+                  }
+                }}
+                className="flex items-center space-x-2 w-full px-2.5 py-1.5 text-xs text-[#e0e2ea] hover:bg-[#272a30] rounded-sm text-left transition cursor-pointer"
+              >
+                <FileDown size={13} className="text-[#8b919d]" />
+                <span>Export as PDF</span>
+              </button>
+              <button
+                onClick={() => {
                   if (confirm("Are you sure you want to delete this folder and all of its contents?")) {
                     deleteFolder(contextMenu.projectId, contextMenu.folderId!);
                   }
@@ -711,6 +747,18 @@ export const ProjectsTree: React.FC = () => {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Export PDF Modal */}
+      {pdfExportModal?.isOpen && (
+        <ExportPDFModal
+          isOpen={pdfExportModal.isOpen}
+          onClose={() => setPdfExportModal(null)}
+          projectId={pdfExportModal.projectId}
+          folderId={pdfExportModal.folderId}
+          folderName={pdfExportModal.folderName}
+          requestsCount={pdfExportModal.requestsCount}
+        />
       )}
     </div>
   );

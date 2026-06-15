@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useHistoryStore, HistoryEntry } from "../../store/historyStore";
 import { useRequestStore, KeyValue } from "../../store/requestStore";
+import { useToastStore } from "../../store/toastStore";
 import { ChevronDown, ChevronRight, Clock, Trash2, ArrowUpRight } from "lucide-react";
 
 interface HistoryPanelProps {
@@ -13,6 +14,7 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
   limit = 8,
 }) => {
   const { entries, clearHistory } = useHistoryStore();
+  const showToast = useToastStore((state) => state.showToast);
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [now, setNow] = useState(Date.now());
 
@@ -70,6 +72,11 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
     const clean = url.replace(/^https?:\/\//, "");
     if (clean.length <= maxLen) return clean;
     return clean.substring(0, maxLen) + "…";
+  };
+
+  const handleClearHistory = () => {
+    clearHistory();
+    showToast("History cleared", "info");
   };
 
   const handleLoadEntry = (entry: HistoryEntry) => {
@@ -180,7 +187,7 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
               {/* Clear history button */}
               <div className="pt-2 flex justify-end">
                 <button
-                  onClick={clearHistory}
+                  onClick={handleClearHistory}
                   className="flex items-center space-x-1 px-2 py-1 text-[10px] text-red-400 hover:text-red-300 font-medium hover:underline transition cursor-pointer"
                 >
                   <Trash2 size={11} />

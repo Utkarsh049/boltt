@@ -238,3 +238,26 @@ pub fn rename_folder_in_project(
         Err(format!("Folder not found: {}", folder_id))
     }
 }
+
+#[tauri::command]
+pub async fn import_project(app_handle: tauri::AppHandle) -> Result<Option<Project>, String> {
+    let file_handle = rfd::AsyncFileDialog::new()
+        .add_filter("Boltt Project JSON", &["json"])
+        .pick_file()
+        .await;
+
+    if let Some(file) = file_handle {
+        let content = fs::read_to_string(file.path())
+            .map_err(|e| format!("Failed to read project file: {}", e))?;
+        
+        let project: Project = serde_json::from_str(&content)
+            .map_err(|e| format!("Invalid project JSON format: {}", e))?;
+
+        // Save the project to disk
+        save_project(app_handle, project.clone())?;
+        Ok(Some(project))
+    } else {
+        Ok(None)
+    }
+}
+

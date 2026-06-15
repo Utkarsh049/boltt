@@ -366,7 +366,7 @@ export const RequestPane: React.FC = () => {
                 </div>
                 {/* Visual basic auth live preview */}
                 <div className="text-[11px] text-[#8b919d] pt-1">
-                  💡 This will be sent as:{" "}
+                  This will be sent as:{" "}
                   <code className="text-amber-300 font-mono bg-[#101419] px-1.5 py-0.5 rounded border border-[#30363D]">
                     Authorization: Basic {
                       activeRequest.auth.config.username || activeRequest.auth.config.password

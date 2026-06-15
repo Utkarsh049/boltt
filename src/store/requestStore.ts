@@ -412,7 +412,22 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
     if (newActiveTabId) {
       setActiveTab(newActiveTabId);
     } else {
-      get().openTab();
+      // Clear active request/response states when no tabs are open
+      set({
+        activeRequest: {
+          name: "",
+          method: "GET",
+          url: "",
+          headers: [],
+          params: [],
+          body: { type: "None" },
+          auth: { type: "None" },
+          ssl_verify: true,
+        },
+        response: null,
+        isLoading: false,
+        error: null,
+      });
     }
   },
 

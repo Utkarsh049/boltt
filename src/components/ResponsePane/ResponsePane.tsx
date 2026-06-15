@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { useRequestStore } from "../../store/requestStore";
 import { Group, Panel, Separator } from "react-resizable-panels";
 import CodeMirror from "@uiw/react-codemirror";
@@ -6,17 +6,17 @@ import { json } from "@codemirror/lang-json";
 import {
   Copy,
   Terminal,
-  Check,
   List,
   FileText,
   Inbox,
 } from "lucide-react";
+import { buildCurlCommand } from "../../utils/curl";
+import { useToastStore } from "../../store/toastStore";
 
 export const ResponsePane: React.FC = () => {
   const { response, isLoading, activeRequest } = useRequestStore();
-  const [copiedBody, setCopiedBody] = useState(false);
-  const [copiedHeaders, setCopiedHeaders] = useState(false);
-  const [copiedCurl, setCopiedCurl] = useState(false);
+  const { showToast } = useToastStore();
+
 
   // Bytes formatting helper
   const formatBytes = (bytes: number): string => {
@@ -51,8 +51,7 @@ export const ResponsePane: React.FC = () => {
   const handleCopyBody = () => {
     if (!response) return;
     navigator.clipboard.writeText(response.body);
-    setCopiedBody(true);
-    setTimeout(() => setCopiedBody(false), 2000);
+    showToast("Response body copied to clipboard", "success");
   };
 
   const handleCopyHeaders = () => {
@@ -61,58 +60,14 @@ export const ResponsePane: React.FC = () => {
       .map((h) => `${h.key}: ${h.value}`)
       .join("\n");
     navigator.clipboard.writeText(headerText);
-    setCopiedHeaders(true);
-    setTimeout(() => setCopiedHeaders(false), 2000);
+    showToast("Response headers copied to clipboard", "success");
   };
 
   const handleCopyCurl = () => {
     if (!activeRequest) return;
-    
-    // Construct Query Params string
-    const query = activeRequest.params
-      .filter((p) => p.enabled && p.key)
-      .map((p) => `${p.key}=${encodeURIComponent(p.value)}`)
-      .join("&");
-    
-    const urlWithParams = query ? `${activeRequest.url}?${query}` : activeRequest.url;
-    let curl = `curl -X ${activeRequest.method} "${urlWithParams}"`;
-
-    // Headers
-    activeRequest.headers.forEach((h) => {
-      if (h.enabled && h.key) {
-        curl += ` \\\n  -H "${h.key}: ${h.value}"`;
-      }
-    });
-
-    // Auth helpers
-    if (activeRequest.auth.type === "Bearer" && activeRequest.auth.config.token) {
-      curl += ` \\\n  -H "Authorization: Bearer ${activeRequest.auth.config.token}"`;
-    } else if (activeRequest.auth.type === "Basic") {
-      const { username, password } = activeRequest.auth.config;
-      if (username || password) {
-        const credentials = btoa(`${username}:${password}`);
-        curl += ` \\\n  -H "Authorization: Basic ${credentials}"`;
-      }
-    }
-
-    // Body
-    if (["POST", "PUT", "PATCH"].includes(activeRequest.method)) {
-      if (activeRequest.body.type === "Json" && activeRequest.body.content) {
-        curl += ` \\\n  -d '${activeRequest.body.content}'`;
-      } else if (activeRequest.body.type === "Raw" && activeRequest.body.content) {
-        curl += ` \\\n  -d '${activeRequest.body.content}'`;
-      } else if (activeRequest.body.type === "FormData") {
-        activeRequest.body.content.forEach((formRow) => {
-          if (formRow.enabled && formRow.key) {
-            curl += ` \\\n  -F "${formRow.key}=${formRow.value}"`;
-          }
-        });
-      }
-    }
-
+    const curl = buildCurlCommand(activeRequest);
     navigator.clipboard.writeText(curl);
-    setCopiedCurl(true);
-    setTimeout(() => setCopiedCurl(false), 2000);
+    showToast("cURL command copied to clipboard", "success");
   };
 
   // Status color mapper
@@ -181,24 +136,24 @@ export const ResponsePane: React.FC = () => {
               className="p-1 hover:bg-[#272a30] text-[#8b919d] hover:text-[#e0e2ea] border border-transparent hover:border-[#30363D] rounded-sm transition flex items-center space-x-1 text-[11px]"
               title="Copy request as cURL command"
             >
-              {copiedCurl ? <Check size={11} className="text-green-400" /> : <Terminal size={11} />}
-              <span>{copiedCurl ? "Copied" : "cURL"}</span>
+              <Terminal size={11} />
+              <span>cURL</span>
             </button>
             <button
               onClick={handleCopyBody}
               className="p-1 hover:bg-[#272a30] text-[#8b919d] hover:text-[#e0e2ea] border border-transparent hover:border-[#30363D] rounded-sm transition flex items-center space-x-1 text-[11px]"
               title="Copy response body"
             >
-              {copiedBody ? <Check size={11} className="text-green-400" /> : <Copy size={11} />}
-              <span>{copiedBody ? "Copied" : "Copy Body"}</span>
+              <Copy size={11} />
+              <span>Copy Body</span>
             </button>
             <button
               onClick={handleCopyHeaders}
               className="p-1 hover:bg-[#272a30] text-[#8b919d] hover:text-[#e0e2ea] border border-transparent hover:border-[#30363D] rounded-sm transition flex items-center space-x-1 text-[11px]"
               title="Copy response headers"
             >
-              {copiedHeaders ? <Check size={11} className="text-green-400" /> : <Copy size={11} />}
-              <span>{copiedHeaders ? "Copied" : "Copy Headers"}</span>
+              <Copy size={11} />
+              <span>Copy Headers</span>
             </button>
           </div>
 

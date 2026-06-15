@@ -104,6 +104,25 @@ export const ProjectsTree: React.FC = () => {
     return () => window.removeEventListener("click", handleGlobalClick);
   }, []);
 
+  // Close local modals on Escape key / close-all-modals event
+  useEffect(() => {
+    const handleClose = () => {
+      setNamingDialog(null);
+      setPdfExportModal(null);
+    };
+    window.addEventListener("close-all-modals", handleClose);
+    return () => window.removeEventListener("close-all-modals", handleClose);
+  }, []);
+
+  // Trigger project naming dialog from global landing page
+  useEffect(() => {
+    const handleCreateProject = () => {
+      triggerNamingDialog("create-project", "");
+    };
+    window.addEventListener("create-project-dialog", handleCreateProject);
+    return () => window.removeEventListener("create-project-dialog", handleCreateProject);
+  }, []);
+
   const toggleExpand = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setExpandedIds((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -538,12 +557,12 @@ export const ProjectsTree: React.FC = () => {
           projects.map(renderProject)
         ) : (
           <div className="py-8 text-center border border-dashed border-[#30363D]/50 rounded-sm bg-[#161B22]/20">
-            <span className="block text-[11px] text-[#8b919d] mb-2">No projects created yet</span>
+            <span className="block text-[11px] text-[#8b919d] mb-2">No projects yet</span>
             <button
               onClick={() => triggerNamingDialog("create-project", "")}
-              className="text-xs bg-[#272a30] text-[#a1c9ff] border border-[#30363D] px-2.5 py-1 rounded hover:bg-[#32353b] cursor-pointer transition"
+              className="text-xs bg-[#272a30] text-[#a1c9ff] border border-[#30363D] px-2.5 py-1 rounded hover:bg-[#32353b] cursor-pointer transition font-semibold"
             >
-              Create Project
+              + New Project
             </button>
           </div>
         )}

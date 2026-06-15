@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { UrlBar } from "./components/UrlBar/UrlBar";
 import { RequestPane } from "./components/RequestPane/RequestPane";
-import { Zap, Settings, RefreshCw, Folder as FolderIcon, Globe, Clock, Eye, EyeOff } from "lucide-react";
+import { Zap, Settings, RefreshCw, Folder as FolderIcon, Globe, Clock, Eye, EyeOff, Plus } from "lucide-react";
 import "./App.css";
 import { Group, Panel, Separator, type PanelImperativeHandle } from "react-resizable-panels";
 import { ResponsePane } from "./components/ResponsePane/ResponsePane";
@@ -15,6 +15,9 @@ import { TabBar } from "./components/TabBar/TabBar";
 import { useProjectsStore, Folder } from "./store/projectsStore";
 import { useHistoryStore } from "./store/historyStore";
 import { HistoryPanel } from "./components/HistoryPanel/HistoryPanel";
+import { invoke } from "@tauri-apps/api/core";
+import { ToastList } from "./components/Toast/Toast";
+import { useToastStore } from "./store/toastStore";
 
 type SidebarTab = "collections" | "environments" | "history";
 
@@ -25,6 +28,10 @@ function App() {
 
   const response = useRequestStore((state) => state.response);
   const isLoading = useRequestStore((state) => state.isLoading);
+  const tabs = useRequestStore((state) => state.tabs);
+  const activeRequest = useRequestStore((state) => state.activeRequest);
+  const openTab = useRequestStore((state) => state.openTab);
+
   const loadEnvironments = useEnvStore((state) => state.loadEnvironments);
 
   // Load environments and history from backend on mount
@@ -33,9 +40,57 @@ function App() {
     useHistoryStore.getState().loadHistory();
   }, [loadEnvironments]);
 
-  // Global Keyboard Shortcut: Ctrl+S / Cmd+S to save request, tabs management
+  // Dynamic window title updates
+  useEffect(() => {
+    if (tabs.length > 0 && activeRequest) {
+      document.title = `Boltt — ${activeRequest.name || activeRequest.url || "New Request"}`;
+    } else {
+      document.title = "Boltt";
+    }
+  }, [tabs.length, activeRequest?.name, activeRequest?.url]);
+
+  // Project importing handler
+  const handleImportProject = async () => {
+    try {
+      const imported = await invoke<any>("import_project");
+      if (imported) {
+        await useProjectsStore.getState().loadProjects();
+        useToastStore.getState().showToast(`Project "${imported.name}" imported successfully`, "success");
+      }
+    } catch (err) {
+      console.error("Import failed:", err);
+      useToastStore.getState().showToast(`Failed to import project: ${err}`, "error");
+    }
+  };
+
+  // Global Keyboard Shortcut: Ctrl+S / Cmd+S to save request, send, focus, tabs management, and escape modals
   useEffect(() => {
     const handleKeyDown = async (e: KeyboardEvent) => {
+      // Send request (Ctrl/Cmd + Enter)
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        e.preventDefault();
+        const { tabs } = useRequestStore.getState();
+        if (tabs.length > 0) {
+          useRequestStore.getState().sendRequest(useEnvStore.getState().getFlatActiveVariables());
+        }
+        return;
+      }
+
+      // Focus URL input (Ctrl/Cmd + L)
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "l") {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent("focus-url-bar"));
+        return;
+      }
+
+      // Close open modals (Escape)
+      if (e.key === "Escape") {
+        useEnvStore.getState().setModalOpen(false);
+        useProjectsStore.getState().setSaveModalOpen(false);
+        window.dispatchEvent(new CustomEvent("close-all-modals"));
+        return;
+      }
+
       // switch tabs by index (Ctrl/Cmd + 1..9)
       if ((e.ctrlKey || e.metaKey) && e.key >= "1" && e.key <= "9") {
         e.preventDefault();
@@ -69,6 +124,8 @@ function App() {
         
         const { projects, saveRequest, setSaveModalOpen } = useProjectsStore.getState();
         const activeRequest = useRequestStore.getState().activeRequest;
+        const { tabs } = useRequestStore.getState();
+        if (tabs.length === 0) return; // No active request to save
         
         if (!activeRequest.id) {
           setSaveModalOpen(true);
@@ -108,6 +165,7 @@ function App() {
             created_at: Date.now(),
           };
           await saveRequest(foundLocation.projectId, foundLocation.folderId, savedReq);
+          useToastStore.getState().showToast("Request saved", "success");
           console.log("Saved request directly via keyboard shortcut!");
         } else {
           setSaveModalOpen(true);
@@ -297,44 +355,100 @@ function App() {
 
           {/* 2. Main Workstage Panel (Request Stage + Response Stage) */}
           <Panel className="h-full overflow-hidden">
-            <Group id="workstage-group-v5" orientation="horizontal">
-              
-              {/* Left stage: Request Builder Panel */}
-              <Panel defaultSize="55%" minSize="500px" className="flex flex-col bg-[#101419] h-full overflow-hidden min-w-0">
-                <TabBar />
-                <div className="flex-1 flex flex-col p-4 space-y-4 overflow-hidden min-h-0">
-                  <UrlBar />
-                  <RequestPane />
+            {tabs.length === 0 ? (
+              <div className="flex-1 flex flex-col items-center justify-center bg-[#101419] p-8 text-center select-none font-sans h-full relative overflow-hidden">
+                {/* Background ambient glow */}
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[100px] pointer-events-none"></div>
+                
+                <div className="max-w-md w-full space-y-6 z-10">
+                  {/* Glowing Lightning Bolt Container */}
+                  <div className="relative inline-flex items-center justify-center p-6 bg-gradient-to-b from-blue-500/10 to-transparent border border-blue-500/20 rounded-full shadow-[0_0_50px_rgba(59,130,246,0.15)]">
+                    <Zap size={48} className="text-[#a1c9ff] fill-[#a1c9ff]/20 filter drop-shadow-[0_0_12px_rgba(161,201,255,0.4)]" />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <h1 className="text-xl font-bold text-[#e0e2ea] tracking-tight">
+                      Start your first request
+                    </h1>
+                    <p className="text-xs text-[#8b919d] leading-relaxed max-w-xs mx-auto">
+                      Create a request tab to start testing API endpoints, or open/import a collection project to organize your requests.
+                    </p>
+                  </div>
+
+                  {/* Quick actions grid */}
+                  <div className="grid grid-cols-1 gap-2.5 pt-2 max-w-[280px] mx-auto">
+                    <button
+                      onClick={() => openTab()}
+                      className="flex items-center justify-center space-x-2 w-full py-2 bg-[#a1c9ff] hover:bg-blue-300 text-[#00325a] rounded text-xs font-bold transition duration-150 cursor-pointer shadow-lg shadow-blue-950/20"
+                    >
+                      <Plus size={14} />
+                      <span>Create a Request</span>
+                    </button>
+                    
+                    <div className="flex items-center space-x-2 text-xs text-[#8b919d] py-1 select-none">
+                      <div className="flex-1 h-[1px] bg-[#30363D]/60"></div>
+                      <span>OR</span>
+                      <div className="flex-1 h-[1px] bg-[#30363D]/60"></div>
+                    </div>
+
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => window.dispatchEvent(new CustomEvent("create-project-dialog"))}
+                        className="flex-1 py-2 bg-[#1c2025] hover:bg-[#272a30] border border-[#30363D] text-[#e0e2ea] hover:text-[#a1c9ff] rounded text-xs font-semibold transition cursor-pointer"
+                      >
+                        New Project
+                      </button>
+                      <button
+                        onClick={handleImportProject}
+                        className="flex-1 py-2 bg-[#1c2025] hover:bg-[#272a30] border border-[#30363D] text-[#e0e2ea] hover:text-[#a1c9ff] rounded text-xs font-semibold transition cursor-pointer"
+                      >
+                        Import Project
+                      </button>
+                    </div>
+                  </div>
                 </div>
-              </Panel>
+              </div>
+            ) : (
+              <Group id="workstage-group-v5" orientation="horizontal">
+                
+                {/* Left stage: Request Builder Panel */}
+                <Panel defaultSize="55%" minSize="500px" className="flex flex-col bg-[#101419] h-full overflow-hidden min-w-0">
+                  <TabBar />
+                  <div className="flex-1 flex flex-col p-4 space-y-4 overflow-hidden min-h-0">
+                    <UrlBar />
+                    <RequestPane />
+                  </div>
+                </Panel>
 
-              {/* Resize Handle 2 */}
-              <Separator className="w-2 hover:bg-[#a1c9ff]/10 active:bg-[#a1c9ff]/20 transition-all cursor-col-resize self-stretch flex-shrink-0 flex items-center justify-center">
-                <div className="w-[1px] h-full bg-[#30363D]" />
-              </Separator>
+                {/* Resize Handle 2 */}
+                <Separator className="w-2 hover:bg-[#a1c9ff]/10 active:bg-[#a1c9ff]/20 transition-all cursor-col-resize self-stretch flex-shrink-0 flex items-center justify-center">
+                  <div className="w-[1px] h-full bg-[#30363D]" />
+                </Separator>
 
-              {/* Right stage: Response Pane Panel */}
-              <Panel
-                id="response-panel"
-                panelRef={responsePanelRef}
-                defaultSize={45}
-                minSize="420px"
-                collapsible={true}
-                onResize={(size) => {
-                  setIsResponseCollapsed(size.inPixels === 0);
-                }}
-                className="flex flex-col p-4 bg-[#161B22] h-full overflow-hidden min-w-0"
-              >
-                <ResponsePane />
-              </Panel>
+                {/* Right stage: Response Pane Panel */}
+                <Panel
+                  id="response-panel"
+                  panelRef={responsePanelRef}
+                  defaultSize={45}
+                  minSize="420px"
+                  collapsible={true}
+                  onResize={(size) => {
+                    setIsResponseCollapsed(size.inPixels === 0);
+                  }}
+                  className="flex flex-col p-4 bg-[#161B22] h-full overflow-hidden min-w-0"
+                >
+                  <ResponsePane />
+                </Panel>
 
-            </Group>
+              </Group>
+            )}
           </Panel>
 
         </Group>
       </div>
       <EnvironmentModal />
       <SaveRequestModal />
+      <ToastList />
     </div>
   );
 }

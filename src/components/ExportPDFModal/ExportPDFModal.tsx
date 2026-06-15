@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
+import { useToastStore } from "../../store/toastStore";
 import { FileDown, X, ShieldAlert, CheckCircle } from "lucide-react";
 
 interface ExportPDFModalProps {
@@ -48,6 +49,7 @@ export const ExportPDFModal: React.FC<ExportPDFModalProps> = ({
 
         if (resultPath) {
           setSuccessPath(resultPath);
+          useToastStore.getState().showToast("PDF saved", "success");
           // Automatically close modal after a brief delay so the user sees the success state
           setTimeout(() => {
             onClose();

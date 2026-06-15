@@ -20,6 +20,7 @@ pub fn run() {
             projects::save_request_to_project,
             projects::delete_request_from_project,
             projects::rename_folder_in_project,
+            projects::import_project,
             history::load_history,
             history::clear_history,
             history::append_history,

@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useRequestStore, HttpMethod } from "../../store/requestStore";
 import { useEnvStore } from "../../store/envStore";
 import { useProjectsStore, Folder } from "../../store/projectsStore";
-import { Save, Send, ChevronDown, Check } from "lucide-react";
+import { Save, Send, ChevronDown, Check, ShieldAlert, ShieldCheck } from "lucide-react";
 
 const getMethodColors = (method: string) => {
   switch (method) {
@@ -59,12 +59,16 @@ const getMethodColors = (method: string) => {
 };
 
 export const UrlBar: React.FC = () => {
-  const { activeRequest, setMethod, setUrl, sendRequest, isLoading, markTabClean } = useRequestStore();
+  const { activeRequest, setMethod, setUrl, sendRequest, isLoading, markTabClean, setSslVerify } = useRequestStore();
   const getFlatActiveVariables = useEnvStore((state) => state.getFlatActiveVariables);
   const { projects, saveRequest, setSaveModalOpen } = useProjectsStore();
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isSslPopoverOpen, setIsSslPopoverOpen] = useState(false);
+
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const sslDropdownRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -72,10 +76,25 @@ export const UrlBar: React.FC = () => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setIsDropdownOpen(false);
       }
+      if (sslDropdownRef.current && !sslDropdownRef.current.contains(event.target as Node)) {
+        setIsSslPopoverOpen(false);
+      }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // Listen to custom focus event (Cmd+L)
+  useEffect(() => {
+    const handleFocus = () => {
+      inputRef.current?.focus();
+      inputRef.current?.select();
+    };
+    window.addEventListener("focus-url-bar", handleFocus);
+    return () => {
+      window.removeEventListener("focus-url-bar", handleFocus);
     };
   }, []);
 
@@ -186,15 +205,64 @@ export const UrlBar: React.FC = () => {
         </div>
 
         {/* URL Input */}
-        <input
-          type="text"
-          value={activeRequest.url}
-          onChange={(e) => setUrl(e.target.value)}
-          onKeyDown={handleKeyDown}
-          disabled={isLoading}
-          placeholder="Enter request URL (e.g. https://httpbin.org/get)"
-          className="flex-1 bg-[#101419] text-[#e0e2ea] border border-[#30363D] px-3 h-9 rounded-sm text-xs font-mono focus:outline-none focus:border-[#a1c9ff] placeholder-[#8b919d]/60"
-        />
+        <div className="flex-1 relative flex items-center">
+          <input
+            ref={inputRef}
+            type="text"
+            value={activeRequest.url}
+            onChange={(e) => setUrl(e.target.value)}
+            onKeyDown={handleKeyDown}
+            disabled={isLoading}
+            placeholder="Enter request URL (e.g. https://httpbin.org/get)"
+            className={`w-full bg-[#101419] text-[#e0e2ea] border px-3 pr-24 h-9 rounded-sm text-xs font-mono focus:outline-none focus:border-[#a1c9ff] placeholder-[#8b919d]/60 transition-colors ${
+              activeRequest.ssl_verify === false
+                ? "border-amber-500/60 focus:border-amber-500"
+                : "border-[#30363D]"
+            }`}
+          />
+          
+          {/* SSL verification button & indicator */}
+          <div className="absolute right-2 flex items-center space-x-1.5" ref={sslDropdownRef}>
+            {activeRequest.ssl_verify === false && (
+              <span className="flex items-center space-x-1 px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-[9px] font-bold text-amber-400 font-mono animate-pulse">
+                <ShieldAlert size={10} />
+                <span>INSECURE</span>
+              </span>
+            )}
+            <button
+              type="button"
+              onClick={() => setIsSslPopoverOpen(!isSslPopoverOpen)}
+              className={`p-1 hover:bg-[#272a30]/80 rounded transition cursor-pointer ${
+                activeRequest.ssl_verify === false ? "text-amber-400" : "text-[#8b919d] hover:text-[#e0e2ea]"
+              }`}
+              title="SSL Verification Settings"
+            >
+              {activeRequest.ssl_verify === false ? <ShieldAlert size={14} /> : <ShieldCheck size={14} />}
+            </button>
+            
+            {isSslPopoverOpen && (
+              <div className="absolute right-0 top-full mt-1.5 w-56 bg-[#161B22] border border-[#30363D] rounded shadow-2xl p-3 z-50 flex flex-col space-y-2 font-sans select-none">
+                <div className="text-[10px] font-bold text-[#8b919d] uppercase tracking-wider">
+                  SSL Settings
+                </div>
+                <label className="flex items-center space-x-2.5 cursor-pointer text-xs text-[#e0e2ea] py-1">
+                  <input
+                    type="checkbox"
+                    checked={activeRequest.ssl_verify !== false}
+                    onChange={(e) => {
+                      setSslVerify(e.target.checked);
+                    }}
+                    className="w-3.5 h-3.5 rounded bg-[#101419] border-[#30363D] text-[#a1c9ff] focus:ring-0 cursor-pointer"
+                  />
+                  <span>Verify SSL certificates</span>
+                </label>
+                <div className="text-[10px] text-[#8b919d] leading-normal border-t border-[#30363D]/40 pt-1.5">
+                  Disabling verification allows self-signed or invalid certificates to be accepted.
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Save Button */}
         <button

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useProjectsStore, Project, Folder, SavedRequest } from "../../store/projectsStore";
 import { useRequestStore } from "../../store/requestStore";
+import { useToastStore } from "../../store/toastStore";
 import { X, Save, Plus, ChevronDown, Check, Briefcase, Folder as FolderIcon } from "lucide-react";
 
 export const SaveRequestModal: React.FC = () => {
@@ -236,6 +237,7 @@ export const SaveRequestModal: React.FC = () => {
       });
 
       markTabClean(savedReq.id);
+      useToastStore.getState().showToast("Request saved", "success");
 
       setActiveProject(selectedProjectId);
       setActiveRequest(savedReq.id);

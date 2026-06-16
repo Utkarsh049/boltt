@@ -89,7 +89,7 @@ export const ResponsePane: React.FC = () => {
         {response && (
           <div className="flex items-center space-x-2.5 text-xs font-mono">
             {/* Status Code */}
-            <span className={`px-2 py-0.5 rounded border ${getStatusColor(response.status)}`}>
+            <span className={`px-2 py-0.5 rounded ${getStatusColor(response.status)}`}>
               {response.status === 0 ? "0 Error" : `${response.status} ${response.status_text}`}
             </span>
             

@@ -169,7 +169,7 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
 
                   <div className="flex items-center space-x-1.5 flex-shrink-0">
                     {/* Status code */}
-                    <span className={`px-1.5 py-0.2 text-[9px] rounded-sm border ${getStatusColor(entry.status)}`}>
+                    <span className={`px-1.5 py-0.2 text-[9px] rounded-sm ${getStatusColor(entry.status)}`}>
                       {entry.status === 0 ? "ERR" : entry.status}
                     </span>
 

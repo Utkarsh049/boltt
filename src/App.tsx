@@ -208,9 +208,6 @@ function App() {
           <span className="font-semibold text-sm tracking-wider text-[#a1c9ff]">
             Boltt
           </span>
-          <span className="text-xs text-[#c0c7d3] bg-[#272a30] px-2 py-0.5 rounded border border-[#30363D]">
-            v0.1 — Developer Client
-          </span>
         </div>
         <div className="flex items-center space-x-3 text-xs text-[#c0c7d3]">
           <EnvironmentDropdown />

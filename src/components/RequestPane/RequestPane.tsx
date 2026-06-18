@@ -54,10 +54,10 @@ export const RequestPane: React.FC = () => {
   // Tab label helper
   const tabClass = (tab: TabType) => {
     const isActive = activeTab === tab;
-    return `h-9 px-4 flex items-center space-x-1.5 border-t-2 text-xs font-semibold select-none cursor-pointer transition ${
+    return `h-9 px-4 flex items-center space-x-1.5 border border-transparent text-xs font-semibold select-none cursor-pointer transition-[color,background-color] duration-150 ${
       isActive
-        ? "bg-[#101419] text-[#a1c9ff] border-t-[#a1c9ff] border-r border-l border-[#30363D]"
-        : "border-t-transparent text-[#8b919d] hover:text-[#e0e2ea]"
+        ? "bg-[#101419] text-[#a1c9ff] border-r-[#30363D] border-l-[#30363D] -mb-[1px]"
+        : "text-[#8b919d] hover:text-[#e0e2ea]"
     }`;
   };
 
@@ -157,7 +157,7 @@ export const RequestPane: React.FC = () => {
       <div className="flex-1 p-4 bg-[#101419] overflow-y-auto">
         {/* Params Tab */}
         {activeTab === "params" && (
-          <div className="space-y-2">
+          <div className="animate-tab-fade space-y-2">
             <div className="text-[11px] text-[#8b919d] mb-2 font-semibold uppercase tracking-wider">
               Query Parameters
             </div>
@@ -172,7 +172,7 @@ export const RequestPane: React.FC = () => {
 
         {/* Headers Tab */}
         {activeTab === "headers" && (
-          <div className="space-y-2">
+          <div className="animate-tab-fade space-y-2">
             <div className="text-[11px] text-[#8b919d] mb-2 font-semibold uppercase tracking-wider">
               Request Headers
             </div>
@@ -187,7 +187,7 @@ export const RequestPane: React.FC = () => {
 
         {/* Body Tab */}
         {activeTab === "body" && (
-          <div className="space-y-4 flex flex-col h-full">
+          <div className="animate-tab-fade space-y-4 flex flex-col h-full">
             {/* Body Mode Selector */}
             <div className="flex space-x-2 border-b border-[#30363D] pb-3">
               {(["None", "Json", "Raw", "FormData"] as const).map((mode) => {
@@ -268,7 +268,7 @@ export const RequestPane: React.FC = () => {
 
         {/* Auth Tab */}
         {activeTab === "auth" && (
-          <div className="space-y-4">
+          <div className="animate-tab-fade space-y-4">
             {/* Auth Dropdown selector type */}
             <div className="flex items-center space-x-3 mb-4">
               <label className="text-xs text-[#8b919d]">Auth Type:</label>

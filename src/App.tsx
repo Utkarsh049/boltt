@@ -276,19 +276,23 @@ function App() {
               </button>
             </div>
 
-            {/* Sidebar Scrollable Content */}
-            <div className="flex-1 p-3 overflow-y-auto min-h-0">
+            {/* Sidebar Content Area */}
+            <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
               {sidebarTab === "collections" && (
-                <div className="space-y-4">
-                  <ProjectsTree />
-                  <div className="border-t border-[#30363D]/40 pt-2">
+                <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+                  {/* Projects tree area scrollable */}
+                  <div className="flex-1 p-3 overflow-y-auto min-h-0">
+                    <ProjectsTree />
+                  </div>
+                  {/* Pinned history panel at bottom */}
+                  <div className="border-t border-[#30363D] p-3 bg-[#161B22]/50 flex-shrink-0">
                     <HistoryPanel limit={8} />
                   </div>
                 </div>
               )}
 
               {sidebarTab === "environments" && (
-                <div className="space-y-3">
+                <div className="flex-1 p-3 overflow-y-auto min-h-0 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] font-bold text-[#8b919d] uppercase tracking-wider">
                       Environments
@@ -310,7 +314,7 @@ function App() {
               )}
 
               {sidebarTab === "history" && (
-                <div className="h-full flex flex-col">
+                <div className="flex-1 p-3 overflow-y-auto min-h-0 flex flex-col">
                   <div className="text-[10px] font-bold text-[#8b919d] uppercase tracking-wider mb-2 flex-shrink-0">
                     Recent Requests
                   </div>

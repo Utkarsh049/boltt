@@ -135,6 +135,20 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
               </span>
             )}
           </div>
+
+          {!isCollapsed && entries.length > 0 && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClearHistory();
+              }}
+              className="flex items-center space-x-1 px-1.5 py-0.5 text-[9px] font-semibold text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded transition cursor-pointer"
+              title="Clear all recent request logs"
+            >
+              <Trash2 size={10} />
+              <span>Clear</span>
+            </button>
+          )}
         </div>
       )}
 
@@ -184,16 +198,18 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
                 </div>
               ))}
 
-              {/* Clear history button */}
-              <div className="pt-2 flex justify-end">
-                <button
-                  onClick={handleClearHistory}
-                  className="flex items-center space-x-1 px-2 py-1 text-[10px] text-red-400 hover:text-red-300 font-medium hover:underline transition cursor-pointer"
-                >
-                  <Trash2 size={11} />
-                  <span>Clear History</span>
-                </button>
-              </div>
+              {/* Pinned history list */}
+              {alwaysExpanded && (
+                <div className="pt-2 flex justify-end">
+                  <button
+                    onClick={handleClearHistory}
+                    className="flex items-center space-x-1 px-2 py-1 text-[10px] text-red-400 hover:text-red-300 font-medium hover:underline transition cursor-pointer"
+                  >
+                    <Trash2 size={11} />
+                    <span>Clear History</span>
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>

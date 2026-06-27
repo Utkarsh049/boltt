@@ -1,9 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { useEnvStore, Environment, Variable } from "../../store/envStore";
+import { useEnvStore, Environment, Variable, getGroupFromId } from "../../store/envStore";
 import { X, Plus, Trash2, Eye, EyeOff, Save, Key } from "lucide-react";
 
 export const EnvironmentModal: React.FC = () => {
-  const { environments, isModalOpen, setModalOpen, saveEnvironment, deleteEnvironment, setActiveId, activeId } = useEnvStore();
+  const {
+    environments,
+    isModalOpen,
+    setModalOpen,
+    saveEnvironment,
+    deleteEnvironment,
+    setActiveIdForGroup,
+    activeGroup,
+    groupActiveIds,
+  } = useEnvStore();
 
   // Local state for buffering changes before clicking Save
   const [localEnvs, setLocalEnvs] = useState<Environment[]>([]);
@@ -16,17 +25,33 @@ export const EnvironmentModal: React.FC = () => {
   // When modal opens, copy store environments to local state
   useEffect(() => {
     if (isModalOpen) {
-      setLocalEnvs(JSON.parse(JSON.stringify(environments)));
-      // Auto-select the active environment, or the first one, or null
-      if (activeId && environments.some((e) => e.id === activeId)) {
-        setSelectedEnvId(activeId);
-      } else if (environments.length > 0) {
-        setSelectedEnvId(environments[0].id);
+      const activeGroupEnvs = environments.filter((e) => getGroupFromId(e.id) === activeGroup);
+      const clonedEnvs: Environment[] = JSON.parse(JSON.stringify(activeGroupEnvs));
+      
+      // For each environment, make sure there is at least one blank row if the last row is not empty
+      clonedEnvs.forEach((env) => {
+        if (env.variables.length === 0) {
+          env.variables.push({ key: "", value: "", enabled: true });
+        } else {
+          const last = env.variables[env.variables.length - 1];
+          if (last.key || last.value) {
+            env.variables.push({ key: "", value: "", enabled: true });
+          }
+        }
+      });
+      setLocalEnvs(clonedEnvs);
+
+      // Auto-select the active environment for this group, or the first one, or null
+      const groupActiveId = groupActiveIds[activeGroup];
+      if (groupActiveId && clonedEnvs.some((e) => e.id === groupActiveId)) {
+        setSelectedEnvId(groupActiveId);
+      } else if (clonedEnvs.length > 0) {
+        setSelectedEnvId(clonedEnvs[0].id);
       } else {
         setSelectedEnvId(null);
       }
     }
-  }, [isModalOpen, environments, activeId]);
+  }, [isModalOpen, environments, activeGroup, groupActiveIds]);
 
   if (!isModalOpen) return null;
 
@@ -34,7 +59,7 @@ export const EnvironmentModal: React.FC = () => {
 
   const handleAddEnvironment = () => {
     const newEnv: Environment = {
-      id: crypto.randomUUID(),
+      id: `${activeGroup}:${crypto.randomUUID()}`,
       name: `New Env ${localEnvs.length + 1}`,
       variables: [
         { key: "", value: "", enabled: true } // start with one ghost-like row
@@ -85,6 +110,16 @@ export const EnvironmentModal: React.FC = () => {
     );
   };
 
+  const handleAddVariableRow = () => {
+    if (!selectedEnvId || !selectedEnv) return;
+    const updatedVars = [...selectedEnv.variables, { key: "", value: "", enabled: true }];
+    setLocalEnvs(
+      localEnvs.map((env) =>
+        env.id === selectedEnvId ? { ...env, variables: updatedVars } : env
+      )
+    );
+  };
+
   const handleDeleteVariable = (index: number) => {
     if (!selectedEnvId || !selectedEnv) return;
     let updatedVars = selectedEnv.variables.filter((_, i) => i !== index);
@@ -113,9 +148,10 @@ export const EnvironmentModal: React.FC = () => {
 
   const handleSave = async () => {
     // 1. Commit deletions/additions to the store
-    // Find removed environments
+    // Find removed environments of the current active group
+    const currentGroupEnvs = environments.filter((e) => getGroupFromId(e.id) === activeGroup);
     const currentIds = localEnvs.map((e) => e.id);
-    for (const env of environments) {
+    for (const env of currentGroupEnvs) {
       if (!currentIds.includes(env.id)) {
         await deleteEnvironment(env.id);
       }
@@ -131,14 +167,11 @@ export const EnvironmentModal: React.FC = () => {
       });
     }
 
-    // 2. Adjust active environment if needed
+    // 2. Adjust active environment for the current group
     if (selectedEnvId && localEnvs.some((e) => e.id === selectedEnvId)) {
-      // If we saved and there's a selected one, let's activate it, or keep active if it was already selected
-      if (!activeId || !localEnvs.some((e) => e.id === activeId)) {
-        await setActiveId(selectedEnvId);
-      }
+      await setActiveIdForGroup(activeGroup, selectedEnvId);
     } else {
-      await setActiveId(null);
+      await setActiveIdForGroup(activeGroup, null);
     }
 
     setModalOpen(false);
@@ -224,9 +257,19 @@ export const EnvironmentModal: React.FC = () => {
 
                 {/* Variable Grid */}
                 <div className="flex-1 flex flex-col min-h-0">
-                  <label className="text-[10px] font-semibold text-[#8b919d] uppercase tracking-wider mb-2 flex-shrink-0">
-                    Variables
-                  </label>
+                  <div className="flex items-center justify-between mb-2 flex-shrink-0">
+                    <span className="text-[10px] font-semibold text-[#8b919d] uppercase tracking-wider">
+                      Variables
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleAddVariableRow}
+                      className="text-[10px] font-semibold text-[#a1c9ff] hover:text-blue-300 flex items-center space-x-1 transition cursor-pointer"
+                    >
+                      <Plus size={12} />
+                      <span>Add Variable</span>
+                    </button>
+                  </div>
                   <div className="flex-1 border border-[#30363D] rounded bg-[#101419]/30 overflow-hidden flex flex-col min-h-0">
                     {/* Variable Headers */}
                     <div className="flex items-center border-b border-[#30363D] bg-[#101419] text-[10px] font-bold text-[#8b919d] uppercase py-1 px-2 flex-shrink-0">

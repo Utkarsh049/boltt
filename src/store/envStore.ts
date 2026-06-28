@@ -50,7 +50,8 @@ export const openEnvironmentWindow = async (group: "production" | "staging" | "l
       minWidth: 700,
       minHeight: 450,
       resizable: true,
-      visible: false,
+      theme: "dark",
+      backgroundColor: "#161B22",
     });
   } catch (e) {
     console.error("Failed to open environment window:", e);

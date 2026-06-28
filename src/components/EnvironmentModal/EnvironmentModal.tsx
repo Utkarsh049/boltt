@@ -69,26 +69,6 @@ export const EnvironmentModal: React.FC = () => {
     }
   }, [isModalOpen, isEnvWindow, environments, targetGroup, groupActiveIds]);
 
-  // Show window when mounted and rendered
-  useEffect(() => {
-    if (!isEnvWindow) return;
-    try {
-      getCurrentWindow().show();
-      getCurrentWindow().setFocus();
-      // Ensure the window manager registers active focus on Linux/X11
-      const timer = setTimeout(() => {
-        try {
-          getCurrentWindow().setFocus();
-        } catch (err) {
-          // ignore
-        }
-      }, 100);
-      return () => clearTimeout(timer);
-    } catch (e) {
-      console.error("Failed to show window:", e);
-    }
-  }, [isEnvWindow]);
-
   const handleClose = async () => {
     if (isEnvWindow) {
       try {

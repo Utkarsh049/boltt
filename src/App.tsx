@@ -16,6 +16,7 @@ import { useProjectsStore, Folder } from "./store/projectsStore";
 import { useHistoryStore } from "./store/historyStore";
 import { HistoryPanel } from "./components/HistoryPanel/HistoryPanel";
 import { invoke } from "@tauri-apps/api/core";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { ToastList } from "./components/Toast/Toast";
 import { useToastStore } from "./store/toastStore";
 
@@ -33,11 +34,39 @@ function App() {
   const openTab = useRequestStore((state) => state.openTab);
 
   const loadEnvironments = useEnvStore((state) => state.loadEnvironments);
+  const activeGroup = useEnvStore((state) => state.activeGroup);
+  const groupActiveIds = useEnvStore((state) => state.groupActiveIds);
+  const setActiveGroup = useEnvStore((state) => state.setActiveGroup);
+  const environments = useEnvStore((state) => state.environments);
+
+  const getInitialWindowLabel = () => {
+    try {
+      return getCurrentWindow().label;
+    } catch (e) {
+      return "main";
+    }
+  };
+
+  const [windowLabel] = useState<string>(getInitialWindowLabel);
 
   // Load environments and history from backend on mount
   useEffect(() => {
     loadEnvironments();
     useHistoryStore.getState().loadHistory();
+
+    // Listen to environments-updated global event
+    let unlisten: (() => void) | undefined;
+    import("@tauri-apps/api/event").then(({ listen }) => {
+      listen("environments-updated", () => {
+        useEnvStore.getState().loadEnvironments();
+      }).then((fn) => {
+        unlisten = fn;
+      });
+    });
+
+    return () => {
+      if (unlisten) unlisten();
+    };
   }, [loadEnvironments]);
 
   // Dynamic window title updates
@@ -198,6 +227,9 @@ function App() {
     }
   };
 
+  if (windowLabel.startsWith("env-")) {
+    return <EnvironmentModal />;
+  }
 
   return (
     <div className="h-screen w-screen bg-[#101419] text-[#e0e2ea] flex flex-col font-sans overflow-hidden select-none">
@@ -299,16 +331,38 @@ function App() {
                     </span>
                   </div>
                   <div className="space-y-1.5 font-mono text-xs">
-                    <div className="flex items-center justify-between px-2 py-1 text-[#8b919d] hover:text-[#e0e2ea] bg-[#1c2025]/50 border border-[#30363D] rounded-sm cursor-pointer">
-                      <span>Production</span>
-                      <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>
-                    </div>
-                    <div className="px-2 py-1 text-[#8b919d] hover:text-[#e0e2ea] cursor-pointer">
-                      Staging
-                    </div>
-                    <div className="px-2 py-1 text-[#8b919d] hover:text-[#e0e2ea] cursor-pointer">
-                      Local
-                    </div>
+                    {(["production", "staging", "local"] as const).map((group) => {
+                      const isActiveGroup = activeGroup === group;
+                      const activeEnvId = groupActiveIds[group];
+                      const hasActiveEnv = activeEnvId !== null;
+                      const activeEnvName = hasActiveEnv
+                        ? environments.find((e) => e.id === activeEnvId)?.name
+                        : null;
+
+                      return (
+                        <div
+                          key={group}
+                          onClick={() => setActiveGroup(group)}
+                          className={`flex items-center justify-between px-2.5 py-1.5 rounded-sm cursor-pointer transition border ${
+                            isActiveGroup
+                              ? "bg-[#1c2025]/50 border-[#30363D] text-[#a1c9ff]"
+                              : "border-transparent text-[#8b919d] hover:text-[#e0e2ea] hover:bg-[#1c2025]/20"
+                          }`}
+                        >
+                          <div className="flex flex-col min-w-0">
+                            <span className="capitalize text-xs font-semibold">{group}</span>
+                            {activeEnvName && (
+                              <span className="text-[10px] text-[#8b919d] truncate font-mono mt-0.5">
+                                {activeEnvName}
+                              </span>
+                            )}
+                          </div>
+                          {hasActiveEnv && (
+                            <span className="w-1.5 h-1.5 bg-green-500 rounded-full flex-shrink-0 ml-2" />
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}
@@ -447,7 +501,6 @@ function App() {
 
         </Group>
       </div>
-      <EnvironmentModal />
       <SaveRequestModal />
       <ToastList />
     </div>

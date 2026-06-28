@@ -1,13 +1,15 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useEnvStore } from "../../store/envStore";
+import { useEnvStore, getGroupFromId, openEnvironmentWindow } from "../../store/envStore";
 import { Globe, Settings, Check, ChevronDown } from "lucide-react";
 
 export const EnvironmentDropdown: React.FC = () => {
-  const { environments, activeId, setActiveId, setModalOpen } = useEnvStore();
+  const { environments, activeGroup, groupActiveIds, setActiveIdForGroup } = useEnvStore();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const activeEnv = environments.find((e) => e.id === activeId);
+  const activeId = groupActiveIds[activeGroup] || null;
+  const currentGroupEnvs = environments.filter((e) => getGroupFromId(e.id) === activeGroup);
+  const activeEnv = currentGroupEnvs.find((e) => e.id === activeId);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -26,12 +28,12 @@ export const EnvironmentDropdown: React.FC = () => {
   }, []);
 
   const handleSelectEnv = (id: string | null) => {
-    setActiveId(id);
+    setActiveIdForGroup(activeGroup, id);
     setIsOpen(false);
   };
 
   const handleManageClick = () => {
-    setModalOpen(true);
+    openEnvironmentWindow(activeGroup);
     setIsOpen(false);
   };
 
@@ -42,8 +44,8 @@ export const EnvironmentDropdown: React.FC = () => {
         className="flex items-center space-x-2 px-3 py-1.5 bg-[#1c2025]/50 border border-[#30363D] hover:bg-[#272a30] hover:border-[#8b919d]/40 rounded text-xs text-[#c0c7d3] hover:text-[#e0e2ea] transition cursor-pointer select-none"
       >
         <Globe size={13} className={activeId ? "text-green-400" : "text-[#8b919d]"} />
-        <span className="font-mono max-w-[120px] truncate">
-          {activeEnv ? activeEnv.name : "No Environment"}
+        <span className="font-mono max-w-[120px] truncate capitalize">
+          {activeEnv ? `${activeGroup}: ${activeEnv.name}` : `No Env (${activeGroup})`}
         </span>
         <ChevronDown size={12} className="text-[#8b919d]" />
       </button>
@@ -51,7 +53,7 @@ export const EnvironmentDropdown: React.FC = () => {
       {isOpen && (
         <div className="absolute right-0 mt-1.5 w-56 bg-[#161B22] border border-[#30363D] rounded shadow-xl z-50 overflow-hidden py-1">
           <div className="px-3 py-1 text-[10px] font-bold text-[#8b919d] uppercase tracking-wider border-b border-[#30363D] mb-1">
-            Environments
+            {activeGroup} Environments
           </div>
           
           <button
@@ -62,7 +64,7 @@ export const EnvironmentDropdown: React.FC = () => {
             {!activeId && <Check size={12} className="text-[#a1c9ff]" />}
           </button>
 
-          {environments.map((env) => (
+          {currentGroupEnvs.map((env) => (
             <button
               key={env.id}
               onClick={() => handleSelectEnv(env.id)}

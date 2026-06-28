@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { invoke } from "@tauri-apps/api/core";
+import { emit } from "@tauri-apps/api/event";
 
 export interface Variable {
   key: string;
@@ -22,6 +23,38 @@ export const getGroupFromId = (id: string): "production" | "staging" | "local" =
   if (id.startsWith("staging:")) return "staging";
   if (id.startsWith("local:")) return "local";
   return "production";
+};
+
+const triggerSync = async () => {
+  try {
+    await emit("environments-updated");
+  } catch (e) {
+    console.warn("Could not emit environments-updated event:", e);
+  }
+};
+
+export const openEnvironmentWindow = async (group: "production" | "staging" | "local") => {
+  try {
+    const { WebviewWindow } = await import("@tauri-apps/api/webviewWindow");
+    const label = `env-${group}`;
+    const existing = await WebviewWindow.getByLabel(label);
+    if (existing) {
+      await existing.setFocus();
+      return;
+    }
+    new WebviewWindow(label, {
+      url: "index.html",
+      title: `Manage Environments — ${group.charAt(0).toUpperCase() + group.slice(1)}`,
+      width: 800,
+      height: 550,
+      minWidth: 700,
+      minHeight: 450,
+      resizable: true,
+      visible: false,
+    });
+  } catch (e) {
+    console.error("Failed to open environment window:", e);
+  }
 };
 
 interface EnvStore {
@@ -133,6 +166,7 @@ export const useEnvStore = create<EnvStore>((set, get) => ({
     } catch (err) {
       console.error("Failed to save active environment ID to backend:", err);
     }
+    await triggerSync();
   },
 
   saveEnvironment: async (env: Environment) => {
@@ -154,6 +188,7 @@ export const useEnvStore = create<EnvStore>((set, get) => ({
     } catch (err) {
       console.error("Failed to save environment to backend:", err);
     }
+    await triggerSync();
   },
 
   deleteEnvironment: async (id: string) => {
@@ -187,6 +222,7 @@ export const useEnvStore = create<EnvStore>((set, get) => ({
     } catch (err) {
       console.error("Failed to delete environment from backend:", err);
     }
+    await triggerSync();
   },
 
   setModalOpen: (isOpen: boolean) => {

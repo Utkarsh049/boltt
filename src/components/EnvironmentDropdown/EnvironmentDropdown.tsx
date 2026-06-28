@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useEnvStore, getGroupFromId } from "../../store/envStore";
+import { useEnvStore, getGroupFromId, openEnvironmentWindow } from "../../store/envStore";
 import { Globe, Settings, Check, ChevronDown } from "lucide-react";
 
 export const EnvironmentDropdown: React.FC = () => {
-  const { environments, activeGroup, groupActiveIds, setActiveIdForGroup, setModalOpen } = useEnvStore();
+  const { environments, activeGroup, groupActiveIds, setActiveIdForGroup } = useEnvStore();
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -33,7 +33,7 @@ export const EnvironmentDropdown: React.FC = () => {
   };
 
   const handleManageClick = () => {
-    setModalOpen(true);
+    openEnvironmentWindow(activeGroup);
     setIsOpen(false);
   };
 

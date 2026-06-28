@@ -16,6 +16,7 @@ import { useProjectsStore, Folder } from "./store/projectsStore";
 import { useHistoryStore } from "./store/historyStore";
 import { HistoryPanel } from "./components/HistoryPanel/HistoryPanel";
 import { invoke } from "@tauri-apps/api/core";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { ToastList } from "./components/Toast/Toast";
 import { useToastStore } from "./store/toastStore";
 
@@ -38,10 +39,34 @@ function App() {
   const setActiveGroup = useEnvStore((state) => state.setActiveGroup);
   const environments = useEnvStore((state) => state.environments);
 
+  const getInitialWindowLabel = () => {
+    try {
+      return getCurrentWindow().label;
+    } catch (e) {
+      return "main";
+    }
+  };
+
+  const [windowLabel] = useState<string>(getInitialWindowLabel);
+
   // Load environments and history from backend on mount
   useEffect(() => {
     loadEnvironments();
     useHistoryStore.getState().loadHistory();
+
+    // Listen to environments-updated global event
+    let unlisten: (() => void) | undefined;
+    import("@tauri-apps/api/event").then(({ listen }) => {
+      listen("environments-updated", () => {
+        useEnvStore.getState().loadEnvironments();
+      }).then((fn) => {
+        unlisten = fn;
+      });
+    });
+
+    return () => {
+      if (unlisten) unlisten();
+    };
   }, [loadEnvironments]);
 
   // Dynamic window title updates
@@ -202,6 +227,9 @@ function App() {
     }
   };
 
+  if (windowLabel.startsWith("env-")) {
+    return <EnvironmentModal />;
+  }
 
   return (
     <div className="h-screen w-screen bg-[#101419] text-[#e0e2ea] flex flex-col font-sans overflow-hidden select-none">
@@ -473,7 +501,6 @@ function App() {
 
         </Group>
       </div>
-      <EnvironmentModal />
       <SaveRequestModal />
       <ToastList />
     </div>

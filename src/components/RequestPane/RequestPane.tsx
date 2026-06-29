@@ -9,10 +9,13 @@ type TabType = "params" | "headers" | "body" | "auth";
 
 export const RequestPane: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>("params");
-  const { activeRequest, setParams, setHeaders, setBody, setAuth } = useRequestStore();
+  const { activeRequest, setParams, setHeaders, setBody, setAuth, tabs, activeTabId } = useRequestStore();
 
   const [isAuthDropdownOpen, setIsAuthDropdownOpen] = useState(false);
   const authDropdownRef = useRef<HTMLDivElement>(null);
+
+  const activeTabObj = tabs.find((t) => t.id === activeTabId);
+  const bodyCache = activeTabObj?.bodyCache;
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -66,11 +69,11 @@ export const RequestPane: React.FC = () => {
     if (type === "None") {
       setBody({ type: "None" });
     } else if (type === "Json") {
-      setBody({ type: "Json", content: "{}" });
+      setBody({ type: "Json", content: bodyCache?.Json ?? "{}" });
     } else if (type === "Raw") {
-      setBody({ type: "Raw", content: "" });
+      setBody({ type: "Raw", content: bodyCache?.Raw ?? "" });
     } else if (type === "FormData") {
-      setBody({ type: "FormData", content: [] });
+      setBody({ type: "FormData", content: bodyCache?.FormData ?? [] });
     }
   };
 

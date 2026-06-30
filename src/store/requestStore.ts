@@ -79,6 +79,7 @@ interface RequestStore {
   closeTab: (id: string) => void;
   setActiveTab: (id: string) => void;
   markTabClean: (id: string) => void;
+  reorderTabs: (startIndex: number, endIndex: number) => void;
 }
 
 export const createInitialRequest = (): BoltRequest => ({
@@ -496,4 +497,12 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
       ),
     }));
   },
+
+  reorderTabs: (startIndex, endIndex) =>
+    set((state) => {
+      const updatedTabs = [...state.tabs];
+      const [removed] = updatedTabs.splice(startIndex, 1);
+      updatedTabs.splice(endIndex, 0, removed);
+      return { tabs: updatedTabs };
+    }),
 }));

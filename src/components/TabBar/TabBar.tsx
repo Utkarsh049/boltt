@@ -1,9 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { useRequestStore } from "../../store/requestStore";
 import { X, Plus } from "lucide-react";
 
 export const TabBar: React.FC = () => {
-  const { tabs, activeTabId, setActiveTab, closeTab, openTab } = useRequestStore();
+  const { tabs, activeTabId, setActiveTab, closeTab, openTab, reorderTabs } = useRequestStore();
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 
   const getMethodColor = (method: string) => {
     switch (method) {
@@ -22,14 +23,32 @@ export const TabBar: React.FC = () => {
     }
   };
 
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", index.toString());
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
+    reorderTabs(draggedIndex, index);
+    setDraggedIndex(index);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
+  };
+
   return (
     <div className="flex items-center w-full h-9 bg-[#161B22] select-none flex-shrink-0">
       {/* Scrollable Tabs Container */}
       <div className="flex items-center overflow-x-auto overflow-y-hidden h-full max-w-[calc(100%-40px)] scrollbar-none">
-        {tabs.map((tab) => {
+        {tabs.map((tab, index) => {
           const isActive = tab.id === activeTabId;
           const method = tab.request.method;
           const name = tab.request.name || "New Request";
+          const isDragging = draggedIndex === index;
 
           return (
             <div
@@ -42,11 +61,15 @@ export const TabBar: React.FC = () => {
                   closeTab(tab.id);
                 }
               }}
-              className={`group flex items-center space-x-2 px-3 h-full border-r border-[#30363D] cursor-pointer transition select-none text-[11px] font-semibold min-w-[120px] max-w-[160px] ${
-                isActive
+              draggable
+              onDragStart={(e) => handleDragStart(e, index)}
+              onDragOver={(e) => handleDragOver(e, index)}
+              onDragEnd={handleDragEnd}
+              className={`group flex items-center space-x-2 px-3 h-full border-r border-[#30363D] cursor-grab active:cursor-grabbing transition select-none text-[11px] font-semibold min-w-[120px] max-w-[160px] ${isDragging ? "opacity-30 bg-[#272a30]/50" : ""
+                } ${isActive && !isDragging
                   ? "bg-[#101419] text-[#a1c9ff] border-b border-b-transparent"
                   : "bg-[#161B22]/50 text-[#8b919d] hover:bg-[#161B22]/80 hover:text-[#e0e2ea] border-b border-b-[#30363D]"
-              }`}
+                }`}
             >
               {/* Colored Method Tag */}
               <span className={`text-[9px] font-extrabold flex-shrink-0 ${getMethodColor(method)}`}>
@@ -69,11 +92,10 @@ export const TabBar: React.FC = () => {
                     e.stopPropagation();
                     closeTab(tab.id);
                   }}
-                  className={`absolute flex items-center justify-center w-3.5 h-3.5 rounded-sm hover:bg-[#272a30] text-[#8b919d] hover:text-[#e0e2ea] transition-all ${
-                    tab.isDirty
-                      ? "opacity-0 group-hover:opacity-100"
-                      : "opacity-40 group-hover:opacity-100"
-                  }`}
+                  className={`absolute flex items-center justify-center w-3.5 h-3.5 rounded-sm hover:bg-[#272a30] text-[#8b919d] hover:text-[#e0e2ea] transition-all cursor-pointer ${tab.isDirty
+                    ? "opacity-0 group-hover:opacity-100"
+                    : "opacity-40 group-hover:opacity-100"
+                    }`}
                 >
                   <X size={10} />
                 </button>

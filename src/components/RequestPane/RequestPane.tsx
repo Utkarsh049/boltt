@@ -59,7 +59,9 @@ export const RequestPane: React.FC = () => {
     const isActive = activeTab === tab;
     return `h-9 px-4 flex items-center space-x-1.5 border border-transparent text-xs font-semibold select-none cursor-pointer transition-[color,background-color] duration-150 ${
       isActive
-        ? "bg-[#101419] text-[#a1c9ff] border-r-[#30363D] border-l-[#30363D] -mb-[1px]"
+        ? `bg-[#101419] text-[#a1c9ff] border-r-[#30363D] ${
+            tab === "params" ? "border-l-transparent" : "border-l-[#30363D]"
+          } -mb-[1px]`
         : "text-[#8b919d] hover:text-[#e0e2ea]"
     }`;
   };

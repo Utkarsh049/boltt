@@ -191,7 +191,7 @@ export const UrlBar: React.FC = () => {
                       methodColors.text
                     } ${
                       isSelected
-                        ? "bg-[#1c2025] border-l-2"
+                        ? "bg-[#1c2025]"
                         : "hover:bg-[#1c2025]/60"
                     }`}
                   >

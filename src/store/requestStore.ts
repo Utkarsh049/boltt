@@ -49,6 +49,11 @@ export interface Tab {
   isLoading: boolean;
   error: string | null;
   isDirty: boolean;
+  bodyCache?: {
+    Json: string;
+    Raw: string;
+    FormData: KeyValue[];
+  };
 }
 
 interface RequestStore {
@@ -74,6 +79,7 @@ interface RequestStore {
   closeTab: (id: string) => void;
   setActiveTab: (id: string) => void;
   markTabClean: (id: string) => void;
+  reorderTabs: (startIndex: number, endIndex: number) => void;
 }
 
 export const createInitialRequest = (): BoltRequest => ({
@@ -99,6 +105,11 @@ const initialTab: Tab = {
   isLoading: false,
   error: null,
   isDirty: false,
+  bodyCache: {
+    Json: initialRequest.body.type === "Json" ? initialRequest.body.content : "{}",
+    Raw: initialRequest.body.type === "Raw" ? initialRequest.body.content : "",
+    FormData: initialRequest.body.type === "FormData" ? initialRequest.body.content : [],
+  },
 };
 
 export const useRequestStore = create<RequestStore>((set, get) => ({
@@ -178,11 +189,23 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
   setBody: (body) =>
     set((state) => {
       const updatedActiveRequest = { ...state.activeRequest, body };
-      const updatedTabs = state.tabs.map((tab) =>
-        tab.id === state.activeTabId
-          ? { ...tab, request: updatedActiveRequest, isDirty: true }
-          : tab
-      );
+      const updatedTabs = state.tabs.map((tab) => {
+        if (tab.id === state.activeTabId) {
+          const currentCache = tab.bodyCache || { Json: "{}", Raw: "", FormData: [] };
+          const updatedCache = { ...currentCache };
+          if (body.type === "Json") updatedCache.Json = body.content;
+          if (body.type === "Raw") updatedCache.Raw = body.content;
+          if (body.type === "FormData") updatedCache.FormData = body.content;
+
+          return {
+            ...tab,
+            request: updatedActiveRequest,
+            isDirty: true,
+            bodyCache: updatedCache,
+          };
+        }
+        return tab;
+      });
       return {
         activeRequest: updatedActiveRequest,
         tabs: updatedTabs,
@@ -317,10 +340,16 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
       activeTab.request.url === "https://httpbin.org/get" &&
       activeTab.response === null;
 
+    const initialCache = {
+      Json: request.body.type === "Json" ? request.body.content : "{}",
+      Raw: request.body.type === "Raw" ? request.body.content : "",
+      FormData: request.body.type === "FormData" ? request.body.content : [],
+    };
+
     if (isCleanDefault && activeTabId) {
       set((state) => {
         const updatedTabs = state.tabs.map((t) =>
-          t.id === activeTabId ? { ...t, request, isDirty: false } : t
+          t.id === activeTabId ? { ...t, request, isDirty: false, bodyCache: initialCache } : t
         );
         return {
           tabs: updatedTabs,
@@ -339,6 +368,7 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
         isLoading: false,
         error: null,
         isDirty: false,
+        bodyCache: initialCache,
       };
       set((state) => ({
         tabs: [...state.tabs, newTab],
@@ -364,6 +394,11 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
     }
 
     const newTabId = crypto.randomUUID();
+    const initialCache = {
+      Json: req.body.type === "Json" ? req.body.content : "{}",
+      Raw: req.body.type === "Raw" ? req.body.content : "",
+      FormData: req.body.type === "FormData" ? req.body.content : [],
+    };
     const newTab: Tab = {
       id: newTabId,
       request: req,
@@ -371,6 +406,7 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
       isLoading: false,
       error: null,
       isDirty: false,
+      bodyCache: initialCache,
     };
 
     set((state) => ({
@@ -435,6 +471,16 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
     const { tabs } = get();
     const tab = tabs.find((t) => t.id === id);
     if (!tab) return;
+
+    // Ensure cache is initialized
+    if (!tab.bodyCache) {
+      tab.bodyCache = {
+        Json: tab.request.body.type === "Json" ? tab.request.body.content : "{}",
+        Raw: tab.request.body.type === "Raw" ? tab.request.body.content : "",
+        FormData: tab.request.body.type === "FormData" ? tab.request.body.content : [],
+      };
+    }
+
     set({
       activeTabId: id,
       activeRequest: tab.request,
@@ -451,4 +497,12 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
       ),
     }));
   },
+
+  reorderTabs: (startIndex, endIndex) =>
+    set((state) => {
+      const updatedTabs = [...state.tabs];
+      const [removed] = updatedTabs.splice(startIndex, 1);
+      updatedTabs.splice(endIndex, 0, removed);
+      return { tabs: updatedTabs };
+    }),
 }));

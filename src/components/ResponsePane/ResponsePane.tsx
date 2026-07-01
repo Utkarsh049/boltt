@@ -72,9 +72,9 @@ export const ResponsePane: React.FC = () => {
 
   // Status color mapper
   const getStatusColor = (status: number) => {
-    if (status >= 200 && status < 300) return "bg-green-950/40 text-green-400 border-green-800/40";
-    if (status >= 300 && status < 400) return "bg-blue-950/40 text-blue-400 border-blue-800/40";
-    if (status >= 400) return "bg-red-950/40 text-red-400 border-red-800/40";
+    if (status >= 200 && status < 300) return "text-green-400 border-green-800/40";
+    if (status >= 300 && status < 400) return "text-blue-400 border-blue-800/40";
+    if (status >= 400) return "text-red-400 border-red-800/40";
     return "bg-[#272a30] text-[#e0e2ea] border-[#30363D]"; // Status 0
   };
 

@@ -75,7 +75,7 @@ export const ExportPDFModal: React.FC<ExportPDFModalProps> = ({
           <div className="flex items-center space-x-2">
             <FileDown size={15} className="text-[#a1c9ff]" />
             <span className="font-semibold text-xs uppercase tracking-wider text-[#e0e2ea]">
-              Export Collection as PDF
+              {folderId === "" ? "Export Project as PDF" : "Export Collection as PDF"}
             </span>
           </div>
           <button
@@ -103,7 +103,9 @@ export const ExportPDFModal: React.FC<ExportPDFModalProps> = ({
               {/* Folder Details */}
               <div className="bg-[#101419] border border-[#30363D] p-4 rounded-sm space-y-2">
                 <div className="flex justify-between text-xs">
-                  <span className="text-[#8b919d]">Target Folder:</span>
+                  <span className="text-[#8b919d]">
+                    {folderId === "" ? "Target Project:" : "Target Folder:"}
+                  </span>
                   <span className="font-semibold text-[#e0e2ea]">{folderName}</span>
                 </div>
                 <div className="flex justify-between text-xs">

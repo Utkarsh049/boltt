@@ -596,6 +596,25 @@ export const ProjectsTree: React.FC = () => {
                 <Edit2 size={13} className="text-[#8b919d]" />
                 <span>Rename Project</span>
               </button>
+              <button
+                onClick={() => {
+                  const proj = projects.find((p) => p.id === contextMenu.projectId);
+                  if (proj) {
+                    setPdfExportModal({
+                      isOpen: true,
+                      projectId: contextMenu.projectId,
+                      folderId: "",
+                      folderName: proj.name,
+                      requestsCount: proj.folders.reduce((sum, f) => sum + countRequestsRecursive(f), 0),
+                    });
+                    setContextMenu(null);
+                  }
+                }}
+                className="flex items-center space-x-2 w-full px-2.5 py-1.5 text-xs text-[#e0e2ea] hover:bg-[#272a30] rounded-sm text-left transition cursor-pointer"
+              >
+                <FileDown size={13} className="text-[#8b919d]" />
+                <span>Export as PDF</span>
+              </button>
               <div className="my-1 border-t border-[#30363D]"></div>
               <button
                 onClick={() => {

@@ -17,6 +17,7 @@ struct PdfContext {
     folder_name: String,
     project_name: String,
     generated_date: String,
+    is_project_level: bool,
 }
 
 fn extract_variables_from_str(input: &str, variables: &mut HashSet<String>) {
@@ -109,6 +110,8 @@ fn gather_requests_recursive(folder: &Folder, path: String, list: &mut Vec<(Stri
 
 fn wrap_text_with_code(text: &str, max_chars_per_line: usize, is_code: bool) -> Vec<String> {
     let mut lines = Vec::new();
+    let max_chars = max_chars_per_line.max(1);
+
     for paragraph in text.split('\n') {
         if paragraph.is_empty() {
             lines.push(String::new());
@@ -116,61 +119,72 @@ fn wrap_text_with_code(text: &str, max_chars_per_line: usize, is_code: bool) -> 
         }
         
         if is_code {
-            let mut remaining = paragraph;
-            while !remaining.is_empty() {
-                if remaining.len() <= max_chars_per_line {
-                    lines.push(remaining.to_string());
-                    break;
-                } else {
-                    let (chunk, rest) = remaining.split_at(max_chars_per_line);
-                    lines.push(chunk.to_string());
-                    remaining = rest;
-                }
+            let chars: Vec<char> = paragraph.chars().collect();
+            let mut start = 0;
+            while start < chars.len() {
+                let end = (start + max_chars).min(chars.len());
+                let line: String = chars[start..end].iter().collect();
+                lines.push(line);
+                start = end;
             }
         } else {
             let words: Vec<&str> = paragraph.split(' ').collect();
             let mut current_line = String::new();
+            let mut current_char_count = 0;
+
             for word in words {
                 if word.is_empty() {
-                    current_line.push(' ');
+                    if !current_line.is_empty() {
+                        current_line.push(' ');
+                        current_char_count += 1;
+                    }
                     continue;
                 }
                 
-                let word_len = word.len();
+                let word_chars: Vec<char> = word.chars().collect();
+                let word_len = word_chars.len();
+                
                 if current_line.is_empty() {
-                    if word_len <= max_chars_per_line {
+                    if word_len <= max_chars {
                         current_line = word.to_string();
+                        current_char_count = word_len;
                     } else {
-                        let mut rem = word;
-                        while !rem.is_empty() {
-                            if rem.len() <= max_chars_per_line {
-                                current_line = rem.to_string();
-                                break;
+                        let mut start = 0;
+                        while start < word_len {
+                            let end = (start + max_chars).min(word_len);
+                            let chunk: String = word_chars[start..end].iter().collect();
+                            if end < word_len {
+                                lines.push(chunk);
                             } else {
-                                let (chunk, rest) = rem.split_at(max_chars_per_line);
-                                lines.push(chunk.to_string());
-                                rem = rest;
+                                current_line = chunk;
+                                current_char_count = word_chars[start..end].len();
                             }
+                            start = end;
                         }
                     }
-                } else if current_line.len() + 1 + word_len <= max_chars_per_line {
+                } else if current_char_count + 1 + word_len <= max_chars {
                     current_line.push(' ');
                     current_line.push_str(word);
+                    current_char_count += 1 + word_len;
                 } else {
                     lines.push(std::mem::take(&mut current_line));
-                    if word_len <= max_chars_per_line {
+                    current_char_count = 0;
+                    
+                    if word_len <= max_chars {
                         current_line = word.to_string();
+                        current_char_count = word_len;
                     } else {
-                        let mut rem = word;
-                        while !rem.is_empty() {
-                            if rem.len() <= max_chars_per_line {
-                                current_line = rem.to_string();
-                                break;
+                        let mut start = 0;
+                        while start < word_len {
+                            let end = (start + max_chars).min(word_len);
+                            let chunk: String = word_chars[start..end].iter().collect();
+                            if end < word_len {
+                                lines.push(chunk);
                             } else {
-                                let (chunk, rest) = rem.split_at(max_chars_per_line);
-                                lines.push(chunk.to_string());
-                                rem = rest;
+                                current_line = chunk;
+                                current_char_count = word_chars[start..end].len();
                             }
+                            start = end;
                         }
                     }
                 }
@@ -184,7 +198,7 @@ fn wrap_text_with_code(text: &str, max_chars_per_line: usize, is_code: bool) -> 
 }
 
 impl PdfContext {
-    fn new(folder_name: String, project_name: String, generated_date: String) -> Self {
+    fn new(folder_name: String, project_name: String, generated_date: String, is_project_level: bool) -> Self {
         let (doc, page1, layer1) = PdfDocument::new("Boltt API Reference", Mm(210.0), Mm(297.0), "Layer 1");
         let font_regular = doc.add_builtin_font(BuiltinFont::Helvetica).unwrap();
         let font_bold = doc.add_builtin_font(BuiltinFont::HelveticaBold).unwrap();
@@ -201,6 +215,7 @@ impl PdfContext {
             folder_name,
             project_name,
             generated_date,
+            is_project_level,
         };
         
         ctx.draw_header(0);
@@ -225,11 +240,13 @@ impl PdfContext {
     fn draw_header(&self, page_idx: usize) {
         let layer = self.doc.get_page(self.pages[page_idx].0).get_layer(self.pages[page_idx].1);
         
-        // Header title "Boltt" on top left
-        layer.use_text("BOLTT", 13.0, Mm(20.0), Mm(280.0), &self.font_bold);
-        
+        layer.set_fill_color(Color::Rgb(Rgb::new(0.09, 0.12, 0.16, None)));
         // Project & Folder info on top right
-        let subtitle = format!("{} — API Reference", self.folder_name);
+        let subtitle = if self.is_project_level {
+            format!("{} — Full Project API Reference", self.project_name)
+        } else {
+            format!("{} — API Reference", self.folder_name)
+        };
         layer.use_text(subtitle, 9.5, Mm(85.0), Mm(280.0), &self.font_bold);
         
         let info = format!("Project: {} | Date: {}", self.project_name, self.generated_date);
@@ -249,7 +266,7 @@ impl PdfContext {
         layer.add_line(line);
         
         // Reset colors
-        layer.set_fill_color(Color::Rgb(Rgb::new(0.1, 0.1, 0.1, None)));
+        layer.set_fill_color(Color::Rgb(Rgb::new(0.09, 0.12, 0.16, None)));
     }
     
     fn draw_footer(&self) {
@@ -281,6 +298,7 @@ impl PdfContext {
     fn write_line(&mut self, text: &str, font_size: f32, is_bold: bool, indent_mm: f32) {
         self.check_page_break(5.0);
         let font = if is_bold { &self.font_bold } else { &self.font_regular };
+        self.current_layer().set_fill_color(Color::Rgb(Rgb::new(0.09, 0.12, 0.16, None)));
         self.current_layer().use_text(text, font_size, Mm(20.0 + indent_mm), Mm(self.y), font);
         self.y -= 5.0;
     }
@@ -292,7 +310,6 @@ impl PdfContext {
         for line in wrapped_lines {
             self.check_page_break(line_spacing_mm);
             if !line.is_empty() {
-                // Borrow font reference inside the loop to avoid overlapping mutable self borrows
                 let font = if is_mono {
                     &self.font_mono
                 } else if is_bold {
@@ -300,6 +317,7 @@ impl PdfContext {
                 } else {
                     &self.font_regular
                 };
+                self.current_layer().set_fill_color(Color::Rgb(Rgb::new(0.09, 0.12, 0.16, None)));
                 self.current_layer().use_text(line, font_size, Mm(20.0 + indent_mm), Mm(self.y), font);
             }
             self.y -= line_spacing_mm;
@@ -307,31 +325,64 @@ impl PdfContext {
     }
 
     fn write_request_header(&mut self, method: &str, url: &str) {
-        self.check_page_break(12.0);
+        self.check_page_break(15.0);
         
         let color = match method.to_uppercase().as_str() {
-            "GET" => Color::Rgb(Rgb::new(0.0, 0.6, 0.2, None)),
-            "POST" => Color::Rgb(Rgb::new(0.9, 0.4, 0.0, None)),
-            "PUT" => Color::Rgb(Rgb::new(0.1, 0.4, 0.8, None)),
-            "PATCH" => Color::Rgb(Rgb::new(0.5, 0.2, 0.8, None)),
-            "DELETE" => Color::Rgb(Rgb::new(0.8, 0.1, 0.1, None)),
+            "GET" => Color::Rgb(Rgb::new(0.28, 0.80, 0.56, None)),
+            "POST" => Color::Rgb(Rgb::new(0.29, 0.69, 1.0, None)),
+            "PUT" => Color::Rgb(Rgb::new(0.99, 0.63, 0.19, None)),
+            "PATCH" => Color::Rgb(Rgb::new(0.31, 0.89, 0.76, None)),
+            "DELETE" => Color::Rgb(Rgb::new(0.96, 0.26, 0.22, None)),
             _ => Color::Rgb(Rgb::new(0.3, 0.3, 0.3, None)),
         };
         
+        let badge_width = match method.to_uppercase().as_str() {
+            "DELETE" => 19.5,
+            "PATCH" => 17.5,
+            "POST" | "HEAD" => 15.5,
+            "GET" | "PUT" => 13.5,
+            _ => 13.5,
+        };
+
+        // Draw solid background badge
+        let rect_points = vec![
+            (Point::new(Mm(20.0), Mm(self.y + 3.0)), false),
+            (Point::new(Mm(20.0), Mm(self.y - 1.0)), false),
+            (Point::new(Mm(20.0 + badge_width), Mm(self.y - 1.0)), false),
+            (Point::new(Mm(20.0 + badge_width), Mm(self.y + 3.0)), false),
+        ];
+        let rect = Polygon {
+            rings: vec![rect_points],
+            mode: PaintMode::Fill,
+            winding_order: WindingOrder::NonZero,
+        };
         self.current_layer().set_fill_color(color);
-        self.current_layer().use_text(method, 10.5, Mm(20.0), Mm(self.y), &self.font_bold);
+        self.current_layer().add_polygon(rect);
         
-        // Reset color to dark gray for URL
-        self.current_layer().set_fill_color(Color::Rgb(Rgb::new(0.1, 0.1, 0.1, None)));
+        // Draw white method text inside badge
+        self.current_layer().set_fill_color(Color::Rgb(Rgb::new(1.0, 1.0, 1.0, None)));
+        let text_offset = (badge_width - (method.len() as f32 * 1.6)) / 2.0;
+        self.current_layer().use_text(method, 8.5, Mm(20.0 + text_offset), Mm(self.y + 0.2), &self.font_bold);
+
+        // Reset color to dark slate for URL
+        self.current_layer().set_fill_color(Color::Rgb(Rgb::new(0.09, 0.12, 0.16, None)));
         
-        let wrapped_url = wrap_text_with_code(url, 72, true);
+        let url_x = 20.0 + badge_width + 4.0;
+        let max_url_chars = (((190.0 - url_x) / 1.6).floor() as isize).max(1) as usize;
+        
+        // Safe character-based slicing for URLs to prevent multi-byte panics
+        let chars: Vec<char> = url.chars().collect();
+        let wrapped_url: Vec<String> = chars
+            .chunks(max_url_chars)
+            .map(|c| c.iter().collect())
+            .collect();
+        
         for line in wrapped_url {
             self.check_page_break(5.0);
-            self.current_layer().use_text(line, 10.5, Mm(40.0), Mm(self.y), &self.font_bold);
+            self.current_layer().use_text(line, 9.5, Mm(url_x), Mm(self.y + 0.2), &self.font_mono);
             self.y -= 5.0;
         }
         
-        self.current_layer().set_fill_color(Color::Rgb(Rgb::new(0.1, 0.1, 0.1, None)));
         self.y -= 4.0;
     }
 
@@ -341,48 +392,130 @@ impl PdfContext {
             return;
         }
         
-        self.check_page_break(12.0);
-        self.current_layer().use_text(title, 9.0, Mm(20.0), Mm(self.y), &self.font_bold);
-        self.y -= 5.5;
+        self.check_page_break(15.0);
         
+        // Draw section title
+        self.current_layer().set_fill_color(Color::Rgb(Rgb::new(0.09, 0.12, 0.16, None))); // Dark slate
+        self.current_layer().use_text(title, 9.5, Mm(20.0), Mm(self.y), &self.font_bold);
+        self.y -= 5.5;
+
+        // Draw table headers background
+        let header_top_y = self.y;
+        let header_bottom_y = self.y - 5.5;
+        
+        let rect_points = vec![
+            (Point::new(Mm(20.0), Mm(header_top_y)), false),
+            (Point::new(Mm(20.0), Mm(header_bottom_y)), false),
+            (Point::new(Mm(190.0), Mm(header_bottom_y)), false),
+            (Point::new(Mm(190.0), Mm(header_top_y)), false),
+        ];
+        let header_rect = Polygon {
+            rings: vec![rect_points],
+            mode: PaintMode::Fill,
+            winding_order: WindingOrder::NonZero,
+        };
+        self.current_layer().set_fill_color(Color::Rgb(Rgb::new(0.95, 0.96, 0.98, None)));
+        self.current_layer().add_polygon(header_rect);
+        
+        // Draw header text
+        self.current_layer().set_fill_color(Color::Rgb(Rgb::new(0.25, 0.3, 0.4, None))); // Slate gray text
+        self.current_layer().use_text("KEY", 7.5, Mm(23.0), Mm(header_bottom_y + 1.5), &self.font_bold);
+        self.current_layer().use_text("VALUE", 7.5, Mm(85.0), Mm(header_bottom_y + 1.5), &self.font_bold);
+        
+        self.y = header_bottom_y;
+
+        // Render rows
         for item in active_items {
-            self.check_page_break(5.0);
+            let max_val_chars = 68; // Space between 85.0mm and 188.0mm
             
-            self.current_layer().use_text("•", 9.0, Mm(22.0), Mm(self.y), &self.font_regular);
-            self.current_layer().use_text(&format!("{}:", item.key), 8.5, Mm(26.0), Mm(self.y), &self.font_bold);
-            
-            let key_width_mm = item.key.len() as f32 * 1.5 + 4.0;
-            let val_x = 26.0 + key_width_mm;
-            
-            let max_val_chars = ((190.0 - val_x) / 1.5).floor() as usize;
-            let wrapped_val = wrap_text_with_code(&item.value, max_val_chars.max(30), false);
-            
-            for (i, val_line) in wrapped_val.iter().enumerate() {
-                if i > 0 {
-                    self.check_page_break(4.5);
+            // Safe character-based chunking to prevent multi-byte panics
+            let wrapped_val: Vec<String> = item.value.split('\n').flat_map(|p| {
+                if p.is_empty() {
+                    return vec![String::new()].into_iter();
                 }
-                let x_pos = if i == 0 { val_x } else { 26.0 + 4.0 };
-                self.current_layer().use_text(val_line, 8.5, Mm(x_pos), Mm(self.y), &self.font_regular);
-                if i < wrapped_val.len() - 1 {
-                    self.y -= 4.5;
-                }
+                let chars: Vec<char> = p.chars().collect();
+                chars
+                    .chunks(max_val_chars)
+                    .map(|c| c.iter().collect::<String>())
+                    .collect::<Vec<String>>()
+                    .into_iter()
+            }).collect();
+            
+            // Calculate row height (based on wrapped value lines)
+            let row_height_mm = (wrapped_val.len() as f32 * 4.2).max(6.0);
+            
+            self.check_page_break(row_height_mm + 2.0);
+            
+            // Draw key
+            self.current_layer().set_fill_color(Color::Rgb(Rgb::new(0.12, 0.15, 0.2, None)));
+            self.current_layer().use_text(&item.key, 8.0, Mm(23.0), Mm(self.y - 4.0), &self.font_bold);
+            
+            // Draw wrapped values
+            let mut val_y = self.y - 4.0;
+            for line in &wrapped_val {
+                self.current_layer().use_text(line, 8.0, Mm(85.0), Mm(val_y), &self.font_mono);
+                val_y -= 4.2;
             }
-            self.y -= 5.0;
+            
+            // Move y down by row height
+            self.y -= row_height_mm;
+            
+            // Draw horizontal row line separator
+            let line_points = vec![
+                (Point::new(Mm(20.0), Mm(self.y)), false),
+                (Point::new(Mm(190.0), Mm(self.y)), false),
+            ];
+            let line = Line {
+                points: line_points,
+                is_closed: false,
+            };
+            self.current_layer().set_outline_thickness(0.2);
+            self.current_layer().set_outline_color(Color::Rgb(Rgb::new(0.9, 0.9, 0.9, None)));
+            self.current_layer().add_line(line);
         }
-        self.y -= 2.5;
+        
+        // Draw outer borders for the table
+        let border_points = vec![
+            (Point::new(Mm(20.0), Mm(header_top_y)), false),
+            (Point::new(Mm(20.0), Mm(self.y)), false),
+            (Point::new(Mm(190.0), Mm(self.y)), false),
+            (Point::new(Mm(190.0), Mm(header_top_y)), false),
+        ];
+        let outer_border = Polygon {
+            rings: vec![border_points],
+            mode: PaintMode::Stroke,
+            winding_order: WindingOrder::NonZero,
+        };
+        self.current_layer().set_outline_thickness(0.4);
+        self.current_layer().set_outline_color(Color::Rgb(Rgb::new(0.83, 0.86, 0.9, None)));
+        self.current_layer().add_polygon(outer_border);
+        
+        self.y -= 5.0; // Space below table
     }
 
     fn write_code_box(&mut self, title: &str, content: &str) {
-        let font_size = 8.0;
-        let line_height_mm = 4.0;
+        let font_size = 7.5;
+        let line_height_mm = 3.8;
         let max_chars = 76;
-        let lines = wrap_text_with_code(content, max_chars, true);
+        
+        // Safe character-based chunking to prevent multi-byte panics
+        let lines: Vec<String> = content.split('\n').flat_map(|p| {
+            if p.is_empty() {
+                return vec![String::new()].into_iter();
+            }
+            let chars: Vec<char> = p.chars().collect();
+            chars
+                .chunks(max_chars)
+                .map(|c| c.iter().collect::<String>())
+                .collect::<Vec<String>>()
+                .into_iter()
+        }).collect();
         
         if lines.is_empty() {
             return;
         }
         
-        let header_height = 6.0;
+        let header_height = 5.5;
         let content_height = lines.len() as f32 * line_height_mm + 5.0;
         let total_box_height = header_height + content_height;
         
@@ -391,6 +524,7 @@ impl PdfContext {
         let top_y = self.y - 2.0;
         let bottom_y = top_y - total_box_height;
         
+        // Draw main body background (Dark Charcoal)
         let rect_points = vec![
             (Point::new(Mm(22.0), Mm(top_y)), false),
             (Point::new(Mm(22.0), Mm(bottom_y)), false),
@@ -403,15 +537,32 @@ impl PdfContext {
             winding_order: WindingOrder::NonZero,
         };
         
-        self.current_layer().set_fill_color(Color::Rgb(Rgb::new(0.96, 0.96, 0.97, None)));
-        self.current_layer().set_outline_color(Color::Rgb(Rgb::new(0.85, 0.85, 0.85, None)));
-        self.current_layer().set_outline_thickness(0.3);
+        self.current_layer().set_fill_color(Color::Rgb(Rgb::new(0.09, 0.11, 0.14, None))); // Dark charcoal
+        self.current_layer().set_outline_color(Color::Rgb(Rgb::new(0.18, 0.22, 0.27, None))); // Dark slate border
+        self.current_layer().set_outline_thickness(0.4);
         self.current_layer().add_polygon(rect);
         
-        self.current_layer().set_fill_color(Color::Rgb(Rgb::new(0.1, 0.1, 0.1, None)));
-        self.current_layer().use_text(title, 8.0, Mm(25.0), Mm(top_y - 4.2), &self.font_bold);
-        
+        // Draw header background (slightly lighter dark gray)
         let divider_y = top_y - header_height;
+        let header_points = vec![
+            (Point::new(Mm(22.0), Mm(top_y)), false),
+            (Point::new(Mm(22.0), Mm(divider_y)), false),
+            (Point::new(Mm(188.0), Mm(divider_y)), false),
+            (Point::new(Mm(188.0), Mm(top_y)), false),
+        ];
+        let header_rect = Polygon {
+            rings: vec![header_points],
+            mode: PaintMode::Fill,
+            winding_order: WindingOrder::NonZero,
+        };
+        self.current_layer().set_fill_color(Color::Rgb(Rgb::new(0.14, 0.17, 0.22, None))); // Lighter dark header
+        self.current_layer().add_polygon(header_rect);
+        
+        // Draw header title text
+        self.current_layer().set_fill_color(Color::Rgb(Rgb::new(0.68, 0.72, 0.8, None))); // Silver gray
+        self.current_layer().use_text(title, 7.5, Mm(25.0), Mm(top_y - 3.8), &self.font_bold);
+        
+        // Draw divider line
         let div_points = vec![
             (Point::new(Mm(22.0), Mm(divider_y)), false),
             (Point::new(Mm(188.0), Mm(divider_y)), false),
@@ -420,8 +571,12 @@ impl PdfContext {
             points: div_points,
             is_closed: false,
         };
+        self.current_layer().set_outline_color(Color::Rgb(Rgb::new(0.18, 0.22, 0.27, None)));
+        self.current_layer().set_outline_thickness(0.4);
         self.current_layer().add_line(divider);
         
+        // Draw code content
+        self.current_layer().set_fill_color(Color::Rgb(Rgb::new(0.63, 0.82, 1.0, None))); // Light cyan code text
         let mut curr_y = divider_y - 3.5;
         for line in lines {
             self.current_layer().use_text(line, font_size, Mm(25.0), Mm(curr_y), &self.font_mono);
@@ -454,8 +609,9 @@ pub fn generate_pdf_document(
     project_name: String,
     generated_date: String,
     save_path: &Path,
+    is_project_level: bool,
 ) -> Result<(), String> {
-    let mut ctx = PdfContext::new(folder.name.clone(), project_name, generated_date);
+    let mut ctx = PdfContext::new(folder.name.clone(), project_name, generated_date, is_project_level);
 
     // 1. Gather variables from all requests recursively
     let mut variables = HashSet::new();

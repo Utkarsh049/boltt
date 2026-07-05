@@ -69,21 +69,30 @@ pub async fn export_folder_pdf(
     let project: crate::projects::Project = serde_json::from_str(&content)
         .map_err(|e| format!("Failed to parse project JSON: {}", e))?;
 
-    // Find the folder recursively
-    fn find_folder_recursive(folders: &[crate::projects::Folder], fold_id: &str) -> Option<crate::projects::Folder> {
-        for folder in folders {
-            if folder.id == fold_id {
-                return Option::Some(folder.clone());
-            }
-            if let Some(f) = find_folder_recursive(&folder.subfolders, fold_id) {
-                return Option::Some(f);
-            }
+    let is_project_level = folder_id.is_empty();
+    let folder = if is_project_level {
+        crate::projects::Folder {
+            id: "root".to_string(),
+            name: project.name.clone(),
+            requests: Vec::new(),
+            subfolders: project.folders.clone(),
         }
-        None
-    }
-
-    let folder = find_folder_recursive(&project.folders, &folder_id)
-        .ok_or_else(|| format!("Folder not found: {}", folder_id))?;
+    } else {
+        // Find the folder recursively
+        fn find_folder_recursive(folders: &[crate::projects::Folder], fold_id: &str) -> Option<crate::projects::Folder> {
+            for folder in folders {
+                if folder.id == fold_id {
+                    return Option::Some(folder.clone());
+                }
+                if let Some(f) = find_folder_recursive(&folder.subfolders, fold_id) {
+                    return Option::Some(f);
+                }
+            }
+            None
+        }
+        find_folder_recursive(&project.folders, &folder_id)
+            .ok_or_else(|| format!("Folder not found: {}", folder_id))?
+    };
 
     // Open native save file dialog
     let file_handle = rfd::AsyncFileDialog::new()
@@ -94,7 +103,7 @@ pub async fn export_folder_pdf(
 
     if let Some(file) = file_handle {
         let save_path = file.path();
-        crate::pdf_export::generate_pdf_document(&folder, project.name, generated_date, save_path)?;
+        crate::pdf_export::generate_pdf_document(&folder, project.name, generated_date, save_path, is_project_level)?;
         Ok(Some(save_path.to_string_lossy().to_string()))
     } else {
         Ok(None) // User cancelled

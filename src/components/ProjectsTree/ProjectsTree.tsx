@@ -44,6 +44,7 @@ export const ProjectsTree: React.FC = () => {
   } = useProjectsStore();
 
   const loadRequest = useRequestStore((state) => state.loadRequest);
+  const updateRequestName = useRequestStore((state) => state.updateRequestName);
 
   // UI state
   const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({});
@@ -264,6 +265,7 @@ export const ProjectsTree: React.FC = () => {
         if (folderId && request) {
           const updatedReq: SavedRequest = { ...request, name };
           await saveRequest(projectId, folderId, updatedReq);
+          updateRequestName(request.id, name);
         }
       }
     } catch (err) {

@@ -15,7 +15,6 @@ import { TabBar } from "./components/TabBar/TabBar";
 import { useProjectsStore, Folder } from "./store/projectsStore";
 import { useHistoryStore } from "./store/historyStore";
 import { HistoryPanel } from "./components/HistoryPanel/HistoryPanel";
-import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { ToastList } from "./components/Toast/Toast";
 import { useToastStore } from "./store/toastStore";
@@ -81,14 +80,10 @@ function App() {
   // Project importing handler
   const handleImportProject = async () => {
     try {
-      const imported = await invoke<any>("import_project");
-      if (imported) {
-        await useProjectsStore.getState().loadProjects();
-        useToastStore.getState().showToast(`Project "${imported.name}" imported successfully`, "success");
-      }
+      await useProjectsStore.getState().importProjects();
     } catch (err) {
       console.error("Import failed:", err);
-      useToastStore.getState().showToast(`Failed to import project: ${err}`, "error");
+      useToastStore.getState().showToast(`Failed to import projects: ${err}`, "error");
     }
   };
 

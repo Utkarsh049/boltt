@@ -25,6 +25,7 @@ export interface Project {
   id: string;
   name: string;
   folders: Folder[];
+  path?: string;
 }
 
 interface ProjectsStore {
@@ -34,9 +35,14 @@ interface ProjectsStore {
   isSaveModalOpen: boolean;
   
   loadProjects: () => Promise<void>;
-  createProject: (name: string) => Promise<void>;
+  createProject: (defaultName: string) => Promise<void>;
   deleteProject: (id: string) => Promise<void>;
   saveProject: (project: Project) => Promise<void>;
+  
+  importProjects: () => Promise<void>;
+  unmountProject: (projectId: string, path: string) => Promise<void>;
+  deleteProjectFile: (projectId: string, path: string) => Promise<void>;
+  openInFileExplorer: (path: string) => Promise<void>;
   
   createFolder: (projectId: string, parentFolderId: string | null, name: string) => Promise<void>;
   renameFolder: (projectId: string, folderId: string, newName: string) => Promise<void>;
@@ -141,31 +147,23 @@ export const useProjectsStore = create<ProjectsStore>((set, get) => ({
     }
   },
 
-  createProject: async (name: string) => {
-    const newProject: Project = {
-      id: crypto.randomUUID(),
-      name,
-      folders: [],
-    };
+  createProject: async (defaultName: string) => {
     try {
-      await invoke("save_project", { project: newProject });
-      await get().loadProjects();
-      set({ activeProjectId: newProject.id });
+      const newProject = await invoke<Project | null>("create_project_dialog", { defaultName });
+      if (newProject) {
+        await get().loadProjects();
+        set({ activeProjectId: newProject.id });
+      }
     } catch (err) {
       console.error("Failed to create project:", err);
     }
   },
 
   deleteProject: async (id: string) => {
-    try {
-      await invoke("delete_project", { id });
-      const { activeProjectId } = get();
-      await get().loadProjects();
-      if (activeProjectId === id) {
-        set({ activeProjectId: null, activeRequestId: null });
-      }
-    } catch (err) {
-      console.error("Failed to delete project:", err);
+    const { projects } = get();
+    const project = projects.find((p) => p.id === id);
+    if (project && project.path) {
+      await get().unmountProject(id, project.path);
     }
   },
 
@@ -177,6 +175,52 @@ export const useProjectsStore = create<ProjectsStore>((set, get) => ({
       }));
     } catch (err) {
       console.error("Failed to save project:", err);
+    }
+  },
+
+  importProjects: async () => {
+    try {
+      const imported = await invoke<Project[]>("import_project_dialog");
+      if (imported.length > 0) {
+        await get().loadProjects();
+        set({ activeProjectId: imported[0].id });
+      }
+    } catch (err) {
+      console.error("Failed to import projects:", err);
+    }
+  },
+
+  unmountProject: async (projectId: string, path: string) => {
+    try {
+      await invoke("unmount_project", { path });
+      const { activeProjectId } = get();
+      await get().loadProjects();
+      if (activeProjectId === projectId) {
+        set({ activeProjectId: null, activeRequestId: null });
+      }
+    } catch (err) {
+      console.error("Failed to unmount project:", err);
+    }
+  },
+
+  deleteProjectFile: async (projectId: string, path: string) => {
+    try {
+      await invoke("delete_project_file", { path });
+      const { activeProjectId } = get();
+      await get().loadProjects();
+      if (activeProjectId === projectId) {
+        set({ activeProjectId: null, activeRequestId: null });
+      }
+    } catch (err) {
+      console.error("Failed to delete project file:", err);
+    }
+  },
+
+  openInFileExplorer: async (path: string) => {
+    try {
+      await invoke("open_in_file_explorer", { path });
+    } catch (err) {
+      console.error("Failed to open file in explorer:", err);
     }
   },
 

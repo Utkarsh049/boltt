@@ -1,6 +1,6 @@
 use crate::http_client::{BoltRequest, BoltResponse};
 use std::collections::HashMap;
-use tauri::Manager;
+use std::path::PathBuf;
 
 #[tauri::command]
 pub async fn send_request(
@@ -43,14 +43,6 @@ pub async fn send_request(
     result
 }
 
-fn get_projects_dir(app_handle: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
-    let config_dir = app_handle
-        .path()
-        .app_config_dir()
-        .map_err(|e| format!("Failed to resolve config directory: {}", e))?;
-    Ok(config_dir.join("projects"))
-}
-
 #[tauri::command]
 pub async fn export_folder_pdf(
     app_handle: tauri::AppHandle,
@@ -58,11 +50,22 @@ pub async fn export_folder_pdf(
     folder_id: String,
     generated_date: String,
 ) -> Result<Option<String>, String> {
-    let projects_dir = get_projects_dir(&app_handle)?;
-    let file_path = projects_dir.join(format!("{}.json", project_id));
-    if !file_path.exists() {
-        return Err(format!("Project not found: {}", project_id));
+    let config = crate::projects::load_workspace_config(&app_handle)?;
+    let mut file_path = None;
+    for path_str in &config.mounted_projects {
+        let path = PathBuf::from(path_str);
+        if path.exists() {
+            if let Ok(content) = std::fs::read_to_string(&path) {
+                if let Ok(proj) = serde_json::from_str::<crate::projects::Project>(&content) {
+                    if proj.id == project_id {
+                        file_path = Some(path);
+                        break;
+                    }
+                }
+            }
+        }
     }
+    let file_path = file_path.ok_or_else(|| format!("Project with ID {} not found in workspace", project_id))?;
 
     let content = std::fs::read_to_string(&file_path)
         .map_err(|e| format!("Failed to read project file: {}", e))?;

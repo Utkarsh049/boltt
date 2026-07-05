@@ -14,7 +14,8 @@ import {
   FolderPlus, 
   FilePlus,
   Briefcase,
-  FileDown
+  FileDown,
+  X
 } from "lucide-react";
 import { ExportPDFModal } from "../ExportPDFModal/ExportPDFModal";
 
@@ -32,7 +33,6 @@ export const ProjectsTree: React.FC = () => {
     activeRequestId,
     loadProjects,
     createProject,
-    deleteProject,
     saveProject,
     createFolder,
     renameFolder,
@@ -41,6 +41,10 @@ export const ProjectsTree: React.FC = () => {
     deleteRequest,
     setActiveProject,
     setActiveRequest,
+    unmountProject,
+    deleteProjectFile,
+    openInFileExplorer,
+    importProjects,
   } = useProjectsStore();
 
   const loadRequest = useRequestStore((state) => state.loadRequest);
@@ -115,14 +119,14 @@ export const ProjectsTree: React.FC = () => {
     return () => window.removeEventListener("close-all-modals", handleClose);
   }, []);
 
-  // Trigger project naming dialog from global landing page
+  // Trigger project saving dialog from global landing page
   useEffect(() => {
     const handleCreateProject = () => {
-      triggerNamingDialog("create-project", "");
+      createProject("Untitled Project");
     };
     window.addEventListener("create-project-dialog", handleCreateProject);
     return () => window.removeEventListener("create-project-dialog", handleCreateProject);
-  }, []);
+  }, [createProject]);
 
   const toggleExpand = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -544,13 +548,24 @@ export const ProjectsTree: React.FC = () => {
         <span className="text-[10px] font-bold text-[#8b919d] uppercase tracking-wider">
           Projects
         </span>
-        <button
-          onClick={() => triggerNamingDialog("create-project", "")}
-          className="text-[10px] bg-[#272a30] text-[#a1c9ff] border border-[#30363D] px-1.5 py-0.5 rounded hover:bg-[#32353b] flex items-center space-x-1 cursor-pointer transition"
-        >
-          <Plus size={10} />
-          <span>New</span>
-        </button>
+        <div className="flex items-center space-x-1.5">
+          <button
+            onClick={importProjects}
+            className="text-[10px] bg-[#272a30] text-[#a1c9ff] border border-[#30363D] px-1.5 py-0.5 rounded hover:bg-[#32353b] flex items-center space-x-1 cursor-pointer transition"
+            title="Import existing project JSON files"
+          >
+            <FolderOpenIcon size={10} />
+            <span>Import</span>
+          </button>
+          <button
+            onClick={() => createProject("Untitled Project")}
+            className="text-[10px] bg-[#272a30] text-[#a1c9ff] border border-[#30363D] px-1.5 py-0.5 rounded hover:bg-[#32353b] flex items-center space-x-1 cursor-pointer transition"
+            title="Create a new project"
+          >
+            <Plus size={10} />
+            <span>New</span>
+          </button>
+        </div>
       </div>
 
       {/* Projects List */}
@@ -558,14 +573,24 @@ export const ProjectsTree: React.FC = () => {
         {projects.length > 0 ? (
           projects.map(renderProject)
         ) : (
-          <div className="py-8 text-center border border-dashed border-[#30363D]/50 rounded-sm bg-[#161B22]/20">
-            <span className="block text-[11px] text-[#8b919d] mb-2">No projects yet</span>
-            <button
-              onClick={() => triggerNamingDialog("create-project", "")}
-              className="text-xs bg-[#272a30] text-[#a1c9ff] border border-[#30363D] px-2.5 py-1 rounded hover:bg-[#32353b] cursor-pointer transition font-semibold"
-            >
-              + New Project
-            </button>
+          <div className="py-8 px-4 text-center border border-dashed border-[#30363D]/50 rounded-sm bg-[#161B22]/20 space-y-2">
+            <span className="block text-[11px] text-[#8b919d]">No projects yet</span>
+            <div className="flex flex-col space-y-1.5 px-2">
+              <button
+                onClick={() => createProject("Untitled Project")}
+                className="w-full text-xs bg-[#272a30] text-[#a1c9ff] border border-[#30363D] px-2.5 py-1.5 rounded hover:bg-[#32353b] cursor-pointer transition font-semibold flex items-center justify-center space-x-1.5"
+              >
+                <Plus size={12} />
+                <span>New Project</span>
+              </button>
+              <button
+                onClick={importProjects}
+                className="w-full text-xs bg-[#1c2025] text-[#e0e2ea] border border-[#30363D] px-2.5 py-1.5 rounded hover:bg-[#272a30] cursor-pointer transition font-semibold flex items-center justify-center space-x-1.5"
+              >
+                <FolderOpenIcon size={12} />
+                <span>Import Project</span>
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -599,6 +624,19 @@ export const ProjectsTree: React.FC = () => {
               <button
                 onClick={() => {
                   const proj = projects.find((p) => p.id === contextMenu.projectId);
+                  if (proj && proj.path) {
+                    openInFileExplorer(proj.path);
+                  }
+                  setContextMenu(null);
+                }}
+                className="flex items-center space-x-2 w-full px-2.5 py-1.5 text-xs text-[#e0e2ea] hover:bg-[#272a30] rounded-sm text-left transition cursor-pointer"
+              >
+                <FolderIcon size={13} className="text-[#8b919d]" />
+                <span>Show in File Explorer</span>
+              </button>
+              <button
+                onClick={() => {
+                  const proj = projects.find((p) => p.id === contextMenu.projectId);
                   if (proj) {
                     setPdfExportModal({
                       isOpen: true,
@@ -618,9 +656,28 @@ export const ProjectsTree: React.FC = () => {
               <div className="my-1 border-t border-[#30363D]"></div>
               <button
                 onClick={() => {
-                  if (confirm("Are you sure you want to delete this project? All folders and requests inside will be lost.")) {
-                    deleteProject(contextMenu.projectId);
+                  const proj = projects.find((p) => p.id === contextMenu.projectId);
+                  if (proj && proj.path) {
+                    if (confirm(`Remove "${proj.name}" from your workspace?\n\nNote: The project file will NOT be deleted from your computer. You can re-import it later.`)) {
+                      unmountProject(proj.id, proj.path);
+                    }
                   }
+                  setContextMenu(null);
+                }}
+                className="flex items-center space-x-2 w-full px-2.5 py-1.5 text-xs text-amber-400 hover:bg-amber-500/10 rounded-sm text-left transition cursor-pointer"
+              >
+                <X size={13} />
+                <span>Remove from Workspace</span>
+              </button>
+              <button
+                onClick={() => {
+                  const proj = projects.find((p) => p.id === contextMenu.projectId);
+                  if (proj && proj.path) {
+                    if (confirm(`⚠️ DANGER: Delete "${proj.name}" permanently?\n\nThis will delete the file from your computer:\n${proj.path}\n\nThis action cannot be undone.`)) {
+                      deleteProjectFile(proj.id, proj.path);
+                    }
+                  }
+                  setContextMenu(null);
                 }}
                 className="flex items-center space-x-2 w-full px-2.5 py-1.5 text-xs text-red-400 hover:bg-red-500/10 rounded-sm text-left transition cursor-pointer"
               >

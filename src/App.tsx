@@ -12,10 +12,9 @@ import { EnvironmentModal } from "./components/EnvironmentModal/EnvironmentModal
 import { ProjectsTree } from "./components/ProjectsTree/ProjectsTree";
 import { SaveRequestModal } from "./components/SaveRequestModal/SaveRequestModal";
 import { TabBar } from "./components/TabBar/TabBar";
-import { useProjectsStore, Folder } from "./store/projectsStore";
+import { useProjectsStore } from "./store/projectsStore";
 import { useHistoryStore } from "./store/historyStore";
 import { HistoryPanel } from "./components/HistoryPanel/HistoryPanel";
-import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { ToastList } from "./components/Toast/Toast";
 import { useToastStore } from "./store/toastStore";
@@ -81,14 +80,10 @@ function App() {
   // Project importing handler
   const handleImportProject = async () => {
     try {
-      const imported = await invoke<any>("import_project");
-      if (imported) {
-        await useProjectsStore.getState().loadProjects();
-        useToastStore.getState().showToast(`Project "${imported.name}" imported successfully`, "success");
-      }
+      await useProjectsStore.getState().importProjects();
     } catch (err) {
       console.error("Import failed:", err);
-      useToastStore.getState().showToast(`Failed to import project: ${err}`, "error");
+      useToastStore.getState().showToast(`Failed to import projects: ${err}`, "error");
     }
   };
 
@@ -151,53 +146,22 @@ function App() {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
         e.preventDefault();
         
-        const { projects, saveRequest, setSaveModalOpen } = useProjectsStore.getState();
         const activeRequest = useRequestStore.getState().activeRequest;
         const { tabs } = useRequestStore.getState();
         if (tabs.length === 0) return; // No active request to save
         
         if (!activeRequest.id) {
-          setSaveModalOpen(true);
+          useProjectsStore.getState().setSaveModalOpen(true);
           return;
         }
-
-        // Try to find request in projects to auto-save, otherwise open modal
-        let foundLocation: { projectId: string; folderId: string } | null = null;
-        for (const project of projects) {
-          const findInFolders = (folders: Folder[]): string | null => {
-            for (const folder of folders) {
-              if (folder.requests.some((r) => r.id === activeRequest.id)) {
-                return folder.id;
-              }
-              const sub = findInFolders(folder.subfolders);
-              if (sub) return sub;
-            }
-            return null;
-          };
-          const fid = findInFolders(project.folders);
-          if (fid) {
-            foundLocation = { projectId: project.id, folderId: fid };
-            break;
-          }
-        }
-
-        if (foundLocation) {
-          const savedReq = {
-            id: activeRequest.id,
-            name: activeRequest.name || "Untitled Request",
-            method: activeRequest.method,
-            url: activeRequest.url,
-            headers: activeRequest.headers,
-            params: activeRequest.params,
-            body: activeRequest.body,
-            auth: activeRequest.auth,
-            created_at: Date.now(),
-          };
-          await saveRequest(foundLocation.projectId, foundLocation.folderId, savedReq);
+        
+        const saved = await useProjectsStore.getState().saveRequestDirectly(activeRequest);
+        if (saved) {
+          useRequestStore.getState().markTabClean(activeRequest.id);
           useToastStore.getState().showToast("Request saved", "success");
           console.log("Saved request directly via keyboard shortcut!");
         } else {
-          setSaveModalOpen(true);
+          useProjectsStore.getState().setSaveModalOpen(true);
         }
       }
     };

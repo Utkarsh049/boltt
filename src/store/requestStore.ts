@@ -328,6 +328,16 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
     // 1. Check if a tab with this request ID already exists
     const existingTab = tabs.find((t) => t.request.id === request.id);
     if (existingTab) {
+      set((state) => {
+        const updatedTabs = state.tabs.map((t) =>
+          t.request.id === request.id ? { ...t, request } : t
+        );
+        const isCurrentlyActive = state.activeTabId === existingTab.id;
+        return {
+          tabs: updatedTabs,
+          activeRequest: isCurrentlyActive ? request : state.activeRequest,
+        };
+      });
       setActiveTab(existingTab.id);
       return;
     }
@@ -383,15 +393,16 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
   },
 
   openTab: (request) => {
-    const req = request || createInitialRequest();
+    const req = request ? { ...request } : createInitialRequest();
+    if (!req.id) {
+      req.id = crypto.randomUUID();
+    }
     const { tabs, setActiveTab } = get();
 
-    if (request && request.id) {
-      const existingTab = tabs.find((t) => t.request.id === request.id);
-      if (existingTab) {
-        setActiveTab(existingTab.id);
-        return;
-      }
+    const existingTab = tabs.find((t) => t.request.id === req.id);
+    if (existingTab) {
+      setActiveTab(existingTab.id);
+      return;
     }
 
     const newTabId = crypto.randomUUID();

@@ -44,6 +44,7 @@ export const ProjectsTree: React.FC = () => {
     unmountProject,
     deleteProjectFile,
     openInFileExplorer,
+    importProjects,
   } = useProjectsStore();
 
   const loadRequest = useRequestStore((state) => state.loadRequest);
@@ -547,13 +548,24 @@ export const ProjectsTree: React.FC = () => {
         <span className="text-[10px] font-bold text-[#8b919d] uppercase tracking-wider">
           Projects
         </span>
-        <button
-          onClick={() => createProject("Untitled Project")}
-          className="text-[10px] bg-[#272a30] text-[#a1c9ff] border border-[#30363D] px-1.5 py-0.5 rounded hover:bg-[#32353b] flex items-center space-x-1 cursor-pointer transition"
-        >
-          <Plus size={10} />
-          <span>New</span>
-        </button>
+        <div className="flex items-center space-x-1.5">
+          <button
+            onClick={importProjects}
+            className="text-[10px] bg-[#272a30] text-[#a1c9ff] border border-[#30363D] px-1.5 py-0.5 rounded hover:bg-[#32353b] flex items-center space-x-1 cursor-pointer transition"
+            title="Import existing project JSON files"
+          >
+            <FolderOpenIcon size={10} />
+            <span>Import</span>
+          </button>
+          <button
+            onClick={() => createProject("Untitled Project")}
+            className="text-[10px] bg-[#272a30] text-[#a1c9ff] border border-[#30363D] px-1.5 py-0.5 rounded hover:bg-[#32353b] flex items-center space-x-1 cursor-pointer transition"
+            title="Create a new project"
+          >
+            <Plus size={10} />
+            <span>New</span>
+          </button>
+        </div>
       </div>
 
       {/* Projects List */}
@@ -561,14 +573,24 @@ export const ProjectsTree: React.FC = () => {
         {projects.length > 0 ? (
           projects.map(renderProject)
         ) : (
-          <div className="py-8 text-center border border-dashed border-[#30363D]/50 rounded-sm bg-[#161B22]/20">
-            <span className="block text-[11px] text-[#8b919d] mb-2">No projects yet</span>
-            <button
-              onClick={() => createProject("Untitled Project")}
-              className="text-xs bg-[#272a30] text-[#a1c9ff] border border-[#30363D] px-2.5 py-1 rounded hover:bg-[#32353b] cursor-pointer transition font-semibold"
-            >
-              + New Project
-            </button>
+          <div className="py-8 px-4 text-center border border-dashed border-[#30363D]/50 rounded-sm bg-[#161B22]/20 space-y-2">
+            <span className="block text-[11px] text-[#8b919d]">No projects yet</span>
+            <div className="flex flex-col space-y-1.5 px-2">
+              <button
+                onClick={() => createProject("Untitled Project")}
+                className="w-full text-xs bg-[#272a30] text-[#a1c9ff] border border-[#30363D] px-2.5 py-1.5 rounded hover:bg-[#32353b] cursor-pointer transition font-semibold flex items-center justify-center space-x-1.5"
+              >
+                <Plus size={12} />
+                <span>New Project</span>
+              </button>
+              <button
+                onClick={importProjects}
+                className="w-full text-xs bg-[#1c2025] text-[#e0e2ea] border border-[#30363D] px-2.5 py-1.5 rounded hover:bg-[#272a30] cursor-pointer transition font-semibold flex items-center justify-center space-x-1.5"
+              >
+                <FolderOpenIcon size={12} />
+                <span>Import Project</span>
+              </button>
+            </div>
           </div>
         )}
       </div>

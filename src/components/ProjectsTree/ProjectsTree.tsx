@@ -607,8 +607,8 @@ export const ProjectsTree: React.FC = () => {
                       folderName: proj.name,
                       requestsCount: proj.folders.reduce((sum, f) => sum + countRequestsRecursive(f), 0),
                     });
-                    setContextMenu(null);
                   }
+                  setContextMenu(null);
                 }}
                 className="flex items-center space-x-2 w-full px-2.5 py-1.5 text-xs text-[#e0e2ea] hover:bg-[#272a30] rounded-sm text-left transition cursor-pointer"
               >

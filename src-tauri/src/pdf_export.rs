@@ -110,6 +110,8 @@ fn gather_requests_recursive(folder: &Folder, path: String, list: &mut Vec<(Stri
 
 fn wrap_text_with_code(text: &str, max_chars_per_line: usize, is_code: bool) -> Vec<String> {
     let mut lines = Vec::new();
+    let max_chars = max_chars_per_line.max(1);
+
     for paragraph in text.split('\n') {
         if paragraph.is_empty() {
             lines.push(String::new());
@@ -117,61 +119,72 @@ fn wrap_text_with_code(text: &str, max_chars_per_line: usize, is_code: bool) -> 
         }
         
         if is_code {
-            let mut remaining = paragraph;
-            while !remaining.is_empty() {
-                if remaining.len() <= max_chars_per_line {
-                    lines.push(remaining.to_string());
-                    break;
-                } else {
-                    let (chunk, rest) = remaining.split_at(max_chars_per_line);
-                    lines.push(chunk.to_string());
-                    remaining = rest;
-                }
+            let chars: Vec<char> = paragraph.chars().collect();
+            let mut start = 0;
+            while start < chars.len() {
+                let end = (start + max_chars).min(chars.len());
+                let line: String = chars[start..end].iter().collect();
+                lines.push(line);
+                start = end;
             }
         } else {
             let words: Vec<&str> = paragraph.split(' ').collect();
             let mut current_line = String::new();
+            let mut current_char_count = 0;
+
             for word in words {
                 if word.is_empty() {
-                    current_line.push(' ');
+                    if !current_line.is_empty() {
+                        current_line.push(' ');
+                        current_char_count += 1;
+                    }
                     continue;
                 }
                 
-                let word_len = word.len();
+                let word_chars: Vec<char> = word.chars().collect();
+                let word_len = word_chars.len();
+                
                 if current_line.is_empty() {
-                    if word_len <= max_chars_per_line {
+                    if word_len <= max_chars {
                         current_line = word.to_string();
+                        current_char_count = word_len;
                     } else {
-                        let mut rem = word;
-                        while !rem.is_empty() {
-                            if rem.len() <= max_chars_per_line {
-                                current_line = rem.to_string();
-                                break;
+                        let mut start = 0;
+                        while start < word_len {
+                            let end = (start + max_chars).min(word_len);
+                            let chunk: String = word_chars[start..end].iter().collect();
+                            if end < word_len {
+                                lines.push(chunk);
                             } else {
-                                let (chunk, rest) = rem.split_at(max_chars_per_line);
-                                lines.push(chunk.to_string());
-                                rem = rest;
+                                current_line = chunk;
+                                current_char_count = word_chars[start..end].len();
                             }
+                            start = end;
                         }
                     }
-                } else if current_line.len() + 1 + word_len <= max_chars_per_line {
+                } else if current_char_count + 1 + word_len <= max_chars {
                     current_line.push(' ');
                     current_line.push_str(word);
+                    current_char_count += 1 + word_len;
                 } else {
                     lines.push(std::mem::take(&mut current_line));
-                    if word_len <= max_chars_per_line {
+                    current_char_count = 0;
+                    
+                    if word_len <= max_chars {
                         current_line = word.to_string();
+                        current_char_count = word_len;
                     } else {
-                        let mut rem = word;
-                        while !rem.is_empty() {
-                            if rem.len() <= max_chars_per_line {
-                                current_line = rem.to_string();
-                                break;
+                        let mut start = 0;
+                        while start < word_len {
+                            let end = (start + max_chars).min(word_len);
+                            let chunk: String = word_chars[start..end].iter().collect();
+                            if end < word_len {
+                                lines.push(chunk);
                             } else {
-                                let (chunk, rest) = rem.split_at(max_chars_per_line);
-                                lines.push(chunk.to_string());
-                                rem = rest;
+                                current_line = chunk;
+                                current_char_count = word_chars[start..end].len();
                             }
+                            start = end;
                         }
                     }
                 }
@@ -226,8 +239,6 @@ impl PdfContext {
     
     fn draw_header(&self, page_idx: usize) {
         let layer = self.doc.get_page(self.pages[page_idx].0).get_layer(self.pages[page_idx].1);
-        
-        layer.set_fill_color(Color::Rgb(Rgb::new(0.29, 0.69, 1.0, None)));
         
         layer.set_fill_color(Color::Rgb(Rgb::new(0.09, 0.12, 0.16, None)));
         // Project & Folder info on top right
@@ -357,8 +368,14 @@ impl PdfContext {
         self.current_layer().set_fill_color(Color::Rgb(Rgb::new(0.09, 0.12, 0.16, None)));
         
         let url_x = 20.0 + badge_width + 4.0;
-        let max_url_chars = ((190.0 - url_x) / 1.6).floor() as usize;
-        let wrapped_url = wrap_text_with_code(url, max_url_chars, true);
+        let max_url_chars = (((190.0 - url_x) / 1.6).floor() as isize).max(1) as usize;
+        
+        // Safe character-based slicing for URLs to prevent multi-byte panics
+        let chars: Vec<char> = url.chars().collect();
+        let wrapped_url: Vec<String> = chars
+            .chunks(max_url_chars)
+            .map(|c| c.iter().collect())
+            .collect();
         
         for line in wrapped_url {
             self.check_page_break(5.0);
@@ -409,9 +426,20 @@ impl PdfContext {
 
         // Render rows
         for item in active_items {
-            // First wrap the value text
             let max_val_chars = 68; // Space between 85.0mm and 188.0mm
-            let wrapped_val = wrap_text_with_code(&item.value, max_val_chars, true);
+            
+            // Safe character-based chunking to prevent multi-byte panics
+            let wrapped_val: Vec<String> = item.value.split('\n').flat_map(|p| {
+                if p.is_empty() {
+                    return vec![String::new()].into_iter();
+                }
+                let chars: Vec<char> = p.chars().collect();
+                chars
+                    .chunks(max_val_chars)
+                    .map(|c| c.iter().collect::<String>())
+                    .collect::<Vec<String>>()
+                    .into_iter()
+            }).collect();
             
             // Calculate row height (based on wrapped value lines)
             let row_height_mm = (wrapped_val.len() as f32 * 4.2).max(6.0);
@@ -446,7 +474,7 @@ impl PdfContext {
             self.current_layer().add_line(line);
         }
         
-        // Draw outer borders for the table!
+        // Draw outer borders for the table
         let border_points = vec![
             (Point::new(Mm(20.0), Mm(header_top_y)), false),
             (Point::new(Mm(20.0), Mm(self.y)), false),
@@ -469,7 +497,19 @@ impl PdfContext {
         let font_size = 7.5;
         let line_height_mm = 3.8;
         let max_chars = 76;
-        let lines = wrap_text_with_code(content, max_chars, true);
+        
+        // Safe character-based chunking to prevent multi-byte panics
+        let lines: Vec<String> = content.split('\n').flat_map(|p| {
+            if p.is_empty() {
+                return vec![String::new()].into_iter();
+            }
+            let chars: Vec<char> = p.chars().collect();
+            chars
+                .chunks(max_chars)
+                .map(|c| c.iter().collect::<String>())
+                .collect::<Vec<String>>()
+                .into_iter()
+        }).collect();
         
         if lines.is_empty() {
             return;

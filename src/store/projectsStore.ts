@@ -51,6 +51,9 @@ interface ProjectsStore {
   saveRequest: (projectId: string, folderId: string, request: SavedRequest) => Promise<void>;
   deleteRequest: (projectId: string, requestId: string) => Promise<void>;
   
+  findRequestLocation: (requestId: string) => { projectId: string; folderId: string } | null;
+  saveRequestDirectly: (activeRequest: any) => Promise<boolean>;
+  
   setActiveProject: (id: string | null) => void;
   setActiveRequest: (id: string | null) => void;
   setSaveModalOpen: (isOpen: boolean) => void;
@@ -289,6 +292,48 @@ export const useProjectsStore = create<ProjectsStore>((set, get) => ({
         set({ activeRequestId: null });
       }
     }
+  },
+
+  findRequestLocation: (requestId: string) => {
+    const { projects } = get();
+    for (const project of projects) {
+      const findInFolders = (folders: Folder[]): string | null => {
+        for (const folder of folders) {
+          if (folder.requests.some((r) => r.id === requestId)) {
+            return folder.id;
+          }
+          const sub = findInFolders(folder.subfolders);
+          if (sub) return sub;
+        }
+        return null;
+      };
+      const fid = findInFolders(project.folders);
+      if (fid) {
+        return { projectId: project.id, folderId: fid };
+      }
+    }
+    return null;
+  },
+
+  saveRequestDirectly: async (activeRequest: any) => {
+    if (!activeRequest.id) return false;
+    const location = get().findRequestLocation(activeRequest.id);
+    if (!location) return false;
+
+    const savedReq: SavedRequest = {
+      id: activeRequest.id,
+      name: activeRequest.name || "Untitled Request",
+      method: activeRequest.method,
+      url: activeRequest.url,
+      headers: activeRequest.headers,
+      params: activeRequest.params,
+      body: activeRequest.body,
+      auth: activeRequest.auth,
+      created_at: Date.now(),
+    };
+
+    await get().saveRequest(location.projectId, location.folderId, savedReq);
+    return true;
   },
 
   setActiveProject: (id) => set({ activeProjectId: id }),

@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useRequestStore, HttpMethod } from "../../store/requestStore";
 import { useEnvStore } from "../../store/envStore";
-import { useProjectsStore, Folder } from "../../store/projectsStore";
+import { useProjectsStore } from "../../store/projectsStore";
+import { useToastStore } from "../../store/toastStore";
 import { Save, Send, ChevronDown, Check, ShieldAlert, ShieldCheck } from "lucide-react";
 
 const getMethodColors = (method: string) => {
@@ -61,7 +62,7 @@ const getMethodColors = (method: string) => {
 export const UrlBar: React.FC = () => {
   const { activeRequest, setMethod, setUrl, sendRequest, isLoading, markTabClean, setSslVerify } = useRequestStore();
   const getFlatActiveVariables = useEnvStore((state) => state.getFlatActiveVariables);
-  const { projects, saveRequest, setSaveModalOpen } = useProjectsStore();
+  const { saveRequestDirectly, setSaveModalOpen } = useProjectsStore();
 
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [isSslPopoverOpen, setIsSslPopoverOpen] = useState(false);
@@ -105,8 +106,7 @@ export const UrlBar: React.FC = () => {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Enter" && (e.ctrlKey || e.metaKey)) {
-      e.preventDefault();
+    if (e.key === "Enter") {
       handleSend();
     }
   };
@@ -116,41 +116,10 @@ export const UrlBar: React.FC = () => {
       setSaveModalOpen(true);
       return;
     }
-
-    // Try to find request in projects to auto-save, otherwise open modal
-    let foundLocation: { projectId: string; folderId: string } | null = null;
-    for (const project of projects) {
-      const findInFolders = (folders: Folder[]): string | null => {
-        for (const folder of folders) {
-          if (folder.requests.some((r) => r.id === activeRequest.id)) {
-            return folder.id;
-          }
-          const sub = findInFolders(folder.subfolders);
-          if (sub) return sub;
-        }
-        return null;
-      };
-      const fid = findInFolders(project.folders);
-      if (fid) {
-        foundLocation = { projectId: project.id, folderId: fid };
-        break;
-      }
-    }
-
-    if (foundLocation) {
-      const savedReq = {
-        id: activeRequest.id,
-        name: activeRequest.name || "Untitled Request",
-        method: activeRequest.method,
-        url: activeRequest.url,
-        headers: activeRequest.headers,
-        params: activeRequest.params,
-        body: activeRequest.body,
-        auth: activeRequest.auth,
-        created_at: Date.now(),
-      };
-      await saveRequest(foundLocation.projectId, foundLocation.folderId, savedReq);
-      markTabClean(savedReq.id);
+    const saved = await saveRequestDirectly(activeRequest);
+    if (saved) {
+      markTabClean(activeRequest.id);
+      useToastStore.getState().showToast("Request saved", "success");
       console.log("Saved request directly!");
     } else {
       setSaveModalOpen(true);

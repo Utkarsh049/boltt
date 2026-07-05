@@ -393,15 +393,16 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
   },
 
   openTab: (request) => {
-    const req = request || createInitialRequest();
+    const req = request ? { ...request } : createInitialRequest();
+    if (!req.id) {
+      req.id = crypto.randomUUID();
+    }
     const { tabs, setActiveTab } = get();
 
-    if (request && request.id) {
-      const existingTab = tabs.find((t) => t.request.id === request.id);
-      if (existingTab) {
-        setActiveTab(existingTab.id);
-        return;
-      }
+    const existingTab = tabs.find((t) => t.request.id === req.id);
+    if (existingTab) {
+      setActiveTab(existingTab.id);
+      return;
     }
 
     const newTabId = crypto.randomUUID();

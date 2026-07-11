@@ -3,7 +3,8 @@ import { useRequestStore, KeyValue, RequestBody } from "../../store/requestStore
 import { KVEditor } from "../KVEditor/KVEditor";
 import CodeMirror from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
-import { ListFilter, Sliders, Code2, KeyRound, ShieldOff, Key, User, ChevronDown, Check } from "lucide-react";
+import { ListFilter, Sliders, Code2, KeyRound, ShieldOff, Key, User, ChevronDown, Check, Sparkles } from "lucide-react";
+import { useToastStore } from "../../store/toastStore";
 
 type TabType = "params" | "headers" | "body" | "auth";
 
@@ -82,6 +83,20 @@ export const RequestPane: React.FC = () => {
   const handleBodyContentChange = (content: string) => {
     if (activeRequest.body.type === "Json" || activeRequest.body.type === "Raw") {
       setBody({ ...activeRequest.body, content } as RequestBody);
+    }
+  };
+
+  const handleBeautifyJson = () => {
+    if (activeRequest.body.type !== "Json") return;
+    try {
+      const currentContent = activeRequest.body.content || "";
+      if (!currentContent.trim()) return;
+      const parsed = JSON.parse(currentContent);
+      const formatted = JSON.stringify(parsed, null, 2);
+      handleBodyContentChange(formatted);
+      useToastStore.getState().showToast("JSON formatted successfully", "success");
+    } catch (err) {
+      useToastStore.getState().showToast("Invalid JSON syntax", "error");
     }
   };
 
@@ -221,7 +236,18 @@ export const RequestPane: React.FC = () => {
             {/* JSON Code Editor */}
             {activeRequest.body.type === "Json" && (
               <div className="flex-1 flex flex-col min-h-[220px]">
-                <div className="text-[10px] text-[#8b919d] mb-1 font-mono">JSON Body Content:</div>
+                <div className="flex items-center justify-between mb-1">
+                  <div className="text-[10px] text-[#8b919d] font-mono">JSON Body Content:</div>
+                   <button
+                    type="button"
+                    onClick={handleBeautifyJson}
+                    className="text-[9px] bg-[#272a30] text-[#a1c9ff] border border-[#30363D] px-2 py-0.5 rounded hover:bg-[#32353b] cursor-pointer transition select-none font-semibold hover:border-[#a1c9ff]/30 active:scale-95 flex items-center space-x-1"
+                    title="Format JSON content"
+                  >
+                    <Sparkles size={10} />
+                    <span>Beautify</span>
+                  </button>
+                </div>
                 <div className="flex-1 border border-[#30363D] rounded-sm overflow-hidden text-xs">
                   <CodeMirror
                     value={activeRequest.body.content || ""}

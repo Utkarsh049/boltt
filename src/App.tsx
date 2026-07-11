@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { UrlBar } from "./components/UrlBar/UrlBar";
 import { RequestPane } from "./components/RequestPane/RequestPane";
-import { Zap, Settings, RefreshCw, Folder as FolderIcon, Globe, Clock, Eye, EyeOff, Plus } from "lucide-react";
+import { Zap, Settings, RefreshCw, Folder as FolderIcon, Globe, Clock, Eye, EyeOff, Plus, Minus, Square, X } from "lucide-react";
 import "./App.css";
 import { Group, Panel, Separator, type PanelImperativeHandle } from "react-resizable-panels";
 import { ResponsePane } from "./components/ResponsePane/ResponsePane";
@@ -25,6 +25,9 @@ function App() {
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>("collections");
   const [isResponseCollapsed, setIsResponseCollapsed] = useState(false);
   const responsePanelRef = useRef<PanelImperativeHandle>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isAppLoading, setIsAppLoading] = useState(true);
 
   const response = useRequestStore((state) => state.response);
   const isLoading = useRequestStore((state) => state.isLoading);
@@ -38,6 +41,26 @@ function App() {
   const setActiveGroup = useEnvStore((state) => state.setActiveGroup);
   const environments = useEnvStore((state) => state.environments);
 
+  const handleRefresh = async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await Promise.all([
+        useProjectsStore.getState().loadProjects(),
+        useEnvStore.getState().loadEnvironments(),
+        useHistoryStore.getState().loadHistory(),
+      ]);
+      useToastStore.getState().showToast("Workspace synchronized with filesystem", "success");
+    } catch (err) {
+      console.error("Failed to refresh workspace:", err);
+      useToastStore.getState().showToast("Failed to sync workspace", "error");
+    } finally {
+      setTimeout(() => {
+        setIsRefreshing(false);
+      }, 600);
+    }
+  };
+
   const getInitialWindowLabel = () => {
     try {
       return getCurrentWindow().label;
@@ -50,8 +73,22 @@ function App() {
 
   // Load environments and history from backend on mount
   useEffect(() => {
-    loadEnvironments();
-    useHistoryStore.getState().loadHistory();
+    const initApp = async () => {
+      try {
+        await Promise.all([
+          loadEnvironments(),
+          useProjectsStore.getState().loadProjects(),
+          useHistoryStore.getState().loadHistory(),
+        ]);
+      } catch (err) {
+        console.error("Initialization failed:", err);
+      } finally {
+        setTimeout(() => {
+          setIsAppLoading(false);
+        }, 550);
+      }
+    };
+    initApp();
 
     // Listen to environments-updated global event
     let unlisten: (() => void) | undefined;
@@ -67,6 +104,71 @@ function App() {
       if (unlisten) unlisten();
     };
   }, [loadEnvironments]);
+
+  // Disable user zoom behavior (Ctrl/Cmd + wheel zoom, trackpad pinch, and Ctrl/Cmd + Plus/Minus/0 shortcuts)
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        (e.key === "=" || e.key === "-" || e.key === "+" || e.key === "0")
+      ) {
+        e.preventDefault();
+      }
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length > 1) {
+        e.preventDefault();
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length > 1) {
+        e.preventDefault();
+      }
+    };
+
+    const handleGesture = (e: Event) => {
+      e.preventDefault();
+    };
+
+    document.addEventListener("wheel", handleWheel, { passive: false, capture: true });
+    document.addEventListener("keydown", handleKeyDown, { capture: true });
+    document.addEventListener("touchstart", handleTouchStart, { passive: false, capture: true });
+    document.addEventListener("touchmove", handleTouchMove, { passive: false, capture: true });
+    document.addEventListener("gesturestart", handleGesture, { passive: false, capture: true });
+    document.addEventListener("gesturechange", handleGesture, { passive: false, capture: true });
+    document.addEventListener("gestureend", handleGesture, { passive: false, capture: true });
+
+    return () => {
+      document.removeEventListener("wheel", handleWheel, { capture: true });
+      document.removeEventListener("keydown", handleKeyDown, { capture: true });
+      document.removeEventListener("touchstart", handleTouchStart, { capture: true });
+      document.removeEventListener("touchmove", handleTouchMove, { capture: true });
+      document.removeEventListener("gesturestart", handleGesture, { capture: true });
+      document.removeEventListener("gesturechange", handleGesture, { capture: true });
+      document.removeEventListener("gestureend", handleGesture, { capture: true });
+    };
+  }, []);
+
+  // Listen to network status (Online/Offline) changes
+  useEffect(() => {
+    const handleStatusChange = () => {
+      setIsOnline(navigator.onLine);
+    };
+    window.addEventListener("online", handleStatusChange);
+    window.addEventListener("offline", handleStatusChange);
+    return () => {
+      window.removeEventListener("online", handleStatusChange);
+      window.removeEventListener("offline", handleStatusChange);
+    };
+  }, []);
 
   // Dynamic window title updates
   useEffect(() => {
@@ -191,6 +293,123 @@ function App() {
     }
   };
 
+  const handleToggleMaximize = async () => {
+    try {
+      const window = getCurrentWindow();
+      if (await window.isMaximized()) {
+        await window.unmaximize();
+      } else {
+        await window.maximize();
+      }
+    } catch (err) {
+      console.error("Failed to toggle maximize:", err);
+    }
+  };
+
+  const handleHeaderMouseDown = (e: React.MouseEvent) => {
+    if (e.button === 0) {
+      const target = e.target as HTMLElement;
+      if (
+        target.closest("button") ||
+        target.closest("input") ||
+        target.closest("select") ||
+        target.closest("a") ||
+        target.closest(".custom-interactive")
+      ) {
+        return;
+      }
+      try {
+        getCurrentWindow().startDragging();
+      } catch (err) {
+        console.error("Failed to start window drag:", err);
+      }
+    }
+  };
+
+  const handleHeaderDoubleClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (
+      target.closest("button") ||
+      target.closest("input") ||
+      target.closest("select") ||
+      target.closest("a") ||
+      target.closest(".custom-interactive")
+    ) {
+      return;
+    }
+    handleToggleMaximize();
+  };
+
+  if (isAppLoading) {
+    return (
+      <div className="h-screen w-screen bg-[#101419] text-[#e0e2ea] flex flex-col font-sans overflow-hidden select-none animate-pulse">
+        {/* Header bar skeleton */}
+        <header className="h-12 border-b border-[#30363D] flex items-center justify-between px-4 bg-[#1c2025] flex-shrink-0">
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 bg-[#1c2128] rounded-full" />
+            <div className="w-16 h-3 bg-[#1c2128] rounded" />
+          </div>
+          <div className="flex items-center space-x-3">
+            <div className="w-24 h-6 bg-[#1c2128] rounded-sm" />
+            <div className="w-6 h-6 bg-[#1c2128] rounded-sm" />
+            <div className="w-6 h-6 bg-[#1c2128] rounded-sm" />
+            <div className="w-16 h-4 bg-[#1c2128] rounded" />
+          </div>
+        </header>
+
+        {/* Workspace body skeleton */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Sidebar skeleton */}
+          <div className="w-[300px] border-r border-[#30363D] bg-[#161B22] flex flex-col h-full flex-shrink-0 p-3 space-y-4">
+            <div className="h-7 bg-[#1c2128] rounded-sm w-full" />
+            <div className="flex items-center justify-between">
+              <div className="w-12 h-3 bg-[#1c2128] rounded" />
+              <div className="w-10 h-4 bg-[#1c2128] rounded-sm" />
+            </div>
+            <div className="space-y-2.5">
+              <div className="h-5 bg-[#1c2128]/60 rounded-sm w-4/5" />
+              <div className="h-5 bg-[#1c2128]/60 rounded-sm w-3/4 pl-4" />
+              <div className="h-5 bg-[#1c2128]/60 rounded-sm w-2/3 pl-4" />
+              <div className="h-5 bg-[#1c2128]/60 rounded-sm w-5/6" />
+            </div>
+          </div>
+
+          {/* Main Content Pane skeleton */}
+          <div className="flex-1 flex flex-col bg-[#101419] overflow-hidden p-4 space-y-4">
+            {/* Tabs bar skeleton */}
+            <div className="flex space-x-2 h-7 items-center border-b border-[#30363D]/40 pb-2">
+              <div className="w-20 h-5 bg-[#1c2128] rounded-sm" />
+              <div className="w-20 h-5 bg-[#1c2128]/60 rounded-sm" />
+              <div className="w-6 h-5 bg-[#1c2128]/40 rounded-sm" />
+            </div>
+
+            {/* URL bar skeleton */}
+            <div className="flex space-x-2 items-center">
+              <div className="w-16 h-9 bg-[#1c2128] rounded-sm" />
+              <div className="flex-1 h-9 bg-[#1c2128] rounded-sm" />
+              <div className="w-14 h-9 bg-[#1c2128] rounded-sm" />
+              <div className="w-16 h-9 bg-[#1c2128] rounded-sm" />
+            </div>
+
+            {/* Editor Pane skeleton */}
+            <div className="flex-1 border border-[#30363D] rounded-sm bg-[#161B22]/10 p-3 flex flex-col space-y-3">
+              <div className="flex space-x-3 border-b border-[#30363D]/40 pb-2">
+                <div className="w-12 h-4 bg-[#1c2128] rounded-sm" />
+                <div className="w-12 h-4 bg-[#1c2128]/60 rounded-sm" />
+                <div className="w-12 h-4 bg-[#1c2128]/60 rounded-sm" />
+              </div>
+              <div className="flex-1 bg-[#101419]/30 rounded-sm border border-[#30363D]/40 p-4 space-y-2">
+                <div className="h-3 bg-[#1c2128]/40 rounded w-2/5" />
+                <div className="h-3 bg-[#1c2128]/40 rounded w-3/5" />
+                <div className="h-3 bg-[#1c2128]/40 rounded w-1/2" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   if (windowLabel.startsWith("env-")) {
     return <EnvironmentModal />;
   }
@@ -198,7 +417,11 @@ function App() {
   return (
     <div className="h-screen w-screen bg-[#101419] text-[#e0e2ea] flex flex-col font-sans overflow-hidden select-none">
       {/* Header bar */}
-      <header className="h-12 border-b border-[#30363D] flex items-center justify-between px-4 bg-[#1c2025] flex-shrink-0">
+      <header
+        onMouseDown={handleHeaderMouseDown}
+        onDoubleClick={handleHeaderDoubleClick}
+        className="h-12 border-b border-[#30363D] flex items-center justify-between px-4 bg-[#1c2025] flex-shrink-0 select-none cursor-default"
+      >
         <div className="flex items-center space-x-2">
           <Zap size={16} className="text-[#a1c9ff] fill-[#a1c9ff]" />
           <span className="font-semibold text-sm tracking-wider text-[#a1c9ff]">
@@ -210,12 +433,44 @@ function App() {
           <button className="p-1 hover:bg-[#272a30] rounded border border-transparent hover:border-[#30363D] transition">
             <Settings size={14} />
           </button>
-          <button className="p-1 hover:bg-[#272a30] rounded border border-transparent hover:border-[#30363D] transition">
-            <RefreshCw size={14} />
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="p-1 hover:bg-[#272a30] rounded border border-transparent hover:border-[#30363D] transition cursor-pointer disabled:opacity-60"
+            title="Sync workspace with filesystem"
+          >
+            <RefreshCw size={14} className={isRefreshing ? "animate-spin text-[#a1c9ff]" : ""} />
           </button>
-          <span className="text-xs">
-            Status: <strong className="text-[#a1c9ff]">Online</strong>
+          <span className="text-xs select-none flex items-center space-x-1.5" title={isOnline ? "Connected to the internet" : "Disconnected from the internet"}>
+            <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? "bg-[#4ade80]" : "bg-[#f87171]"}`} />
+            <span>Status:</span>
+            <strong className={isOnline ? "text-[#4ade80]" : "text-[#f87171]"}>
+              {isOnline ? "Online" : "Offline"}
+            </strong>
           </span>
+          <div className="flex items-center space-x-1 pl-2 border-l border-[#30363D] h-6">
+            <button
+              onClick={() => getCurrentWindow().minimize()}
+              className="p-1 hover:bg-[#272a30] rounded text-[#8b919d] hover:text-[#e0e2ea] transition cursor-pointer flex items-center justify-center"
+              title="Minimize"
+            >
+              <Minus size={13} />
+            </button>
+            <button
+              onClick={handleToggleMaximize}
+              className="p-1 hover:bg-[#272a30] rounded text-[#8b919d] hover:text-[#e0e2ea] transition cursor-pointer flex items-center justify-center"
+              title="Maximize / Restore"
+            >
+              <Square size={10} />
+            </button>
+            <button
+              onClick={() => getCurrentWindow().close()}
+              className="p-1 hover:bg-[#ea3e3e]/20 hover:text-[#ff8080] rounded text-[#8b919d] transition cursor-pointer flex items-center justify-center"
+              title="Close"
+            >
+              <X size={13} />
+            </button>
+          </div>
         </div>
       </header>
 

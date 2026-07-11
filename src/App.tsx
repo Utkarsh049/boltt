@@ -26,6 +26,7 @@ function App() {
   const [isResponseCollapsed, setIsResponseCollapsed] = useState(false);
   const responsePanelRef = useRef<PanelImperativeHandle>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
 
   const response = useRequestStore((state) => state.response);
   const isLoading = useRequestStore((state) => state.isLoading);
@@ -138,6 +139,19 @@ function App() {
       document.removeEventListener("gesturestart", handleGesture, { capture: true });
       document.removeEventListener("gesturechange", handleGesture, { capture: true });
       document.removeEventListener("gestureend", handleGesture, { capture: true });
+    };
+  }, []);
+
+  // Listen to network status (Online/Offline) changes
+  useEffect(() => {
+    const handleStatusChange = () => {
+      setIsOnline(navigator.onLine);
+    };
+    window.addEventListener("online", handleStatusChange);
+    window.addEventListener("offline", handleStatusChange);
+    return () => {
+      window.removeEventListener("online", handleStatusChange);
+      window.removeEventListener("offline", handleStatusChange);
     };
   }, []);
 
@@ -291,8 +305,12 @@ function App() {
           >
             <RefreshCw size={14} className={isRefreshing ? "animate-spin text-[#a1c9ff]" : ""} />
           </button>
-          <span className="text-xs">
-            Status: <strong className="text-[#a1c9ff]">Online</strong>
+          <span className="text-xs select-none flex items-center space-x-1.5" title={isOnline ? "Connected to the internet" : "Disconnected from the internet"}>
+            <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? "bg-[#4ade80]" : "bg-[#f87171]"}`} />
+            <span>Status:</span>
+            <strong className={isOnline ? "text-[#4ade80]" : "text-[#f87171]"}>
+              {isOnline ? "Online" : "Offline"}
+            </strong>
           </span>
         </div>
       </header>

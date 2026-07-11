@@ -89,6 +89,58 @@ function App() {
     };
   }, [loadEnvironments]);
 
+  // Disable user zoom behavior (Ctrl/Cmd + wheel zoom, trackpad pinch, and Ctrl/Cmd + Plus/Minus/0 shortcuts)
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      if (e.ctrlKey || e.metaKey) {
+        e.preventDefault();
+      }
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        (e.key === "=" || e.key === "-" || e.key === "+" || e.key === "0")
+      ) {
+        e.preventDefault();
+      }
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      if (e.touches.length > 1) {
+        e.preventDefault();
+      }
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      if (e.touches.length > 1) {
+        e.preventDefault();
+      }
+    };
+
+    const handleGesture = (e: Event) => {
+      e.preventDefault();
+    };
+
+    document.addEventListener("wheel", handleWheel, { passive: false, capture: true });
+    document.addEventListener("keydown", handleKeyDown, { capture: true });
+    document.addEventListener("touchstart", handleTouchStart, { passive: false, capture: true });
+    document.addEventListener("touchmove", handleTouchMove, { passive: false, capture: true });
+    document.addEventListener("gesturestart", handleGesture, { passive: false, capture: true });
+    document.addEventListener("gesturechange", handleGesture, { passive: false, capture: true });
+    document.addEventListener("gestureend", handleGesture, { passive: false, capture: true });
+
+    return () => {
+      document.removeEventListener("wheel", handleWheel, { capture: true });
+      document.removeEventListener("keydown", handleKeyDown, { capture: true });
+      document.removeEventListener("touchstart", handleTouchStart, { capture: true });
+      document.removeEventListener("touchmove", handleTouchMove, { capture: true });
+      document.removeEventListener("gesturestart", handleGesture, { capture: true });
+      document.removeEventListener("gesturechange", handleGesture, { capture: true });
+      document.removeEventListener("gestureend", handleGesture, { capture: true });
+    };
+  }, []);
+
   // Dynamic window title updates
   useEffect(() => {
     if (tabs.length > 0 && activeRequest) {

@@ -27,6 +27,7 @@ function App() {
   const responsePanelRef = useRef<PanelImperativeHandle>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const [isAppLoading, setIsAppLoading] = useState(true);
 
   const response = useRequestStore((state) => state.response);
   const isLoading = useRequestStore((state) => state.isLoading);
@@ -72,8 +73,22 @@ function App() {
 
   // Load environments and history from backend on mount
   useEffect(() => {
-    loadEnvironments();
-    useHistoryStore.getState().loadHistory();
+    const initApp = async () => {
+      try {
+        await Promise.all([
+          loadEnvironments(),
+          useProjectsStore.getState().loadProjects(),
+          useHistoryStore.getState().loadHistory(),
+        ]);
+      } catch (err) {
+        console.error("Initialization failed:", err);
+      } finally {
+        setTimeout(() => {
+          setIsAppLoading(false);
+        }, 550);
+      }
+    };
+    initApp();
 
     // Listen to environments-updated global event
     let unlisten: (() => void) | undefined;
@@ -324,6 +339,76 @@ function App() {
     }
     handleToggleMaximize();
   };
+
+  if (isAppLoading) {
+    return (
+      <div className="h-screen w-screen bg-[#101419] text-[#e0e2ea] flex flex-col font-sans overflow-hidden select-none animate-pulse">
+        {/* Header bar skeleton */}
+        <header className="h-12 border-b border-[#30363D] flex items-center justify-between px-4 bg-[#1c2025] flex-shrink-0">
+          <div className="flex items-center space-x-2">
+            <div className="w-4 h-4 bg-[#1c2128] rounded-full" />
+            <div className="w-16 h-3 bg-[#1c2128] rounded" />
+          </div>
+          <div className="flex items-center space-x-3">
+            <div className="w-24 h-6 bg-[#1c2128] rounded-sm" />
+            <div className="w-6 h-6 bg-[#1c2128] rounded-sm" />
+            <div className="w-6 h-6 bg-[#1c2128] rounded-sm" />
+            <div className="w-16 h-4 bg-[#1c2128] rounded" />
+          </div>
+        </header>
+
+        {/* Workspace body skeleton */}
+        <div className="flex-1 flex overflow-hidden">
+          {/* Sidebar skeleton */}
+          <div className="w-[300px] border-r border-[#30363D] bg-[#161B22] flex flex-col h-full flex-shrink-0 p-3 space-y-4">
+            <div className="h-7 bg-[#1c2128] rounded-sm w-full" />
+            <div className="flex items-center justify-between">
+              <div className="w-12 h-3 bg-[#1c2128] rounded" />
+              <div className="w-10 h-4 bg-[#1c2128] rounded-sm" />
+            </div>
+            <div className="space-y-2.5">
+              <div className="h-5 bg-[#1c2128]/60 rounded-sm w-4/5" />
+              <div className="h-5 bg-[#1c2128]/60 rounded-sm w-3/4 pl-4" />
+              <div className="h-5 bg-[#1c2128]/60 rounded-sm w-2/3 pl-4" />
+              <div className="h-5 bg-[#1c2128]/60 rounded-sm w-5/6" />
+            </div>
+          </div>
+
+          {/* Main Content Pane skeleton */}
+          <div className="flex-1 flex flex-col bg-[#101419] overflow-hidden p-4 space-y-4">
+            {/* Tabs bar skeleton */}
+            <div className="flex space-x-2 h-7 items-center border-b border-[#30363D]/40 pb-2">
+              <div className="w-20 h-5 bg-[#1c2128] rounded-sm" />
+              <div className="w-20 h-5 bg-[#1c2128]/60 rounded-sm" />
+              <div className="w-6 h-5 bg-[#1c2128]/40 rounded-sm" />
+            </div>
+
+            {/* URL bar skeleton */}
+            <div className="flex space-x-2 items-center">
+              <div className="w-16 h-9 bg-[#1c2128] rounded-sm" />
+              <div className="flex-1 h-9 bg-[#1c2128] rounded-sm" />
+              <div className="w-14 h-9 bg-[#1c2128] rounded-sm" />
+              <div className="w-16 h-9 bg-[#1c2128] rounded-sm" />
+            </div>
+
+            {/* Editor Pane skeleton */}
+            <div className="flex-1 border border-[#30363D] rounded-sm bg-[#161B22]/10 p-3 flex flex-col space-y-3">
+              <div className="flex space-x-3 border-b border-[#30363D]/40 pb-2">
+                <div className="w-12 h-4 bg-[#1c2128] rounded-sm" />
+                <div className="w-12 h-4 bg-[#1c2128]/60 rounded-sm" />
+                <div className="w-12 h-4 bg-[#1c2128]/60 rounded-sm" />
+              </div>
+              <div className="flex-1 bg-[#101419]/30 rounded-sm border border-[#30363D]/40 p-4 space-y-2">
+                <div className="h-3 bg-[#1c2128]/40 rounded w-2/5" />
+                <div className="h-3 bg-[#1c2128]/40 rounded w-3/5" />
+                <div className="h-3 bg-[#1c2128]/40 rounded w-1/2" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (windowLabel.startsWith("env-")) {
     return <EnvironmentModal />;

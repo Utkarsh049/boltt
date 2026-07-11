@@ -25,6 +25,7 @@ function App() {
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>("collections");
   const [isResponseCollapsed, setIsResponseCollapsed] = useState(false);
   const responsePanelRef = useRef<PanelImperativeHandle>(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const response = useRequestStore((state) => state.response);
   const isLoading = useRequestStore((state) => state.isLoading);
@@ -37,6 +38,26 @@ function App() {
   const groupActiveIds = useEnvStore((state) => state.groupActiveIds);
   const setActiveGroup = useEnvStore((state) => state.setActiveGroup);
   const environments = useEnvStore((state) => state.environments);
+
+  const handleRefresh = async () => {
+    if (isRefreshing) return;
+    setIsRefreshing(true);
+    try {
+      await Promise.all([
+        useProjectsStore.getState().loadProjects(),
+        useEnvStore.getState().loadEnvironments(),
+        useHistoryStore.getState().loadHistory(),
+      ]);
+      useToastStore.getState().showToast("Workspace synchronized with filesystem", "success");
+    } catch (err) {
+      console.error("Failed to refresh workspace:", err);
+      useToastStore.getState().showToast("Failed to sync workspace", "error");
+    } finally {
+      setTimeout(() => {
+        setIsRefreshing(false);
+      }, 600);
+    }
+  };
 
   const getInitialWindowLabel = () => {
     try {
@@ -210,8 +231,13 @@ function App() {
           <button className="p-1 hover:bg-[#272a30] rounded border border-transparent hover:border-[#30363D] transition">
             <Settings size={14} />
           </button>
-          <button className="p-1 hover:bg-[#272a30] rounded border border-transparent hover:border-[#30363D] transition">
-            <RefreshCw size={14} />
+          <button
+            onClick={handleRefresh}
+            disabled={isRefreshing}
+            className="p-1 hover:bg-[#272a30] rounded border border-transparent hover:border-[#30363D] transition cursor-pointer disabled:opacity-60"
+            title="Sync workspace with filesystem"
+          >
+            <RefreshCw size={14} className={isRefreshing ? "animate-spin text-[#a1c9ff]" : ""} />
           </button>
           <span className="text-xs">
             Status: <strong className="text-[#a1c9ff]">Online</strong>

@@ -13,6 +13,7 @@
     "windows": [
       {
         "title": "Boltt",
+        "decorations": false,
         "width": 1000,
         "height": 700,
         "minWidth": 900,

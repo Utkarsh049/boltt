@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { UrlBar } from "./components/UrlBar/UrlBar";
 import { RequestPane } from "./components/RequestPane/RequestPane";
-import { Zap, Settings, RefreshCw, Folder as FolderIcon, Globe, Clock, Eye, EyeOff, Plus } from "lucide-react";
+import { Zap, Settings, RefreshCw, Folder as FolderIcon, Globe, Clock, Eye, EyeOff, Plus, Minus, Square, X } from "lucide-react";
 import "./App.css";
 import { Group, Panel, Separator, type PanelImperativeHandle } from "react-resizable-panels";
 import { ResponsePane } from "./components/ResponsePane/ResponsePane";
@@ -278,6 +278,53 @@ function App() {
     }
   };
 
+  const handleToggleMaximize = async () => {
+    try {
+      const window = getCurrentWindow();
+      if (await window.isMaximized()) {
+        await window.unmaximize();
+      } else {
+        await window.maximize();
+      }
+    } catch (err) {
+      console.error("Failed to toggle maximize:", err);
+    }
+  };
+
+  const handleHeaderMouseDown = (e: React.MouseEvent) => {
+    if (e.button === 0) {
+      const target = e.target as HTMLElement;
+      if (
+        target.closest("button") ||
+        target.closest("input") ||
+        target.closest("select") ||
+        target.closest("a") ||
+        target.closest(".custom-interactive")
+      ) {
+        return;
+      }
+      try {
+        getCurrentWindow().startDragging();
+      } catch (err) {
+        console.error("Failed to start window drag:", err);
+      }
+    }
+  };
+
+  const handleHeaderDoubleClick = (e: React.MouseEvent) => {
+    const target = e.target as HTMLElement;
+    if (
+      target.closest("button") ||
+      target.closest("input") ||
+      target.closest("select") ||
+      target.closest("a") ||
+      target.closest(".custom-interactive")
+    ) {
+      return;
+    }
+    handleToggleMaximize();
+  };
+
   if (windowLabel.startsWith("env-")) {
     return <EnvironmentModal />;
   }
@@ -285,7 +332,11 @@ function App() {
   return (
     <div className="h-screen w-screen bg-[#101419] text-[#e0e2ea] flex flex-col font-sans overflow-hidden select-none">
       {/* Header bar */}
-      <header className="h-12 border-b border-[#30363D] flex items-center justify-between px-4 bg-[#1c2025] flex-shrink-0">
+      <header
+        onMouseDown={handleHeaderMouseDown}
+        onDoubleClick={handleHeaderDoubleClick}
+        className="h-12 border-b border-[#30363D] flex items-center justify-between px-4 bg-[#1c2025] flex-shrink-0 select-none cursor-default"
+      >
         <div className="flex items-center space-x-2">
           <Zap size={16} className="text-[#a1c9ff] fill-[#a1c9ff]" />
           <span className="font-semibold text-sm tracking-wider text-[#a1c9ff]">
@@ -312,6 +363,29 @@ function App() {
               {isOnline ? "Online" : "Offline"}
             </strong>
           </span>
+          <div className="flex items-center space-x-1 pl-2 border-l border-[#30363D] h-6">
+            <button
+              onClick={() => getCurrentWindow().minimize()}
+              className="p-1 hover:bg-[#272a30] rounded text-[#8b919d] hover:text-[#e0e2ea] transition cursor-pointer flex items-center justify-center"
+              title="Minimize"
+            >
+              <Minus size={13} />
+            </button>
+            <button
+              onClick={handleToggleMaximize}
+              className="p-1 hover:bg-[#272a30] rounded text-[#8b919d] hover:text-[#e0e2ea] transition cursor-pointer flex items-center justify-center"
+              title="Maximize / Restore"
+            >
+              <Square size={10} />
+            </button>
+            <button
+              onClick={() => getCurrentWindow().close()}
+              className="p-1 hover:bg-[#ea3e3e]/20 hover:text-[#ff8080] rounded text-[#8b919d] transition cursor-pointer flex items-center justify-center"
+              title="Close"
+            >
+              <X size={13} />
+            </button>
+          </div>
         </div>
       </header>
 

@@ -423,7 +423,7 @@ function App() {
         className="h-12 border-b border-[#30363D] flex items-center justify-between px-4 bg-[#1c2025] flex-shrink-0 select-none cursor-default"
       >
         <div className="flex items-center space-x-2">
-          <Zap size={16} className="text-[#a1c9ff] fill-[#a1c9ff]" />
+          <img src="/logo.svg" className="w-4 h-4 object-contain select-none" alt="Boltt Logo" />
           <span className="font-semibold text-sm tracking-wider text-[#a1c9ff]">
             Boltt
           </span>
@@ -637,7 +637,7 @@ function App() {
                 <div className="max-w-md w-full space-y-6 z-10">
                   {/* Glowing Lightning Bolt Container */}
                   <div className="relative inline-flex items-center justify-center p-6 bg-gradient-to-b from-blue-500/10 to-transparent border border-blue-500/20 rounded-full shadow-[0_0_50px_rgba(59,130,246,0.15)]">
-                    <Zap size={48} className="text-[#a1c9ff] fill-[#a1c9ff]/20 filter drop-shadow-[0_0_12px_rgba(161,201,255,0.4)]" />
+                    <img src="/logo.svg" className="w-14 h-14 object-contain select-none" alt="Boltt Logo" />
                   </div>
                   
                   <div className="space-y-2">

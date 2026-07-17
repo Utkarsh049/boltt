@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { UrlBar } from "./components/UrlBar/UrlBar";
 import { RequestPane } from "./components/RequestPane/RequestPane";
-import { Zap, Settings, RefreshCw, Folder as FolderIcon, Globe, Clock, Eye, EyeOff, Plus, Minus, Square, X } from "lucide-react";
+import { Settings, RefreshCw, Folder as FolderIcon, Globe, Clock, Eye, EyeOff, Plus, Minus, Square, X } from "lucide-react";
 import "./App.css";
 import { Group, Panel, Separator, type PanelImperativeHandle } from "react-resizable-panels";
 import { ResponsePane } from "./components/ResponsePane/ResponsePane";

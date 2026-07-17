@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useEnvStore, Environment, Variable, getGroupFromId } from "../../store/envStore";
-import { X, Plus, Trash2, Eye, EyeOff, Save, Key } from "lucide-react";
+import { X, Plus, Trash2, Eye, EyeOff, Save, Key, Minus, Square } from "lucide-react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
 export const EnvironmentModal: React.FC = () => {
@@ -80,6 +80,55 @@ export const EnvironmentModal: React.FC = () => {
     } else {
       setModalOpen(false);
     }
+  };
+
+  const handleToggleMaximize = async () => {
+    try {
+      const window = getCurrentWindow();
+      if (await window.isMaximized()) {
+        await window.unmaximize();
+      } else {
+        await window.maximize();
+      }
+    } catch (err) {
+      console.error("Failed to toggle maximize:", err);
+    }
+  };
+
+  const handleHeaderMouseDown = (e: React.MouseEvent) => {
+    if (!isEnvWindow) return;
+    if (e.button === 0) {
+      const target = e.target as HTMLElement;
+      if (
+        target.closest("button") ||
+        target.closest("input") ||
+        target.closest("select") ||
+        target.closest("a") ||
+        target.closest(".custom-interactive")
+      ) {
+        return;
+      }
+      try {
+        getCurrentWindow().startDragging();
+      } catch (err) {
+        console.error("Failed to start window drag:", err);
+      }
+    }
+  };
+
+  const handleHeaderDoubleClick = (e: React.MouseEvent) => {
+    if (!isEnvWindow) return;
+    const target = e.target as HTMLElement;
+    if (
+      target.closest("button") ||
+      target.closest("input") ||
+      target.closest("select") ||
+      target.closest("a") ||
+      target.closest(".custom-interactive")
+    ) {
+      return;
+    }
+    handleToggleMaximize();
   };
 
   // Handle escape key listener for standalone windows
@@ -225,14 +274,42 @@ export const EnvironmentModal: React.FC = () => {
         : "w-[780px] h-[520px] border rounded-lg shadow-2xl"
     }`}>
       {/* Modal Header */}
-      <div className="h-12 border-b border-[#30363D] bg-[#1c2025] flex items-center justify-between px-4 flex-shrink-0">
+      <div
+        onMouseDown={handleHeaderMouseDown}
+        onDoubleClick={handleHeaderDoubleClick}
+        className="h-12 border-b border-[#30363D] bg-[#1c2025] flex items-center justify-between px-4 flex-shrink-0 select-none cursor-default"
+      >
         <div className="flex items-center space-x-2">
           <Key size={16} className="text-[#a1c9ff]" />
           <span className="font-semibold text-sm text-[#e0e2ea] capitalize">
             Manage {targetGroup} Environments
           </span>
         </div>
-        {!isEnvWindow && (
+        {isEnvWindow ? (
+          <div className="flex items-center space-x-1 pl-2 border-l border-[#30363D] h-6">
+            <button
+              onClick={() => getCurrentWindow().minimize()}
+              className="p-1 hover:bg-[#272a30] rounded text-[#8b919d] hover:text-[#e0e2ea] transition cursor-pointer flex items-center justify-center"
+              title="Minimize"
+            >
+              <Minus size={13} />
+            </button>
+            <button
+              onClick={handleToggleMaximize}
+              className="p-1 hover:bg-[#272a30] rounded text-[#8b919d] hover:text-[#e0e2ea] transition cursor-pointer flex items-center justify-center"
+              title="Maximize / Restore"
+            >
+              <Square size={10} />
+            </button>
+            <button
+              onClick={() => getCurrentWindow().close()}
+              className="p-1 hover:bg-[#ea3e3e]/20 hover:text-[#ff8080] rounded text-[#8b919d] transition cursor-pointer flex items-center justify-center"
+              title="Close"
+            >
+              <X size={13} />
+            </button>
+          </div>
+        ) : (
           <button
             onClick={handleClose}
             className="text-[#8b919d] hover:text-[#e0e2ea] transition cursor-pointer"

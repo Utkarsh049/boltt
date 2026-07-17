@@ -50,6 +50,7 @@ export const openEnvironmentWindow = async (group: "production" | "staging" | "l
       minWidth: 700,
       minHeight: 450,
       resizable: true,
+      decorations: false,
       theme: "dark",
       backgroundColor: "#161B22",
     });

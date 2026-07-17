@@ -38,7 +38,11 @@ function App() {
   // Sync theme class list on mount
   useEffect(() => {
     let savedTheme = localStorage.getItem("boltt-theme") || "dark";
-    const validThemes = ["dark", "light", "nord", "dracula", "space"];
+    if (savedTheme === "one-dark-glass") {
+      savedTheme = "glass";
+      localStorage.setItem("boltt-theme", "glass");
+    }
+    const validThemes = ["dark", "light", "nord", "dracula", "space", "glass"];
     if (!validThemes.includes(savedTheme)) {
       savedTheme = "dark";
       setTheme("dark");
@@ -282,16 +286,16 @@ function App() {
 
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
         e.preventDefault();
-        
+
         const activeRequest = useRequestStore.getState().activeRequest;
         const { tabs } = useRequestStore.getState();
         if (tabs.length === 0) return; // No active request to save
-        
+
         if (!activeRequest.id) {
           useProjectsStore.getState().setSaveModalOpen(true);
           return;
         }
-        
+
         const saved = await useProjectsStore.getState().saveRequestDirectly(activeRequest);
         if (saved) {
           useRequestStore.getState().markTabClean(activeRequest.id);
@@ -494,8 +498,9 @@ function App() {
                   { id: "dark", name: "Dark Theme" },
                   { id: "light", name: "Light Theme" },
                   { id: "nord", name: "Nord Theme" },
-                  { id: "dracula", name: "Dracula" },
-                  { id: "space", name: "Space" },
+                  { id: "dracula", name: "Dracula Theme" },
+                  { id: "space", name: "Space Theme" },
+                  { id: "glass", name: "Glass Theme" },
                 ] as const).map((t) => {
                   const isSelected = theme === t.id;
                   return (
@@ -509,9 +514,8 @@ function App() {
                         setTheme(t.id);
                         setIsThemeDropdownOpen(false);
                       }}
-                      className={`w-full text-left px-3 py-1.5 text-[11px] flex items-center justify-between transition cursor-pointer hover:bg-bg-tertiary/60 ${
-                        isSelected ? "text-text-accent font-semibold bg-bg-tertiary" : "text-text-primary"
-                      }`}
+                      className={`w-full text-left px-3 py-1.5 text-[11px] flex items-center justify-between transition cursor-pointer hover:bg-bg-tertiary/60 ${isSelected ? "text-text-accent font-semibold bg-bg-tertiary" : "text-text-primary"
+                        }`}
                     >
                       <span>{t.name}</span>
                     </button>
@@ -564,7 +568,7 @@ function App() {
       {/* Main Resizable Split Workspace */}
       <div className="flex-1 overflow-hidden relative">
         <Group id="main-workspace-group-v5" orientation="horizontal">
-          
+
           {/* 1. Sidebar Panel */}
           <Panel
             id="sidebar-panel"
@@ -579,35 +583,32 @@ function App() {
             <div className="flex border-b border-border-primary bg-bg-tertiary h-9 flex-shrink-0">
               <button
                 onClick={() => setSidebarTab("collections")}
-                className={`flex-1 flex items-center justify-center text-[11px] font-semibold transition px-2 min-w-0 ${
-                  sidebarTab === "collections"
+                className={`flex-1 flex items-center justify-center text-[11px] font-semibold transition px-2 min-w-0 ${sidebarTab === "collections"
                     ? "bg-bg-secondary text-text-accent"
                     : "text-text-secondary hover:text-text-primary"
-                }`}
+                  }`}
               >
                 <FolderIcon size={13} className="flex-shrink-0" />
                 {sidebarTab === "collections" && <span className="ml-1.5 truncate whitespace-nowrap">Collections</span>}
               </button>
-              
+
               <button
                 onClick={() => setSidebarTab("environments")}
-                className={`flex-1 flex items-center justify-center text-[11px] font-semibold transition px-2 min-w-0 ${
-                  sidebarTab === "environments"
+                className={`flex-1 flex items-center justify-center text-[11px] font-semibold transition px-2 min-w-0 ${sidebarTab === "environments"
                     ? "bg-bg-secondary text-text-accent"
                     : "text-text-secondary hover:text-text-primary"
-                }`}
+                  }`}
               >
                 <Globe size={13} className="flex-shrink-0" />
                 {sidebarTab === "environments" && <span className="ml-1.5 truncate whitespace-nowrap">Environments</span>}
               </button>
-              
+
               <button
                 onClick={() => setSidebarTab("history")}
-                className={`flex-1 flex items-center justify-center text-[11px] font-semibold transition px-2 min-w-0 ${
-                  sidebarTab === "history"
+                className={`flex-1 flex items-center justify-center text-[11px] font-semibold transition px-2 min-w-0 ${sidebarTab === "history"
                     ? "bg-bg-secondary text-text-accent"
                     : "text-text-secondary hover:text-text-primary"
-                }`}
+                  }`}
               >
                 <Clock size={13} className="flex-shrink-0" />
                 {sidebarTab === "history" && <span className="ml-1.5 truncate whitespace-nowrap">History</span>}
@@ -649,11 +650,10 @@ function App() {
                         <div
                           key={group}
                           onClick={() => setActiveGroup(group)}
-                          className={`flex items-center justify-between px-2.5 py-1.5 rounded-sm cursor-pointer transition border ${
-                            isActiveGroup
+                          className={`flex items-center justify-between px-2.5 py-1.5 rounded-sm cursor-pointer transition border ${isActiveGroup
                               ? "bg-bg-tertiary/50 border-border-primary text-text-accent"
                               : "border-transparent text-text-secondary hover:text-text-primary hover:bg-bg-tertiary/20"
-                          }`}
+                            }`}
                         >
                           <div className="flex flex-col min-w-0">
                             <span className="capitalize text-xs font-semibold">{group}</span>
@@ -720,13 +720,13 @@ function App() {
               <div className="flex-1 flex flex-col items-center justify-center bg-bg-primary p-8 text-center select-none font-sans h-full relative overflow-hidden">
                 {/* Background ambient glow */}
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[100px] pointer-events-none"></div>
-                
+
                 <div className="max-w-md w-full space-y-6 z-10">
                   {/* Glowing Lightning Bolt Container */}
                   <div className="relative inline-flex items-center justify-center p-6 bg-gradient-to-b from-blue-500/10 to-transparent border border-blue-500/20 rounded-full shadow-[0_0_50px_rgba(59,130,246,0.15)]">
                     <img src="/logo.svg" className="w-14 h-14 object-contain select-none" alt="Boltt Logo" />
                   </div>
-                  
+
                   <div className="space-y-2">
                     <h1 className="text-xl font-bold text-text-primary tracking-tight">
                       Start your first request
@@ -745,7 +745,7 @@ function App() {
                       <Plus size={14} />
                       <span>Create a Request</span>
                     </button>
-                    
+
                     <div className="flex items-center space-x-2 text-xs text-text-secondary py-1 select-none">
                       <div className="flex-1 h-[1px] bg-border-primary/60"></div>
                       <span>OR</span>
@@ -771,7 +771,7 @@ function App() {
               </div>
             ) : (
               <Group id="workstage-group-v5" orientation="horizontal">
-                
+
                 {/* Left stage: Request Builder Panel */}
                 <Panel defaultSize="55%" minSize="500px" className="flex flex-col bg-bg-primary h-full overflow-hidden min-w-0">
                   <TabBar />

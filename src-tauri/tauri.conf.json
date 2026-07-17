@@ -19,7 +19,8 @@
         "minWidth": 900,
         "minHeight": 600,
         "zoomHotkeysEnabled": false,
-        "additionalBrowserArgs": "--disable-pinch"
+        "additionalBrowserArgs": "--disable-pinch",
+        "transparent": true
       }
     ],
     "security": {

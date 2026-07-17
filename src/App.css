@@ -26,7 +26,10 @@
 }
 
 /* Prevent native browser/OS focus outlines and boxes on buttons globally */
-button, button:focus, button:active, button:focus-visible {
+button,
+button:focus,
+button:active,
+button:focus-visible {
   outline: none !important;
   box-shadow: none !important;
 }
@@ -36,6 +39,7 @@ button, button:focus, button:active, button:focus-visible {
     transform: translateY(12px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -47,6 +51,7 @@ button, button:focus, button:active, button:focus-visible {
     opacity: 0;
     transform: translateY(2px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -57,7 +62,9 @@ button, button:focus, button:active, button:focus-visible {
   animation: tab-fade-in 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   margin: 0;
   padding: 0;
@@ -117,6 +124,60 @@ html.theme-space {
   --bg-editor: #181a1f;
 }
 
+html.theme-glass {
+  --bg-primary: rgba(8, 9, 9, 0.78);
+  --bg-secondary: rgba(12, 13, 13, 0.82);
+  --bg-tertiary: rgba(24, 25, 25, 0.88);
+  --border-primary: rgba(55, 55, 55, 0.75);
+  --text-primary: #abb2bf;
+  --text-secondary: #7f838c;
+  --text-accent: #61afef;
+  --bg-hover: rgba(44, 49, 58, 0.55);
+  --bg-hover-light: rgba(62, 68, 81, 0.7);
+  --bg-editor: rgba(20, 22, 26, 0.65);
+
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+html.theme-glass #root,
+html.theme-glass .h-screen.w-screen {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+html.theme-glass body {
+  background-color: rgba(8, 9, 9, 0.78) !important;
+  background: rgba(8, 9, 9, 0.78) !important;
+}
+
+/* Glassmorphism panel blurs - apply blur ONLY on the static sidebar panels to prevent WebKitGTK graphics buffer memory leaks on active workspace/editor repaints */
+html.theme-glass .w-64.bg-bg-secondary,
+html.theme-glass .w-\[300px\].bg-bg-secondary {
+  backdrop-filter: blur(20px) saturate(125%);
+  -webkit-backdrop-filter: blur(20px) saturate(125%);
+}
+
+/* Exclude header, its children, and absolute-positioned elements (like dropdowns/modals) from backdrop-filter 
+   to completely prevent GTK WebKit input-region / click-blocking rendering bugs */
+html.theme-glass header,
+html.theme-glass header *,
+html.theme-glass .absolute,
+html.theme-glass .absolute * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Ensure nested layout blocks inside the workspace do not compound opacity in glass mode */
+html.theme-glass .flex-grow.bg-bg-primary,
+html.theme-glass .flex-1.p-4.bg-bg-primary,
+html.theme-glass .flex-grow.bg-bg-secondary,
+html.theme-glass .bg-bg-secondary:not(.w-64):not(.w-\[300px\]),
+html.theme-glass .bg-bg-primary:not(.h-screen) {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
 /* CodeMirror Theme Sync Overrides */
 .cm-editor {
   background-color: var(--bg-editor) !important;
@@ -142,6 +203,7 @@ html.theme-space {
   color: var(--text-accent) !important;
 }
 
-.cm-cursor, .cm-dropCursor {
+.cm-cursor,
+.cm-dropCursor {
   border-left-color: var(--text-accent) !important;
 }

@@ -141,8 +141,8 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
         ["POST", "PUT", "PATCH"].includes(method) && state.activeRequest.body.type === "None"
           ? { type: "Json", content: "{}" }
           : !["POST", "PUT", "PATCH"].includes(method)
-          ? { type: "None" }
-          : state.activeRequest.body;
+            ? { type: "None" }
+            : state.activeRequest.body;
       const updatedActiveRequest = {
         ...state.activeRequest,
         method,

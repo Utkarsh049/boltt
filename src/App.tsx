@@ -68,6 +68,36 @@ function App() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isThemeDropdownOpen, setTheme]);
 
+  // Listen to global theme-changed events (for multi-window synchronization)
+  useEffect(() => {
+    let active = true;
+    let unlistenFn: (() => void) | undefined;
+
+    const setupListener = async () => {
+      const { listen } = await import("@tauri-apps/api/event");
+      const fn = await listen<string>("theme-changed", (event) => {
+        const currentTheme = useRequestStore.getState().theme;
+        const newTheme = event.payload;
+        if (newTheme !== currentTheme) {
+          setTheme(newTheme);
+        }
+      });
+      if (!active) {
+        fn();
+      } else {
+        unlistenFn = fn;
+      }
+    };
+    setupListener();
+
+    return () => {
+      active = false;
+      if (unlistenFn) {
+        unlistenFn();
+      }
+    };
+  }, [setTheme]);
+
   const response = useRequestStore((state) => state.response);
   const isLoading = useRequestStore((state) => state.isLoading);
   const tabs = useRequestStore((state) => state.tabs);

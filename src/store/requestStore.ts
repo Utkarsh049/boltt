@@ -133,6 +133,13 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
       root.classList.add(`theme-${theme}`);
     }
     set({ theme });
+    
+    // Broadcast theme changes to other windows (multi-window sync)
+    import("@tauri-apps/api/event").then(({ emit }) => {
+      emit("theme-changed", theme).catch((err) => {
+        console.warn("Failed to broadcast theme change:", err);
+      });
+    });
   },
 
   setMethod: (method) =>

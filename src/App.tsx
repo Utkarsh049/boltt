@@ -31,6 +31,7 @@ function App() {
 
   const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
   const themeDropdownRef = useRef<HTMLDivElement>(null);
+  const initialThemeRef = useRef<string | null>(null);
   const theme = useRequestStore((state) => state.theme);
   const setTheme = useRequestStore((state) => state.setTheme);
 
@@ -53,12 +54,15 @@ function App() {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (themeDropdownRef.current && !themeDropdownRef.current.contains(event.target as Node)) {
+        if (isThemeDropdownOpen && initialThemeRef.current) {
+          setTheme(initialThemeRef.current);
+        }
         setIsThemeDropdownOpen(false);
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  }, [isThemeDropdownOpen, setTheme]);
 
   const response = useRequestStore((state) => state.response);
   const isLoading = useRequestStore((state) => state.isLoading);
@@ -463,7 +467,14 @@ function App() {
           <EnvironmentDropdown />
           <div className="relative" ref={themeDropdownRef}>
             <button
-              onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
+              onClick={() => {
+                if (!isThemeDropdownOpen) {
+                  initialThemeRef.current = theme;
+                } else if (initialThemeRef.current) {
+                  setTheme(initialThemeRef.current);
+                }
+                setIsThemeDropdownOpen(!isThemeDropdownOpen);
+              }}
               className={`p-1 hover:bg-bg-hover rounded border border-transparent hover:border-border-primary transition cursor-pointer flex items-center justify-center ${isThemeDropdownOpen ? "bg-bg-hover border-border-primary" : ""}`}
               title="Select color theme"
             >
@@ -471,7 +482,14 @@ function App() {
             </button>
 
             {isThemeDropdownOpen && (
-              <div className="absolute right-0 mt-1 w-40 bg-bg-secondary border border-border-primary rounded shadow-2xl z-50 py-1 font-sans flex flex-col">
+              <div
+                onMouseLeave={() => {
+                  if (initialThemeRef.current) {
+                    setTheme(initialThemeRef.current);
+                  }
+                }}
+                className="absolute right-0 mt-1 w-40 bg-bg-secondary border border-border-primary rounded shadow-2xl z-50 py-1 font-sans flex flex-col"
+              >
                 {([
                   { id: "dark", name: "Dark Theme" },
                   { id: "light", name: "Light Theme" },
@@ -483,7 +501,11 @@ function App() {
                   return (
                     <button
                       key={t.id}
+                      onMouseEnter={() => {
+                        setTheme(t.id);
+                      }}
                       onClick={() => {
+                        initialThemeRef.current = t.id; // Commit the selection
                         setTheme(t.id);
                         setIsThemeDropdownOpen(false);
                       }}

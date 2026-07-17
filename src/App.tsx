@@ -36,13 +36,18 @@ function App() {
 
   // Sync theme class list on mount
   useEffect(() => {
-    const savedTheme = localStorage.getItem("boltt-theme") || "dark";
+    let savedTheme = localStorage.getItem("boltt-theme") || "dark";
+    const validThemes = ["dark", "light", "nord", "dracula", "space"];
+    if (!validThemes.includes(savedTheme)) {
+      savedTheme = "dark";
+      setTheme("dark");
+    }
     const root = document.documentElement;
     root.className = "";
     if (savedTheme !== "dark") {
       root.classList.add(`theme-${savedTheme}`);
     }
-  }, []);
+  }, [setTheme]);
 
   // Theme dropdown click outside handler
   useEffect(() => {
@@ -466,12 +471,13 @@ function App() {
             </button>
 
             {isThemeDropdownOpen && (
-              <div className="absolute right-0 mt-1 w-32 bg-bg-secondary border border-border-primary rounded shadow-2xl z-50 py-1 font-sans flex flex-col">
+              <div className="absolute right-0 mt-1 w-40 bg-bg-secondary border border-border-primary rounded shadow-2xl z-50 py-1 font-sans flex flex-col">
                 {([
                   { id: "dark", name: "Dark Theme" },
                   { id: "light", name: "Light Theme" },
                   { id: "nord", name: "Nord Theme" },
                   { id: "dracula", name: "Dracula" },
+                  { id: "space", name: "Space" },
                 ] as const).map((t) => {
                   const isSelected = theme === t.id;
                   return (

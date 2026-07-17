@@ -10,6 +10,7 @@
   --text-accent: #a1c9ff;
   --bg-hover: #272a30;
   --bg-hover-light: #32353b;
+  --bg-editor: #161B22;
 }
 
 @theme {
@@ -74,6 +75,7 @@ html.theme-light {
   --text-accent: #0969da;
   --bg-hover: #eaeef2;
   --bg-hover-light: #e1e8f0;
+  --bg-editor: #ffffff;
 }
 
 html.theme-nord {
@@ -86,6 +88,7 @@ html.theme-nord {
   --text-accent: #88c0d0;
   --bg-hover: #4c566a;
   --bg-hover-light: #5e81ac;
+  --bg-editor: #242933;
 }
 
 html.theme-dracula {
@@ -98,4 +101,47 @@ html.theme-dracula {
   --text-accent: #bd93f9;
   --bg-hover: #44475a;
   --bg-hover-light: #ff79c6;
+  --bg-editor: #1e1f29;
+}
+
+html.theme-space {
+  --bg-primary: #080909;
+  --bg-secondary: #080909;
+  --bg-tertiary: #0f1010;
+  --border-primary: #212121;
+  --text-primary: #abb2bf;
+  --text-secondary: #7f838c;
+  --text-accent: #61afef;
+  --bg-hover: #2c313a;
+  --bg-hover-light: #3e4451;
+  --bg-editor: #181a1f;
+}
+
+/* CodeMirror Theme Sync Overrides */
+.cm-editor {
+  background-color: var(--bg-editor) !important;
+  color: var(--text-primary) !important;
+}
+
+.cm-scroller {
+  background-color: var(--bg-editor) !important;
+}
+
+.cm-gutters {
+  background-color: var(--bg-editor) !important;
+  border-right: 1px solid var(--border-primary) !important;
+  color: var(--text-secondary) !important;
+}
+
+.cm-activeLine {
+  background-color: var(--bg-hover) !important;
+}
+
+.cm-activeLineGutter {
+  background-color: var(--bg-hover) !important;
+  color: var(--text-accent) !important;
+}
+
+.cm-cursor, .cm-dropCursor {
+  border-left-color: var(--text-accent) !important;
 }

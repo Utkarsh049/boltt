@@ -60,10 +60,10 @@ export const RequestPane: React.FC = () => {
     const isActive = activeTab === tab;
     return `h-9 px-4 flex items-center space-x-1.5 border border-transparent text-xs font-semibold select-none cursor-pointer transition-[color,background-color] duration-150 ${
       isActive
-        ? `bg-[#101419] text-[#a1c9ff] border-r-[#30363D] ${
-            tab === "params" ? "border-l-transparent" : "border-l-[#30363D]"
+        ? `bg-bg-primary text-text-accent border-r-border-primary ${
+            tab === "params" ? "border-l-transparent" : "border-l-border-primary"
           } -mb-[1px]`
-        : "text-[#8b919d] hover:text-[#e0e2ea]"
+        : "text-text-secondary hover:text-text-primary"
     }`;
   };
 
@@ -136,14 +136,14 @@ export const RequestPane: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col border border-[#30363D] bg-[#161B22] rounded-sm overflow-hidden">
+    <div className="flex-1 flex flex-col border border-border-primary bg-bg-secondary rounded-sm overflow-hidden">
       {/* Horizontal Tabs Header */}
-      <div className="flex items-end border-b border-[#30363D] bg-[#1c2025] h-9">
+      <div className="flex items-end border-b border-border-primary bg-bg-tertiary h-9">
         <button onClick={() => setActiveTab("params")} className={tabClass("params")}>
           <ListFilter size={13} />
           <span>Params</span>
           {activeParamsCount > 0 && (
-            <span className="bg-[#272a30] text-[#a1c9ff] text-[10px] px-1.5 rounded-full border border-[#30363D]">
+            <span className="bg-bg-hover text-text-accent text-[10px] px-1.5 rounded-full border border-border-primary">
               {activeParamsCount}
             </span>
           )}
@@ -152,7 +152,7 @@ export const RequestPane: React.FC = () => {
           <Sliders size={13} />
           <span>Headers</span>
           {activeHeadersCount > 0 && (
-            <span className="bg-[#272a30] text-[#a1c9ff] text-[10px] px-1.5 rounded-full border border-[#30363D]">
+            <span className="bg-bg-hover text-text-accent text-[10px] px-1.5 rounded-full border border-border-primary">
               {activeHeadersCount}
             </span>
           )}
@@ -161,24 +161,24 @@ export const RequestPane: React.FC = () => {
           <Code2 size={13} />
           <span>Body</span>
           {activeBodyCount > 0 && (
-            <span className="w-1.5 h-1.5 bg-[#a1c9ff] rounded-full"></span>
+            <span className="w-1.5 h-1.5 bg-text-accent rounded-full"></span>
           )}
         </button>
         <button onClick={() => setActiveTab("auth")} className={tabClass("auth")}>
           <KeyRound size={13} />
           <span>Authorization</span>
           {isAuthActive && (
-            <span className="w-1.5 h-1.5 bg-[#a1c9ff] rounded-full"></span>
+            <span className="w-1.5 h-1.5 bg-text-accent rounded-full"></span>
           )}
         </button>
       </div>
 
       {/* Tab Panel Content */}
-      <div className="flex-1 p-4 bg-[#101419] overflow-y-auto">
+      <div className="flex-1 p-4 bg-bg-primary overflow-y-auto">
         {/* Params Tab */}
         {activeTab === "params" && (
           <div className="animate-tab-fade space-y-2">
-            <div className="text-[11px] text-[#8b919d] mb-2 font-semibold uppercase tracking-wider">
+            <div className="text-[11px] text-text-secondary mb-2 font-semibold uppercase tracking-wider">
               Query Parameters
             </div>
             <KVEditor
@@ -193,7 +193,7 @@ export const RequestPane: React.FC = () => {
         {/* Headers Tab */}
         {activeTab === "headers" && (
           <div className="animate-tab-fade space-y-2">
-            <div className="text-[11px] text-[#8b919d] mb-2 font-semibold uppercase tracking-wider">
+            <div className="text-[11px] text-text-secondary mb-2 font-semibold uppercase tracking-wider">
               Request Headers
             </div>
             <KVEditor
@@ -209,7 +209,7 @@ export const RequestPane: React.FC = () => {
         {activeTab === "body" && (
           <div className="animate-tab-fade space-y-4 flex flex-col h-full">
             {/* Body Mode Selector */}
-            <div className="flex space-x-2 border-b border-[#30363D] pb-3">
+            <div className="flex space-x-2 border-b border-border-primary pb-3">
               {(["None", "Json", "Raw", "FormData"] as const).map((mode) => {
                 const isSelected =
                   (mode === "None" && activeRequest.body.type === "None") ||
@@ -223,8 +223,8 @@ export const RequestPane: React.FC = () => {
                     onClick={() => handleBodyTypeChange(mode)}
                     className={`px-3 py-1 text-xs rounded-sm border transition ${
                       isSelected
-                        ? "bg-[#272a30] text-[#a1c9ff] border-[#a1c9ff]"
-                        : "bg-transparent text-[#8b919d] border-[#30363D] hover:text-[#e0e2ea]"
+                        ? "bg-bg-hover text-text-accent border-text-accent"
+                        : "bg-transparent text-text-secondary border-border-primary hover:text-text-primary"
                     }`}
                   >
                     {mode === "FormData" ? "Form-data" : mode}
@@ -237,18 +237,18 @@ export const RequestPane: React.FC = () => {
             {activeRequest.body.type === "Json" && (
               <div className="flex-1 flex flex-col min-h-[220px]">
                 <div className="flex items-center justify-between mb-1">
-                  <div className="text-[10px] text-[#8b919d] font-mono">JSON Body Content:</div>
+                  <div className="text-[10px] text-text-secondary font-mono">JSON Body Content:</div>
                    <button
                     type="button"
                     onClick={handleBeautifyJson}
-                    className="text-[9px] bg-[#272a30] text-[#a1c9ff] border border-[#30363D] px-2 py-0.5 rounded hover:bg-[#32353b] cursor-pointer transition select-none font-semibold hover:border-[#a1c9ff]/30 active:scale-95 flex items-center space-x-1"
+                    className="text-[9px] bg-bg-hover text-text-accent border border-border-primary px-2 py-0.5 rounded hover:bg-[#32353b] cursor-pointer transition select-none font-semibold hover:border-text-accent/30 active:scale-95 flex items-center space-x-1"
                     title="Format JSON content"
                   >
                     <Sparkles size={10} />
                     <span>Beautify</span>
                   </button>
                 </div>
-                <div className="flex-1 border border-[#30363D] rounded-sm overflow-hidden text-xs">
+                <div className="flex-1 border border-border-primary rounded-sm overflow-hidden text-xs">
                   <CodeMirror
                     value={activeRequest.body.content || ""}
                     height="100%"
@@ -265,11 +265,11 @@ export const RequestPane: React.FC = () => {
             {/* Raw Text Editor */}
             {activeRequest.body.type === "Raw" && (
               <div className="flex-1 flex flex-col min-h-[220px]">
-                <div className="text-[10px] text-[#8b919d] mb-1 font-mono">Plain Text Body Content:</div>
+                <div className="text-[10px] text-text-secondary mb-1 font-mono">Plain Text Body Content:</div>
                 <textarea
                   value={activeRequest.body.content || ""}
                   onChange={(e) => handleBodyContentChange(e.target.value)}
-                  className="flex-1 bg-[#101419] text-[#e0e2ea] border border-[#30363D] p-3 rounded-sm font-mono text-xs focus:outline-none focus:border-[#a1c9ff] placeholder-[#8b919d]/40 min-h-[180px]"
+                  className="flex-1 bg-bg-primary text-text-primary border border-border-primary p-3 rounded-sm font-mono text-xs focus:outline-none focus:border-text-accent placeholder-text-secondary/40 min-h-[180px]"
                   placeholder="Enter raw request body..."
                 />
               </div>
@@ -278,7 +278,7 @@ export const RequestPane: React.FC = () => {
             {/* FormData KV Table */}
             {activeRequest.body.type === "FormData" && (
               <div className="space-y-2">
-                <div className="text-[10px] text-[#8b919d] mb-1 font-mono">Multipart Form parameters:</div>
+                <div className="text-[10px] text-text-secondary mb-1 font-mono">Multipart Form parameters:</div>
                 <KVEditor
                   rows={activeRequest.body.content || []}
                   onChange={handleBodyFormChange}
@@ -290,8 +290,8 @@ export const RequestPane: React.FC = () => {
 
             {/* None / Empty state */}
             {activeRequest.body.type === "None" && (
-              <div className="flex-1 flex items-center justify-center py-10 border border-dashed border-[#30363D] rounded bg-[#161B22]/20">
-                <span className="text-[#8b919d] text-xs">This request has no body payload.</span>
+              <div className="flex-1 flex items-center justify-center py-10 border border-dashed border-border-primary rounded bg-bg-secondary/20">
+                <span className="text-text-secondary text-xs">This request has no body payload.</span>
               </div>
             )}
           </div>
@@ -302,22 +302,22 @@ export const RequestPane: React.FC = () => {
           <div className="animate-tab-fade space-y-4">
             {/* Auth Dropdown selector type */}
             <div className="flex items-center space-x-3 mb-4">
-              <label className="text-xs text-[#8b919d]">Auth Type:</label>
+              <label className="text-xs text-text-secondary">Auth Type:</label>
               <div className="relative inline-block text-left" ref={authDropdownRef}>
                 <button
                   type="button"
                   onClick={() => setIsAuthDropdownOpen(!isAuthDropdownOpen)}
-                  className="flex items-center justify-between px-3 py-1.5 min-w-[150px] bg-[#1c2025] text-[#e0e2ea] border border-[#30363D] rounded-sm text-xs font-medium cursor-pointer select-none hover:bg-[#272a30] transition duration-150 focus:outline-none focus:border-[#a1c9ff]"
+                  className="flex items-center justify-between px-3 py-1.5 min-w-[150px] bg-bg-tertiary text-text-primary border border-border-primary rounded-sm text-xs font-medium cursor-pointer select-none hover:bg-bg-hover transition duration-150 focus:outline-none focus:border-text-accent"
                 >
                   <div className="flex items-center space-x-2">
-                    <SelectedIcon size={13} className="text-[#8b919d]" />
+                    <SelectedIcon size={13} className="text-text-secondary" />
                     <span>{selectedOption.label}</span>
                   </div>
-                  <ChevronDown size={14} className="text-[#8b919d] ml-1 flex-shrink-0" />
+                  <ChevronDown size={14} className="text-text-secondary ml-1 flex-shrink-0" />
                 </button>
 
                 {isAuthDropdownOpen && (
-                  <div className="absolute left-0 mt-1 w-[160px] bg-[#161B22] border border-[#30363D] rounded shadow-2xl z-50 py-1 overflow-hidden font-sans">
+                  <div className="absolute left-0 mt-1 w-[160px] bg-bg-secondary border border-border-primary rounded shadow-2xl z-50 py-1 overflow-hidden font-sans">
                     {authOptions.map((opt) => {
                       const Icon = opt.icon;
                       const isSelected = activeRequest.auth.type === opt.value;
@@ -329,18 +329,18 @@ export const RequestPane: React.FC = () => {
                             handleAuthTypeChange(opt.value);
                             setIsAuthDropdownOpen(false);
                           }}
-                          className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between transition cursor-pointer hover:bg-[#1c2025]/60 ${
-                            isSelected ? "text-[#a1c9ff] font-semibold bg-[#1c2025]" : "text-[#e0e2ea]"
+                          className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between transition cursor-pointer hover:bg-bg-tertiary/60 ${
+                            isSelected ? "text-text-accent font-semibold bg-bg-tertiary" : "text-text-primary"
                           }`}
                         >
                           <div className="flex items-center space-x-2">
                             <Icon
                               size={13}
-                              className={isSelected ? "text-[#a1c9ff]" : "text-[#8b919d]"}
+                              className={isSelected ? "text-text-accent" : "text-text-secondary"}
                             />
                             <span>{opt.label}</span>
                           </div>
-                          {isSelected && <Check size={12} className="text-[#a1c9ff]" />}
+                          {isSelected && <Check size={12} className="text-text-accent" />}
                         </button>
                       );
                     })}
@@ -351,21 +351,21 @@ export const RequestPane: React.FC = () => {
 
             {/* Bearer Token Form */}
             {activeRequest.auth.type === "Bearer" && (
-              <div className="space-y-3 p-4 bg-[#161B22] border border-[#30363D] rounded-sm max-w-lg">
+              <div className="space-y-3 p-4 bg-bg-secondary border border-border-primary rounded-sm max-w-lg">
                 <div className="flex flex-col space-y-1">
-                  <label className="text-xs text-[#8b919d] font-semibold">Token</label>
+                  <label className="text-xs text-text-secondary font-semibold">Token</label>
                   <input
                     type="text"
                     value={activeRequest.auth.config.token}
                     onChange={(e) => handleBearerTokenChange(e.target.value)}
                     placeholder="Enter Bearer Token value"
-                    className="bg-[#101419] text-[#e0e2ea] border border-[#30363D] px-3 py-1.5 rounded-sm text-xs font-mono focus:outline-none focus:border-[#a1c9ff] placeholder-[#8b919d]/40"
+                    className="bg-bg-primary text-text-primary border border-border-primary px-3 py-1.5 rounded-sm text-xs font-mono focus:outline-none focus:border-text-accent placeholder-text-secondary/40"
                   />
                 </div>
                 {/* Visual token live preview */}
-                <div className="text-[11px] text-[#8b919d] pt-1">
+                <div className="text-[11px] text-text-secondary pt-1">
                   This will be sent as:{" "}
-                  <code className="text-amber-300 font-mono select-all break-all bg-[#101419] px-1.5 py-1 rounded border border-[#30363D]">
+                  <code className="text-amber-300 font-mono select-all break-all bg-bg-primary px-1.5 py-1 rounded border border-border-primary">
                     Authorization: Bearer {activeRequest.auth.config.token || "<token>"}
                   </code>
                 </div>
@@ -374,31 +374,31 @@ export const RequestPane: React.FC = () => {
 
             {/* Basic Auth Form */}
             {activeRequest.auth.type === "Basic" && (
-              <div className="space-y-3 p-4 bg-[#161B22] border border-[#30363D] rounded-sm max-w-lg">
+              <div className="space-y-3 p-4 bg-bg-secondary border border-border-primary rounded-sm max-w-lg">
                 <div className="flex flex-col space-y-1">
-                  <label className="text-xs text-[#8b919d] font-semibold">Username</label>
+                  <label className="text-xs text-text-secondary font-semibold">Username</label>
                   <input
                     type="text"
                     value={activeRequest.auth.config.username}
                     onChange={(e) => handleBasicAuthChange("username", e.target.value)}
                     placeholder="Username"
-                    className="bg-[#101419] text-[#e0e2ea] border border-[#30363D] px-3 py-1.5 rounded-sm text-xs font-mono focus:outline-none focus:border-[#a1c9ff] placeholder-[#8b919d]/40"
+                    className="bg-bg-primary text-text-primary border border-border-primary px-3 py-1.5 rounded-sm text-xs font-mono focus:outline-none focus:border-text-accent placeholder-text-secondary/40"
                   />
                 </div>
                 <div className="flex flex-col space-y-1">
-                  <label className="text-xs text-[#8b919d] font-semibold">Password</label>
+                  <label className="text-xs text-text-secondary font-semibold">Password</label>
                   <input
                     type="password"
                     value={activeRequest.auth.config.password}
                     onChange={(e) => handleBasicAuthChange("password", e.target.value)}
                     placeholder="Password"
-                    className="bg-[#101419] text-[#e0e2ea] border border-[#30363D] px-3 py-1.5 rounded-sm text-xs font-mono focus:outline-none focus:border-[#a1c9ff] placeholder-[#8b919d]/40"
+                    className="bg-bg-primary text-text-primary border border-border-primary px-3 py-1.5 rounded-sm text-xs font-mono focus:outline-none focus:border-text-accent placeholder-text-secondary/40"
                   />
                 </div>
                 {/* Visual basic auth live preview */}
-                <div className="text-[11px] text-[#8b919d] pt-1">
+                <div className="text-[11px] text-text-secondary pt-1">
                   This will be sent as:{" "}
-                  <code className="text-amber-300 font-mono bg-[#101419] px-1.5 py-0.5 rounded border border-[#30363D]">
+                  <code className="text-amber-300 font-mono bg-bg-primary px-1.5 py-0.5 rounded border border-border-primary">
                     Authorization: Basic {
                       activeRequest.auth.config.username || activeRequest.auth.config.password
                         ? btoa(`${activeRequest.auth.config.username}:${activeRequest.auth.config.password}`)
@@ -411,8 +411,8 @@ export const RequestPane: React.FC = () => {
 
             {/* Inherit / None state */}
             {activeRequest.auth.type === "None" && (
-              <div className="py-10 text-center border border-dashed border-[#30363D] rounded bg-[#161B22]/20">
-                <span className="text-[#8b919d] text-xs">
+              <div className="py-10 text-center border border-dashed border-border-primary rounded bg-bg-secondary/20">
+                <span className="text-text-secondary text-xs">
                   No authorization headers will be injected automatically.
                 </span>
               </div>

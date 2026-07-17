@@ -393,8 +393,8 @@ export const ProjectsTree: React.FC = () => {
         style={{ paddingLeft: `${depth * 12 + 12}px` }}
         className={`group flex items-center justify-between py-1.5 pr-2 text-xs font-mono rounded cursor-pointer transition select-none ${
           isActive
-            ? "bg-[#1c2025] text-[#a1c9ff] "
-            : "text-[#8b919d] hover:bg-[#1c2025]/40 hover:text-[#e0e2ea]"
+            ? "bg-bg-tertiary text-text-accent "
+            : "text-text-secondary hover:bg-bg-tertiary/40 hover:text-text-primary"
         }`}
       >
         <div className="flex items-center space-x-2 min-w-0 flex-1">
@@ -414,7 +414,7 @@ export const ProjectsTree: React.FC = () => {
             e.stopPropagation();
             onContextMenu(e, "request", projectId, { folderId, requestId: request.id, request });
           }}
-          className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-[#272a30] transition text-[#8b919d] hover:text-[#e0e2ea] cursor-pointer"
+          className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-bg-hover transition text-text-secondary hover:text-text-primary cursor-pointer"
         >
           <MoreVertical size={11} />
         </button>
@@ -430,17 +430,17 @@ export const ProjectsTree: React.FC = () => {
           onClick={(e) => toggleExpand(folder.id, e)}
           onContextMenu={(e) => onContextMenu(e, "folder", projectId, { folderId: folder.id, folder })}
           style={{ paddingLeft: `${depth * 12 + 8}px` }}
-          className="group flex items-center justify-between py-1.5 pr-2 rounded text-xs font-medium text-[#c0c7d3] hover:bg-[#1c2025]/40 hover:text-[#e0e2ea] cursor-pointer select-none"
+          className="group flex items-center justify-between py-1.5 pr-2 rounded text-xs font-medium text-[#c0c7d3] hover:bg-bg-tertiary/40 hover:text-text-primary cursor-pointer select-none"
         >
           <div className="flex items-center space-x-1.5 min-w-0 flex-1">
-            <span className="text-[#8b919d]">
+            <span className="text-text-secondary">
               {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
             </span>
-            <span className="text-[#a1c9ff]/90 flex-shrink-0">
+            <span className="text-text-accent/90 flex-shrink-0">
               {isExpanded ? (
-                <FolderOpenIcon size={13} className="fill-[#a1c9ff]/10" />
+                <FolderOpenIcon size={13} className="fill-text-accent/10" />
               ) : (
-                <FolderIcon size={13} className="fill-[#a1c9ff]/10" />
+                <FolderIcon size={13} className="fill-text-accent/10" />
               )}
             </span>
             <span className="truncate text-[11px] font-semibold">{folder.name}</span>
@@ -452,7 +452,7 @@ export const ProjectsTree: React.FC = () => {
               e.stopPropagation();
               onContextMenu(e, "folder", projectId, { folderId: folder.id, folder });
             }}
-            className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-[#272a30] transition text-[#8b919d] hover:text-[#e0e2ea] cursor-pointer"
+            className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-bg-hover transition text-text-secondary hover:text-text-primary cursor-pointer"
           >
             <MoreVertical size={11} />
           </button>
@@ -465,7 +465,7 @@ export const ProjectsTree: React.FC = () => {
             {folder.subfolders.length === 0 && folder.requests.length === 0 && (
               <div
                 style={{ paddingLeft: `${(depth + 1) * 12 + 20}px` }}
-                className="py-1 text-[10px] text-[#8b919d]/50 italic select-none"
+                className="py-1 text-[10px] text-text-secondary/50 italic select-none"
               >
                 Empty Folder
               </div>
@@ -479,20 +479,20 @@ export const ProjectsTree: React.FC = () => {
   const renderProject = (project: Project) => {
     const isExpanded = !!expandedIds[project.id];
     return (
-      <div key={project.id} className="border border-[#30363D]/40 bg-[#161B22] rounded overflow-hidden">
+      <div key={project.id} className="border border-border-primary/40 bg-bg-secondary rounded overflow-hidden">
         {/* Project Header */}
         <div
           onClick={(e) => toggleExpand(project.id, e)}
           onContextMenu={(e) => onContextMenu(e, "project", project.id, {})}
           className={`group flex items-center justify-between px-2.5 py-2 text-xs font-semibold cursor-pointer select-none transition ${
-            isExpanded ? "bg-[#1c2025]/60 text-[#e0e2ea]" : "text-[#8b919d] hover:bg-[#1c2025]/30 hover:text-[#e0e2ea]"
+            isExpanded ? "bg-bg-tertiary/60 text-text-primary" : "text-text-secondary hover:bg-bg-tertiary/30 hover:text-text-primary"
           }`}
         >
           <div className="flex items-center space-x-1.5 min-w-0 flex-1">
-            <span className="text-[#8b919d]">
+            <span className="text-text-secondary">
               {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
             </span>
-            <Briefcase size={13} className="text-[#8b919d] flex-shrink-0" />
+            <Briefcase size={13} className="text-text-secondary flex-shrink-0" />
             <span className="truncate uppercase tracking-wider text-[10px]">{project.name}</span>
           </div>
 
@@ -503,7 +503,7 @@ export const ProjectsTree: React.FC = () => {
                 e.stopPropagation();
                 triggerNamingDialog("create-folder", project.id);
               }}
-              className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-[#272a30] transition text-[#8b919d] hover:text-[#a1c9ff] cursor-pointer"
+              className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-bg-hover transition text-text-secondary hover:text-text-accent cursor-pointer"
               title="Add Folder"
             >
               <Plus size={12} />
@@ -513,7 +513,7 @@ export const ProjectsTree: React.FC = () => {
                 e.stopPropagation();
                 onContextMenu(e, "project", project.id, {});
               }}
-              className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-[#272a30] transition text-[#8b919d] hover:text-[#e0e2ea] cursor-pointer"
+              className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-bg-hover transition text-text-secondary hover:text-text-primary cursor-pointer"
             >
               <MoreVertical size={11} />
             </button>
@@ -522,14 +522,14 @@ export const ProjectsTree: React.FC = () => {
 
         {/* Project Body */}
         {isExpanded && (
-          <div className="p-1 space-y-0.5 border-t border-[#30363D]/20 bg-[#101419]/10">
+          <div className="p-1 space-y-0.5 border-t border-border-primary/20 bg-bg-primary/10">
             {project.folders.map((folder) => renderFolder(folder, project.id, 0))}
             {project.folders.length === 0 && (
-              <div className="py-3 px-4 text-center text-[10px] text-[#8b919d]/60 select-none">
+              <div className="py-3 px-4 text-center text-[10px] text-text-secondary/60 select-none">
                 <span>No folders yet. </span>
                 <button
                   onClick={() => triggerNamingDialog("create-folder", project.id)}
-                  className="text-[#a1c9ff] hover:underline cursor-pointer"
+                  className="text-text-accent hover:underline cursor-pointer"
                 >
                   Create folder
                 </button>
@@ -545,13 +545,13 @@ export const ProjectsTree: React.FC = () => {
     <div className="space-y-3">
       {/* List Header */}
       <div className="flex items-center justify-between select-none">
-        <span className="text-[10px] font-bold text-[#8b919d] uppercase tracking-wider">
+        <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">
           Projects
         </span>
         <div className="flex items-center space-x-1.5">
           <button
             onClick={importProjects}
-            className="text-[10px] bg-[#272a30] text-[#a1c9ff] border border-[#30363D] px-1.5 py-0.5 rounded hover:bg-[#32353b] flex items-center space-x-1 cursor-pointer transition"
+            className="text-[10px] bg-bg-hover text-text-accent border border-border-primary px-1.5 py-0.5 rounded hover:bg-bg-hover-light flex items-center space-x-1 cursor-pointer transition"
             title="Import existing project JSON files"
           >
             <FolderOpenIcon size={10} />
@@ -559,7 +559,7 @@ export const ProjectsTree: React.FC = () => {
           </button>
           <button
             onClick={() => createProject("Untitled Project")}
-            className="text-[10px] bg-[#272a30] text-[#a1c9ff] border border-[#30363D] px-1.5 py-0.5 rounded hover:bg-[#32353b] flex items-center space-x-1 cursor-pointer transition"
+            className="text-[10px] bg-bg-hover text-text-accent border border-border-primary px-1.5 py-0.5 rounded hover:bg-bg-hover-light flex items-center space-x-1 cursor-pointer transition"
             title="Create a new project"
           >
             <Plus size={10} />
@@ -573,19 +573,19 @@ export const ProjectsTree: React.FC = () => {
         {projects.length > 0 ? (
           projects.map(renderProject)
         ) : (
-          <div className="py-8 px-4 text-center border border-dashed border-[#30363D]/50 rounded-sm bg-[#161B22]/20 space-y-2">
-            <span className="block text-[11px] text-[#8b919d]">No projects yet</span>
+          <div className="py-8 px-4 text-center border border-dashed border-border-primary/50 rounded-sm bg-bg-secondary/20 space-y-2">
+            <span className="block text-[11px] text-text-secondary">No projects yet</span>
             <div className="flex flex-col space-y-1.5 px-2">
               <button
                 onClick={() => createProject("Untitled Project")}
-                className="w-full text-xs bg-[#272a30] text-[#a1c9ff] border border-[#30363D] px-2.5 py-1.5 rounded hover:bg-[#32353b] cursor-pointer transition font-semibold flex items-center justify-center space-x-1.5"
+                className="w-full text-xs bg-bg-hover text-text-accent border border-border-primary px-2.5 py-1.5 rounded hover:bg-bg-hover-light cursor-pointer transition font-semibold flex items-center justify-center space-x-1.5"
               >
                 <Plus size={12} />
                 <span>New Project</span>
               </button>
               <button
                 onClick={importProjects}
-                className="w-full text-xs bg-[#1c2025] text-[#e0e2ea] border border-[#30363D] px-2.5 py-1.5 rounded hover:bg-[#272a30] cursor-pointer transition font-semibold flex items-center justify-center space-x-1.5"
+                className="w-full text-xs bg-bg-tertiary text-text-primary border border-border-primary px-2.5 py-1.5 rounded hover:bg-bg-hover cursor-pointer transition font-semibold flex items-center justify-center space-x-1.5"
               >
                 <FolderOpenIcon size={12} />
                 <span>Import Project</span>
@@ -599,15 +599,15 @@ export const ProjectsTree: React.FC = () => {
       {contextMenu && (
         <div
           style={{ top: `${contextMenu.y}px`, left: `${contextMenu.x}px` }}
-          className="fixed z-50 w-44 bg-[#1c2025] border border-[#30363D] rounded-md shadow-2xl p-1 flex flex-col font-sans select-none"
+          className="fixed z-50 w-44 bg-bg-tertiary border border-border-primary rounded-md shadow-2xl p-1 flex flex-col font-sans select-none"
         >
           {contextMenu.type === "project" && (
             <>
               <button
                 onClick={() => triggerNamingDialog("create-folder", contextMenu.projectId)}
-                className="flex items-center space-x-2 w-full px-2.5 py-1.5 text-xs text-[#e0e2ea] hover:bg-[#272a30] rounded-sm text-left transition cursor-pointer"
+                className="flex items-center space-x-2 w-full px-2.5 py-1.5 text-xs text-text-primary hover:bg-bg-hover rounded-sm text-left transition cursor-pointer"
               >
-                <FolderPlus size={13} className="text-[#8b919d]" />
+                <FolderPlus size={13} className="text-text-secondary" />
                 <span>Add Folder</span>
               </button>
               <button
@@ -616,9 +616,9 @@ export const ProjectsTree: React.FC = () => {
                     initialValue: projects.find((p) => p.id === contextMenu.projectId)?.name || "",
                   })
                 }
-                className="flex items-center space-x-2 w-full px-2.5 py-1.5 text-xs text-[#e0e2ea] hover:bg-[#272a30] rounded-sm text-left transition cursor-pointer"
+                className="flex items-center space-x-2 w-full px-2.5 py-1.5 text-xs text-text-primary hover:bg-bg-hover rounded-sm text-left transition cursor-pointer"
               >
-                <Edit2 size={13} className="text-[#8b919d]" />
+                <Edit2 size={13} className="text-text-secondary" />
                 <span>Rename Project</span>
               </button>
               <button
@@ -629,9 +629,9 @@ export const ProjectsTree: React.FC = () => {
                   }
                   setContextMenu(null);
                 }}
-                className="flex items-center space-x-2 w-full px-2.5 py-1.5 text-xs text-[#e0e2ea] hover:bg-[#272a30] rounded-sm text-left transition cursor-pointer"
+                className="flex items-center space-x-2 w-full px-2.5 py-1.5 text-xs text-text-primary hover:bg-bg-hover rounded-sm text-left transition cursor-pointer"
               >
-                <FolderIcon size={13} className="text-[#8b919d]" />
+                <FolderIcon size={13} className="text-text-secondary" />
                 <span>Show in File Explorer</span>
               </button>
               <button
@@ -648,12 +648,12 @@ export const ProjectsTree: React.FC = () => {
                   }
                   setContextMenu(null);
                 }}
-                className="flex items-center space-x-2 w-full px-2.5 py-1.5 text-xs text-[#e0e2ea] hover:bg-[#272a30] rounded-sm text-left transition cursor-pointer"
+                className="flex items-center space-x-2 w-full px-2.5 py-1.5 text-xs text-text-primary hover:bg-bg-hover rounded-sm text-left transition cursor-pointer"
               >
-                <FileDown size={13} className="text-[#8b919d]" />
+                <FileDown size={13} className="text-text-secondary" />
                 <span>Export as PDF</span>
               </button>
-              <div className="my-1 border-t border-[#30363D]"></div>
+              <div className="my-1 border-t border-border-primary"></div>
               <button
                 onClick={() => {
                   const proj = projects.find((p) => p.id === contextMenu.projectId);
@@ -691,16 +691,16 @@ export const ProjectsTree: React.FC = () => {
             <>
               <button
                 onClick={() => handleAddRequestInFolder(contextMenu.projectId, contextMenu.folderId!)}
-                className="flex items-center space-x-2 w-full px-2.5 py-1.5 text-xs text-[#e0e2ea] hover:bg-[#272a30] rounded-sm text-left transition cursor-pointer"
+                className="flex items-center space-x-2 w-full px-2.5 py-1.5 text-xs text-text-primary hover:bg-bg-hover rounded-sm text-left transition cursor-pointer"
               >
-                <FilePlus size={13} className="text-[#8b919d]" />
+                <FilePlus size={13} className="text-text-secondary" />
                 <span>Add Request</span>
               </button>
               <button
                 onClick={() => triggerNamingDialog("create-subfolder", contextMenu.projectId, { folderId: contextMenu.folderId })}
-                className="flex items-center space-x-2 w-full px-2.5 py-1.5 text-xs text-[#e0e2ea] hover:bg-[#272a30] rounded-sm text-left transition cursor-pointer"
+                className="flex items-center space-x-2 w-full px-2.5 py-1.5 text-xs text-text-primary hover:bg-bg-hover rounded-sm text-left transition cursor-pointer"
               >
-                <FolderPlus size={13} className="text-[#8b919d]" />
+                <FolderPlus size={13} className="text-text-secondary" />
                 <span>Add Subfolder</span>
               </button>
               <button
@@ -710,19 +710,19 @@ export const ProjectsTree: React.FC = () => {
                     initialValue: contextMenu.folder?.name || "",
                   })
                 }
-                className="flex items-center space-x-2 w-full px-2.5 py-1.5 text-xs text-[#e0e2ea] hover:bg-[#272a30] rounded-sm text-left transition cursor-pointer"
+                className="flex items-center space-x-2 w-full px-2.5 py-1.5 text-xs text-text-primary hover:bg-bg-hover rounded-sm text-left transition cursor-pointer"
               >
-                <Edit2 size={13} className="text-[#8b919d]" />
+                <Edit2 size={13} className="text-text-secondary" />
                 <span>Rename Folder</span>
               </button>
               <button
                 onClick={() => handleDuplicateFolder(contextMenu.projectId, contextMenu.folder!)}
-                className="flex items-center space-x-2 w-full px-2.5 py-1.5 text-xs text-[#e0e2ea] hover:bg-[#272a30] rounded-sm text-left transition cursor-pointer"
+                className="flex items-center space-x-2 w-full px-2.5 py-1.5 text-xs text-text-primary hover:bg-bg-hover rounded-sm text-left transition cursor-pointer"
               >
-                <Copy size={13} className="text-[#8b919d]" />
+                <Copy size={13} className="text-text-secondary" />
                 <span>Duplicate Folder</span>
               </button>
-              <div className="my-1 border-t border-[#30363D]"></div>
+              <div className="my-1 border-t border-border-primary"></div>
               <button
                 onClick={() => {
                   if (contextMenu.folder) {
@@ -736,9 +736,9 @@ export const ProjectsTree: React.FC = () => {
                     setContextMenu(null);
                   }
                 }}
-                className="flex items-center space-x-2 w-full px-2.5 py-1.5 text-xs text-[#e0e2ea] hover:bg-[#272a30] rounded-sm text-left transition cursor-pointer"
+                className="flex items-center space-x-2 w-full px-2.5 py-1.5 text-xs text-text-primary hover:bg-bg-hover rounded-sm text-left transition cursor-pointer"
               >
-                <FileDown size={13} className="text-[#8b919d]" />
+                <FileDown size={13} className="text-text-secondary" />
                 <span>Export as PDF</span>
               </button>
               <button
@@ -766,19 +766,19 @@ export const ProjectsTree: React.FC = () => {
                     initialValue: contextMenu.request?.name || "",
                   })
                 }
-                className="flex items-center space-x-2 w-full px-2.5 py-1.5 text-xs text-[#e0e2ea] hover:bg-[#272a30] rounded-sm text-left transition cursor-pointer"
+                className="flex items-center space-x-2 w-full px-2.5 py-1.5 text-xs text-text-primary hover:bg-bg-hover rounded-sm text-left transition cursor-pointer"
               >
-                <Edit2 size={13} className="text-[#8b919d]" />
+                <Edit2 size={13} className="text-text-secondary" />
                 <span>Rename Request</span>
               </button>
               <button
                 onClick={() => handleDuplicateRequest(contextMenu.projectId, contextMenu.folderId!, contextMenu.request!)}
-                className="flex items-center space-x-2 w-full px-2.5 py-1.5 text-xs text-[#e0e2ea] hover:bg-[#272a30] rounded-sm text-left transition cursor-pointer"
+                className="flex items-center space-x-2 w-full px-2.5 py-1.5 text-xs text-text-primary hover:bg-bg-hover rounded-sm text-left transition cursor-pointer"
               >
-                <Copy size={13} className="text-[#8b919d]" />
+                <Copy size={13} className="text-text-secondary" />
                 <span>Duplicate Request</span>
               </button>
-              <div className="my-1 border-t border-[#30363D]"></div>
+              <div className="my-1 border-t border-border-primary"></div>
               <button
                 onClick={() => {
                   if (confirm("Are you sure you want to delete this request?")) {
@@ -798,10 +798,10 @@ export const ProjectsTree: React.FC = () => {
       {/* Glassmorphic custom naming modal overlay */}
       {namingDialog?.isOpen && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4 font-sans">
-          <div className="w-[360px] bg-[#161B22] border border-[#30363D] rounded-lg shadow-2xl flex flex-col overflow-hidden">
+          <div className="w-[360px] bg-bg-secondary border border-border-primary rounded-lg shadow-2xl flex flex-col overflow-hidden">
             {/* Modal Header */}
-            <div className="h-11 border-b border-[#30363D] bg-[#1c2025] flex items-center justify-between px-4">
-              <span className="font-semibold text-xs text-[#e0e2ea] uppercase tracking-wider">
+            <div className="h-11 border-b border-border-primary bg-bg-tertiary flex items-center justify-between px-4">
+              <span className="font-semibold text-xs text-text-primary uppercase tracking-wider">
                 {namingDialog.title}
               </span>
             </div>
@@ -809,7 +809,7 @@ export const ProjectsTree: React.FC = () => {
             {/* Modal Form */}
             <form onSubmit={handleNamingSubmit} className="p-4 space-y-4">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-[#8b919d] uppercase tracking-wider">
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">
                   Name
                 </label>
                 <input
@@ -821,22 +821,22 @@ export const ProjectsTree: React.FC = () => {
                   onChange={(e) =>
                     setNamingDialog((prev) => (prev ? { ...prev, value: e.target.value } : null))
                   }
-                  className="w-full bg-[#101419] text-[#e0e2ea] border border-[#30363D] px-3 py-2 rounded text-xs focus:outline-none focus:border-[#a1c9ff] placeholder-[#8b919d]/40 font-medium"
+                  className="w-full bg-bg-primary text-text-primary border border-border-primary px-3 py-2 rounded text-xs focus:outline-none focus:border-text-accent placeholder-text-secondary/40 font-medium"
                 />
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center justify-end space-x-2 pt-2 border-t border-[#30363D]/30">
+              <div className="flex items-center justify-end space-x-2 pt-2 border-t border-border-primary/30">
                 <button
                   type="button"
                   onClick={() => setNamingDialog(null)}
-                  className="px-3 py-1.5 border border-[#30363D] rounded text-xs text-[#c0c7d3] hover:bg-[#272a30] transition cursor-pointer font-medium"
+                  className="px-3 py-1.5 border border-border-primary rounded text-xs text-[#c0c7d3] hover:bg-bg-hover transition cursor-pointer font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 bg-[#a1c9ff] hover:bg-blue-300 text-[#00325a] rounded text-xs transition cursor-pointer font-bold"
+                  className="px-4 py-1.5 bg-text-accent hover:bg-blue-300 text-[#00325a] rounded text-xs transition cursor-pointer font-bold"
                 >
                   Save
                 </button>

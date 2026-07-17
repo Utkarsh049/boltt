@@ -268,7 +268,7 @@ export const EnvironmentModal: React.FC = () => {
   };
 
   const content = (
-    <div className={`bg-[#161B22] border-[#30363D] flex flex-col overflow-hidden ${
+    <div className={`bg-bg-secondary border-border-primary flex flex-col overflow-hidden ${
       isEnvWindow 
         ? "w-screen h-screen" 
         : "w-[780px] h-[520px] border rounded-lg shadow-2xl"
@@ -277,33 +277,33 @@ export const EnvironmentModal: React.FC = () => {
       <div
         onMouseDown={handleHeaderMouseDown}
         onDoubleClick={handleHeaderDoubleClick}
-        className="h-12 border-b border-[#30363D] bg-[#1c2025] flex items-center justify-between px-4 flex-shrink-0 select-none cursor-default"
+        className="h-12 border-b border-border-primary bg-bg-tertiary flex items-center justify-between px-4 flex-shrink-0 select-none cursor-default"
       >
         <div className="flex items-center space-x-2">
-          <Key size={16} className="text-[#a1c9ff]" />
-          <span className="font-semibold text-sm text-[#e0e2ea] capitalize">
+          <Key size={16} className="text-text-accent" />
+          <span className="font-semibold text-sm text-text-primary capitalize">
             Manage {targetGroup} Environments
           </span>
         </div>
         {isEnvWindow ? (
-          <div className="flex items-center space-x-1 pl-2 border-l border-[#30363D] h-6">
+          <div className="flex items-center space-x-1 pl-2 border-l border-border-primary h-6">
             <button
               onClick={() => getCurrentWindow().minimize()}
-              className="p-1 hover:bg-[#272a30] rounded text-[#8b919d] hover:text-[#e0e2ea] transition cursor-pointer flex items-center justify-center"
+              className="p-1 hover:bg-bg-hover rounded text-text-secondary hover:text-text-primary transition cursor-pointer flex items-center justify-center"
               title="Minimize"
             >
               <Minus size={13} />
             </button>
             <button
               onClick={handleToggleMaximize}
-              className="p-1 hover:bg-[#272a30] rounded text-[#8b919d] hover:text-[#e0e2ea] transition cursor-pointer flex items-center justify-center"
+              className="p-1 hover:bg-bg-hover rounded text-text-secondary hover:text-text-primary transition cursor-pointer flex items-center justify-center"
               title="Maximize / Restore"
             >
               <Square size={10} />
             </button>
             <button
               onClick={() => getCurrentWindow().close()}
-              className="p-1 hover:bg-[#ea3e3e]/20 hover:text-[#ff8080] rounded text-[#8b919d] transition cursor-pointer flex items-center justify-center"
+              className="p-1 hover:bg-[#ea3e3e]/20 hover:text-[#ff8080] rounded text-text-secondary transition cursor-pointer flex items-center justify-center"
               title="Close"
             >
               <X size={13} />
@@ -312,7 +312,7 @@ export const EnvironmentModal: React.FC = () => {
         ) : (
           <button
             onClick={handleClose}
-            className="text-[#8b919d] hover:text-[#e0e2ea] transition cursor-pointer"
+            className="text-text-secondary hover:text-text-primary transition cursor-pointer"
           >
             <X size={18} />
           </button>
@@ -322,9 +322,9 @@ export const EnvironmentModal: React.FC = () => {
       {/* Modal Body */}
       <div className="flex-1 flex min-h-0 overflow-hidden">
         {/* Left Panel: Environment List */}
-        <div className="w-1/3 bg-[#101419]/50 flex flex-col border-r border-[#30363D]">
+        <div className="w-1/3 bg-bg-primary/50 flex flex-col border-r border-border-primary">
           <div className="flex-1 p-3 overflow-y-auto space-y-1.5 min-h-0">
-            <div className="text-[10px] font-bold text-[#8b919d] uppercase tracking-wider mb-2 px-1">
+            <div className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-2 px-1">
               Environments
             </div>
             {localEnvs.map((env) => (
@@ -333,14 +333,14 @@ export const EnvironmentModal: React.FC = () => {
                 onClick={() => setSelectedEnvId(env.id)}
                 className={`group flex items-center justify-between px-3 py-2 rounded-sm text-xs font-medium cursor-pointer transition ${
                   selectedEnvId === env.id
-                    ? "bg-[#1c2025] text-[#a1c9ff] border-l-2 border-l-[#a1c9ff]"
-                    : "text-[#8b919d] hover:bg-[#1c2025]/40 hover:text-[#e0e2ea]"
+                    ? "bg-bg-tertiary text-text-accent border-l-2 border-l-text-accent"
+                    : "text-text-secondary hover:bg-bg-tertiary/40 hover:text-text-primary"
                 }`}
               >
                 <span className="truncate max-w-[150px]">{env.name}</span>
                 <button
                   onClick={(e) => handleDeleteEnvironment(env.id, e)}
-                  className="text-[#8b919d] hover:text-red-400 opacity-0 group-hover:opacity-100 transition p-0.5 cursor-pointer"
+                  className="text-text-secondary hover:text-red-400 opacity-0 group-hover:opacity-100 transition p-0.5 cursor-pointer"
                   title="Delete Environment"
                 >
                   <Trash2 size={12} />
@@ -349,10 +349,10 @@ export const EnvironmentModal: React.FC = () => {
             ))}
           </div>
           
-          <div className="p-3 border-t border-[#30363D] bg-[#101419]/80 flex-shrink-0">
+          <div className="p-3 border-t border-border-primary bg-bg-primary/80 flex-shrink-0">
             <button
               onClick={handleAddEnvironment}
-              className="w-full py-1.5 border border-dashed border-[#30363D] hover:border-[#a1c9ff]/50 rounded text-xs text-[#c0c7d3] hover:text-[#a1c9ff] flex items-center justify-center space-x-1.5 transition cursor-pointer bg-[#1c2025]/30 hover:bg-[#1c2025]/60"
+              className="w-full py-1.5 border border-dashed border-border-primary hover:border-text-accent/50 rounded text-xs text-[#c0c7d3] hover:text-text-accent flex items-center justify-center space-x-1.5 transition cursor-pointer bg-bg-tertiary/30 hover:bg-bg-tertiary/60"
             >
               <Plus size={13} />
               <span>Add Environment</span>
@@ -361,19 +361,19 @@ export const EnvironmentModal: React.FC = () => {
         </div>
 
         {/* Right Panel: Variable Editor */}
-        <div className="w-2/3 flex flex-col bg-[#161B22]">
+        <div className="w-2/3 flex flex-col bg-bg-secondary">
           {selectedEnv ? (
             <div className="flex-1 flex flex-col min-h-0 p-4 space-y-4">
               {/* Environment Name Input */}
               <div className="flex flex-col space-y-1.5 flex-shrink-0">
-                <label className="text-[10px] font-semibold text-[#8b919d] uppercase tracking-wider">
+                <label className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">
                   Environment Name
                 </label>
                 <input
                   type="text"
                   value={selectedEnv.name}
                   onChange={(e) => handleNameChange(e.target.value)}
-                  className="bg-[#101419] border border-[#30363D] hover:border-[#8b919d]/40 focus:border-[#a1c9ff] px-3 py-1.5 rounded text-xs text-[#e0e2ea] focus:outline-none transition w-full"
+                  className="bg-bg-primary border border-border-primary hover:border-text-secondary/40 focus:border-text-accent px-3 py-1.5 rounded text-xs text-text-primary focus:outline-none transition w-full"
                   placeholder="e.g. Production"
                 />
               </div>
@@ -381,21 +381,21 @@ export const EnvironmentModal: React.FC = () => {
               {/* Variable Grid */}
               <div className="flex-1 flex flex-col min-h-0">
                 <div className="flex items-center justify-between mb-2 flex-shrink-0">
-                  <span className="text-[10px] font-semibold text-[#8b919d] uppercase tracking-wider">
+                  <span className="text-[10px] font-semibold text-text-secondary uppercase tracking-wider">
                     Variables
                   </span>
                   <button
                     type="button"
                     onClick={handleAddVariableRow}
-                    className="text-[10px] font-semibold text-[#a1c9ff] hover:text-blue-300 flex items-center space-x-1 transition cursor-pointer"
+                    className="text-[10px] font-semibold text-text-accent hover:text-blue-300 flex items-center space-x-1 transition cursor-pointer"
                   >
                     <Plus size={12} />
                     <span>Add Variable</span>
                   </button>
                 </div>
-                <div className="flex-1 border border-[#30363D] rounded bg-[#101419]/30 overflow-hidden flex flex-col min-h-0">
+                <div className="flex-1 border border-border-primary rounded bg-bg-primary/30 overflow-hidden flex flex-col min-h-0">
                   {/* Variable Headers */}
-                  <div className="flex items-center border-b border-[#30363D] bg-[#101419] text-[10px] font-bold text-[#8b919d] uppercase py-1 px-2 flex-shrink-0">
+                  <div className="flex items-center border-b border-border-primary bg-bg-primary text-[10px] font-bold text-text-secondary uppercase py-1 px-2 flex-shrink-0">
                     <div className="w-8 flex justify-center">Active</div>
                     <div className="flex-1 px-2">Key</div>
                     <div className="flex-1 px-2">Value</div>
@@ -403,18 +403,18 @@ export const EnvironmentModal: React.FC = () => {
                   </div>
 
                   {/* Variable Rows */}
-                  <div className="flex-1 overflow-y-auto divide-y divide-[#30363D] min-h-0">
+                  <div className="flex-1 overflow-y-auto divide-y divide-border-primary min-h-0">
                     {selectedEnv.variables.map((variable, index) => {
                       const isValueVisible = visibleValues[`${selectedEnv.id}-${index}`];
                       return (
-                        <div key={index} className="group flex items-center py-1 px-2 hover:bg-[#1c2025]/30">
+                        <div key={index} className="group flex items-center py-1 px-2 hover:bg-bg-tertiary/30">
                           {/* Checkbox */}
                           <div className="w-8 flex justify-center">
                             <input
                               type="checkbox"
                               checked={variable.enabled}
                               onChange={(e) => handleVariableChange(index, "enabled", e.target.checked)}
-                              className="w-3.5 h-3.5 rounded bg-[#101419] border-[#30363D] text-[#a1c9ff] focus:ring-0 cursor-pointer"
+                              className="w-3.5 h-3.5 rounded bg-bg-primary border-border-primary text-text-accent focus:ring-0 cursor-pointer"
                             />
                           </div>
                           
@@ -424,7 +424,7 @@ export const EnvironmentModal: React.FC = () => {
                               type="text"
                               value={variable.key}
                               onChange={(e) => handleVariableChange(index, "key", e.target.value)}
-                              className="w-full bg-transparent border-0 focus:ring-0 focus:outline-none text-xs font-mono text-[#e0e2ea] placeholder-[#8b919d]/40"
+                              className="w-full bg-transparent border-0 focus:ring-0 focus:outline-none text-xs font-mono text-text-primary placeholder-text-secondary/40"
                               placeholder="KEY"
                             />
                           </div>
@@ -435,13 +435,13 @@ export const EnvironmentModal: React.FC = () => {
                               type={isValueVisible ? "text" : "password"}
                               value={variable.value}
                               onChange={(e) => handleVariableChange(index, "value", e.target.value)}
-                              className="flex-1 bg-transparent border-0 focus:ring-0 focus:outline-none text-xs font-mono text-green-300 placeholder-[#8b919d]/40"
+                              className="flex-1 bg-transparent border-0 focus:ring-0 focus:outline-none text-xs font-mono text-green-300 placeholder-text-secondary/40"
                               placeholder="value"
                             />
                             {(variable.value.length > 0) && (
                               <button
                                 onClick={() => toggleValueVisibility(index)}
-                                className="text-[#8b919d] hover:text-[#e0e2ea] transition p-0.5 cursor-pointer flex-shrink-0"
+                                className="text-text-secondary hover:text-text-primary transition p-0.5 cursor-pointer flex-shrink-0"
                                 title={isValueVisible ? "Hide value" : "Show value"}
                               >
                                 {isValueVisible ? <EyeOff size={11} /> : <Eye size={11} />}
@@ -453,7 +453,7 @@ export const EnvironmentModal: React.FC = () => {
                           <div className="w-16 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                             <button
                               onClick={() => handleDeleteVariable(index)}
-                              className="text-[#8b919d] hover:text-red-400 p-1 cursor-pointer flex items-center justify-center"
+                              className="text-text-secondary hover:text-red-400 p-1 cursor-pointer flex items-center justify-center"
                               title="Delete Variable"
                             >
                               <Trash2 size={12} />
@@ -467,7 +467,7 @@ export const EnvironmentModal: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-center p-6 text-[#8b919d]">
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-6 text-text-secondary">
               <Key size={24} className="opacity-20 mb-2" />
               <span className="text-xs">Create or select an environment to manage its variables.</span>
             </div>
@@ -476,17 +476,17 @@ export const EnvironmentModal: React.FC = () => {
       </div>
 
       {/* Modal Footer */}
-      <div className="h-12 border-t border-[#30363D] bg-[#1c2025] flex items-center justify-end px-4 space-x-3 flex-shrink-0">
+      <div className="h-12 border-t border-border-primary bg-bg-tertiary flex items-center justify-end px-4 space-x-3 flex-shrink-0">
         <button
           onClick={handleClose}
-          className="px-4 py-1.5 border border-[#30363D] hover:bg-[#272a30] rounded text-xs font-medium text-[#c0c7d3] hover:text-[#e0e2ea] transition cursor-pointer"
+          className="px-4 py-1.5 border border-border-primary hover:bg-bg-hover rounded text-xs font-medium text-[#c0c7d3] hover:text-text-primary transition cursor-pointer"
         >
           Cancel
         </button>
         
         <button
           onClick={handleSave}
-          className="px-4 py-1.5 bg-[#a1c9ff] hover:bg-blue-300 rounded text-xs font-bold text-[#00325a] flex items-center space-x-1.5 transition cursor-pointer"
+          className="px-4 py-1.5 bg-text-accent hover:bg-blue-300 rounded text-xs font-bold text-[#00325a] flex items-center space-x-1.5 transition cursor-pointer"
         >
           <Save size={13} />
           <span>Save Changes</span>

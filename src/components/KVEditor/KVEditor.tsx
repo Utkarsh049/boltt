@@ -57,11 +57,11 @@ export const KVEditor: React.FC<KVEditorProps> = ({
   return (
     <div className="w-full flex flex-col font-mono text-xs">
       {/* Header column labels */}
-      <div className="flex items-center border-b border-[#30363D] bg-[#161B22] text-[#8b919d] py-1">
+      <div className="flex items-center border-b border-border-primary bg-bg-secondary text-text-secondary py-1">
         <div className="w-8 flex justify-center">
           {/* Checkbox column spacer */}
         </div>
-        <div className="flex-1 px-2 border-r border-[#30363D]">Key</div>
+        <div className="flex-1 px-2 border-r border-border-primary">Key</div>
         <div className="flex-1 px-2">Value</div>
         <div className="w-8">
           {/* Action column spacer */}
@@ -69,7 +69,7 @@ export const KVEditor: React.FC<KVEditorProps> = ({
       </div>
 
       {/* Rows List */}
-      <div className="flex flex-col divide-y divide-[#30363D]">
+      <div className="flex flex-col divide-y divide-border-primary">
         {displayRows.map((row, index) => {
           const isVirtual = index === rows.length;
           const keyHasVar = hasVariable(row.key);
@@ -79,7 +79,7 @@ export const KVEditor: React.FC<KVEditorProps> = ({
             <div
               key={index}
               className={`flex items-center group py-1 ${
-                isVirtual ? "bg-[#101419]" : "bg-[#101419] hover:bg-[#161B22]/50"
+                isVirtual ? "bg-bg-primary" : "bg-bg-primary"
               }`}
             >
               {/* Checkbox Toggle */}
@@ -89,20 +89,20 @@ export const KVEditor: React.FC<KVEditorProps> = ({
                     type="checkbox"
                     disabled
                     checked={false}
-                    className="w-3.5 h-3.5 rounded-sm border-[#30363D] bg-[#161B22]/30 cursor-not-allowed opacity-30"
+                    className="w-3.5 h-3.5 rounded-sm border-border-primary bg-bg-secondary/30 cursor-not-allowed opacity-30"
                   />
                 ) : (
                   <input
                     type="checkbox"
                     checked={row.enabled}
                     onChange={(e) => handleRowChange(index, "enabled", e.target.checked)}
-                    className="w-3.5 h-3.5 rounded-sm border-[#30363D] bg-[#1c2025] text-[#a1c9ff] focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                    className="w-3.5 h-3.5 rounded-sm border-border-primary bg-bg-tertiary text-text-accent focus:ring-0 focus:ring-offset-0 cursor-pointer"
                   />
                 )}
               </div>
 
               {/* Key Input */}
-              <div className="flex-1 border-r border-[#30363D]">
+              <div className="flex-1 border-r border-border-primary">
                 <input
                   type="text"
                   value={row.key}
@@ -112,7 +112,7 @@ export const KVEditor: React.FC<KVEditorProps> = ({
                       ? handleVirtualRowChange("key", e.target.value)
                       : handleRowChange(index, "key", e.target.value)
                   }
-                  className={`w-full bg-transparent text-[#e0e2ea] px-2 py-0.5 border-0 focus:outline-none focus:ring-0 ${
+                  className={`w-full bg-transparent text-text-primary px-2 py-0.5 border-0 focus:outline-none focus:ring-0 ${
                     isVirtual ? "opacity-50 focus:opacity-100" : ""
                   } ${keyHasVar ? "text-amber-300 font-semibold" : ""}`}
                 />
@@ -129,7 +129,7 @@ export const KVEditor: React.FC<KVEditorProps> = ({
                       ? handleVirtualRowChange("value", e.target.value)
                       : handleRowChange(index, "value", e.target.value)
                   }
-                  className={`w-full bg-transparent text-[#e0e2ea] px-2 py-0.5 border-0 focus:outline-none focus:ring-0 ${
+                  className={`w-full bg-transparent text-text-primary px-2 py-0.5 border-0 focus:outline-none focus:ring-0 ${
                     isVirtual ? "opacity-50 focus:opacity-100" : ""
                   } ${valHasVar ? "text-amber-300 font-semibold bg-amber-950/10 rounded-sm" : ""}`}
                 />
@@ -140,7 +140,7 @@ export const KVEditor: React.FC<KVEditorProps> = ({
                 {!isVirtual && (
                   <button
                     onClick={() => handleRowDelete(index)}
-                    className="text-[#8b919d] hover:text-red-400 focus:outline-none flex items-center justify-center p-1 cursor-pointer"
+                    className="text-text-secondary hover:text-red-400 focus:outline-none flex items-center justify-center p-1 cursor-pointer"
                     title="Delete Row"
                   >
                     <Trash2 size={12} />

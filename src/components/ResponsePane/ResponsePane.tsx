@@ -82,7 +82,7 @@ export const ResponsePane: React.FC = () => {
     if (status >= 200 && status < 300) return "text-green-400 border-green-800/40";
     if (status >= 300 && status < 400) return "text-blue-400 border-blue-800/40";
     if (status >= 400) return "text-red-400 border-red-800/40";
-    return "bg-[#272a30] text-[#e0e2ea] border-[#30363D]"; // Status 0
+    return "bg-bg-hover text-text-primary border-border-primary"; // Status 0
   };
 
   // Drag resizing handler
@@ -125,8 +125,8 @@ export const ResponsePane: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
       {/* Header Metrics */}
-      <div className="flex items-center justify-between border-b border-[#30363D] pb-2.5 mb-2.5 flex-shrink-0">
-        <h3 className="text-xs font-semibold text-[#8b919d] uppercase tracking-wider">
+      <div className="flex items-center justify-between border-b border-border-primary pb-2.5 mb-2.5 flex-shrink-0">
+        <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
           Response View
         </h3>
         
@@ -139,11 +139,11 @@ export const ResponsePane: React.FC = () => {
             
             {response.status !== 0 && (
               <>
-                <span className="text-[#8b919d]">
-                  Time: <strong className="text-[#e0e2ea]">{response.time_ms} ms</strong>
+                <span className="text-text-secondary">
+                  Time: <strong className="text-text-primary">{response.time_ms} ms</strong>
                 </span>
-                <span className="text-[#8b919d]">
-                  Size: <strong className="text-[#e0e2ea]">{formatBytes(response.size_bytes)}</strong>
+                <span className="text-text-secondary">
+                  Size: <strong className="text-text-primary">{formatBytes(response.size_bytes)}</strong>
                 </span>
               </>
             )}
@@ -154,16 +154,16 @@ export const ResponsePane: React.FC = () => {
       {/* Loading State */}
       {isLoading && (
         <div className="flex-1 flex flex-col items-center justify-center space-y-3">
-          <div className="w-7 h-7 border-2 border-[#a1c9ff] border-t-transparent rounded-full animate-spin"></div>
-          <span className="text-xs text-[#8b919d] animate-pulse">Dispatching API request...</span>
+          <div className="w-7 h-7 border-2 border-text-accent border-t-transparent rounded-full animate-spin"></div>
+          <span className="text-xs text-text-secondary animate-pulse">Dispatching API request...</span>
         </div>
       )}
 
       {/* Empty State */}
       {!isLoading && !response && (
-        <div className="flex-1 flex flex-col items-center justify-center text-center p-6 border border-dashed border-[#30363D] rounded-sm bg-[#101419]/50">
-          <Inbox className="w-8 h-8 text-[#8b919d]/40 mb-2" />
-          <span className="text-[#8b919d] text-xs max-w-xs leading-relaxed">
+        <div className="flex-1 flex flex-col items-center justify-center text-center p-6 border border-dashed border-border-primary rounded-sm bg-bg-primary/50">
+          <Inbox className="w-8 h-8 text-text-secondary/40 mb-2" />
+          <span className="text-text-secondary text-xs max-w-xs leading-relaxed">
             Hit Send in the Request Builder to dispatch the request and inspect the response.
           </span>
         </div>
@@ -174,10 +174,10 @@ export const ResponsePane: React.FC = () => {
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
           
           {/* Quick Actions Panel */}
-          <div className="flex items-center justify-end space-x-1.5 border border-[#30363D] bg-[#1c2025] py-1 px-2 flex-shrink-0 rounded-t-sm border-b-0">
+          <div className="flex items-center justify-end space-x-1.5 border border-border-primary bg-bg-tertiary py-1 px-2 flex-shrink-0 rounded-t-sm border-b-0">
             <button
               onClick={handleCopyCurl}
-              className="p-1 hover:bg-[#272a30] text-[#8b919d] hover:text-[#e0e2ea] border border-transparent hover:border-[#30363D] rounded-sm transition flex items-center space-x-1 text-[11px] cursor-pointer"
+              className="p-1 hover:bg-bg-hover text-text-secondary hover:text-text-primary border border-transparent hover:border-border-primary rounded-sm transition flex items-center space-x-1 text-[11px] cursor-pointer"
               title="Copy request as cURL command"
             >
               <Terminal size={11} />
@@ -185,7 +185,7 @@ export const ResponsePane: React.FC = () => {
             </button>
             <button
               onClick={handleCopyBody}
-              className="p-1 hover:bg-[#272a30] text-[#8b919d] hover:text-[#e0e2ea] border border-transparent hover:border-[#30363D] rounded-sm transition flex items-center space-x-1 text-[11px] cursor-pointer"
+              className="p-1 hover:bg-bg-hover text-text-secondary hover:text-text-primary border border-transparent hover:border-border-primary rounded-sm transition flex items-center space-x-1 text-[11px] cursor-pointer"
               title="Copy response body"
             >
               <Copy size={11} />
@@ -193,7 +193,7 @@ export const ResponsePane: React.FC = () => {
             </button>
             <button
               onClick={handleCopyHeaders}
-              className="p-1 hover:bg-[#272a30] text-[#8b919d] hover:text-[#e0e2ea] border border-transparent hover:border-[#30363D] rounded-sm transition flex items-center space-x-1 text-[11px] cursor-pointer"
+              className="p-1 hover:bg-bg-hover text-text-secondary hover:text-text-primary border border-transparent hover:border-border-primary rounded-sm transition flex items-center space-x-1 text-[11px] cursor-pointer"
               title="Copy response headers"
             >
               <Copy size={11} />
@@ -204,7 +204,7 @@ export const ResponsePane: React.FC = () => {
           {/* Resizable Headers vs Body vertically split */}
           <div
             ref={containerRef}
-            className={`flex-grow bg-[#101419] p-3 border border-[#30363D] rounded-b-sm overflow-hidden min-h-0 flex flex-col ${
+            className={`flex-grow bg-bg-primary p-3 border border-border-primary rounded-b-sm overflow-hidden min-h-0 flex flex-col ${
               isResizing ? "select-none" : ""
             }`}
           >
@@ -222,18 +222,18 @@ export const ResponsePane: React.FC = () => {
               >
                 <h4
                   onClick={() => setHeadersExpanded(!headersExpanded)}
-                  className="text-[10px] font-bold text-[#8b919d] uppercase mb-1.5 flex items-center space-x-1.5 flex-shrink-0 cursor-pointer hover:text-[#e0e2ea] transition select-none"
+                  className="text-[10px] font-bold text-text-secondary uppercase mb-1.5 flex items-center space-x-1.5 flex-shrink-0 cursor-pointer hover:text-text-primary transition select-none"
                 >
                   {headersExpanded ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
                   <List size={11} />
                   <span>Response Headers ({response.headers.length})</span>
                 </h4>
                 {headersExpanded && (
-                  <div className="flex-1 bg-[#161B22]/20 rounded border border-[#30363D] font-mono text-[11px] overflow-y-auto min-h-0 divide-y divide-[#1c2025]">
+                  <div className="flex-1 bg-bg-secondary/20 rounded border border-border-primary font-mono text-[11px] overflow-y-auto min-h-0 divide-y divide-bg-tertiary">
                     {response.headers.map((h, i) => (
-                      <div key={i} className="flex justify-between py-1 px-2 hover:bg-[#1c2025]/30">
-                        <span className="text-[#8b919d] font-semibold select-none">{h.key}</span>
-                        <span className="text-[#e0e2ea] text-right break-all pl-6 select-all">{h.value}</span>
+                      <div key={i} className="flex justify-between py-1 px-2 hover:bg-bg-tertiary/30">
+                        <span className="text-text-secondary font-semibold select-none">{h.key}</span>
+                        <span className="text-text-primary text-right break-all pl-6 select-all">{h.value}</span>
                       </div>
                     ))}
                   </div>
@@ -245,9 +245,9 @@ export const ResponsePane: React.FC = () => {
             {response.headers.length > 0 && (headersExpanded || bodyExpanded) && (
               <div
                 onMouseDown={startResizing}
-                className="h-2 hover:bg-[#a1c9ff]/10 active:bg-[#a1c9ff]/20 transition-all cursor-row-resize flex-shrink-0 flex flex-col items-center justify-center my-1 select-none"
+                className="h-2 hover:bg-text-accent/10 active:bg-text-accent/20 transition-all cursor-row-resize flex-shrink-0 flex flex-col items-center justify-center my-1 select-none"
               >
-                <div className="h-[1px] w-full bg-[#30363D]" />
+                <div className="h-[1px] w-full bg-border-primary" />
               </div>
             )}
 
@@ -262,7 +262,7 @@ export const ResponsePane: React.FC = () => {
             >
               <h4
                 onClick={() => setBodyExpanded(!bodyExpanded)}
-                className="text-[10px] font-bold text-[#8b919d] uppercase mb-1.5 flex items-center space-x-1.5 flex-shrink-0 cursor-pointer hover:text-[#e0e2ea] transition select-none"
+                className="text-[10px] font-bold text-text-secondary uppercase mb-1.5 flex items-center space-x-1.5 flex-shrink-0 cursor-pointer hover:text-text-primary transition select-none"
               >
                 {bodyExpanded ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
                 <FileText size={11} />
@@ -271,7 +271,7 @@ export const ResponsePane: React.FC = () => {
               {bodyExpanded && (
                 <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
                   {isJson(response.body) ? (
-                    <div className="border border-[#30363D] rounded-sm overflow-hidden text-xs font-mono flex-1 flex flex-col min-h-0">
+                    <div className="border border-border-primary rounded-sm overflow-hidden text-xs font-mono flex-1 flex flex-col min-h-0">
                       <CodeMirror
                         value={renderResponseBody(response.body)}
                         height="100%"
@@ -283,7 +283,7 @@ export const ResponsePane: React.FC = () => {
                       />
                     </div>
                   ) : (
-                    <pre className="flex-1 w-full bg-[#101419] text-green-300 p-3 rounded border border-[#30363D] font-mono text-xs overflow-y-auto whitespace-pre-wrap min-h-0">
+                    <pre className="flex-1 w-full bg-bg-primary text-green-300 p-3 rounded border border-border-primary font-mono text-xs overflow-y-auto whitespace-pre-wrap min-h-0">
                       {response.body || "(No response body returned)"}
                     </pre>
                   )}

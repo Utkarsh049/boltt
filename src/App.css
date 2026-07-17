@@ -1,5 +1,29 @@
 @import "tailwindcss";
 
+:root {
+  --bg-primary: #101419;
+  --bg-secondary: #161B22;
+  --bg-tertiary: #1c2025;
+  --border-primary: #30363D;
+  --text-primary: #e0e2ea;
+  --text-secondary: #8b919d;
+  --text-accent: #a1c9ff;
+  --bg-hover: #272a30;
+  --bg-hover-light: #32353b;
+}
+
+@theme {
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-tertiary: var(--bg-tertiary);
+  --color-border-primary: var(--border-primary);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-accent: var(--text-accent);
+  --color-bg-hover: var(--bg-hover);
+  --color-bg-hover-light: var(--bg-hover-light);
+}
+
 /* Prevent native browser/OS focus outlines and boxes on buttons globally */
 button, button:focus, button:active, button:focus-visible {
   outline: none !important;

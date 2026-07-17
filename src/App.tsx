@@ -342,66 +342,66 @@ function App() {
 
   if (isAppLoading) {
     return (
-      <div className="h-screen w-screen bg-[#101419] text-[#e0e2ea] flex flex-col font-sans overflow-hidden select-none animate-pulse">
+      <div className="h-screen w-screen bg-bg-primary text-text-primary flex flex-col font-sans overflow-hidden select-none animate-pulse">
         {/* Header bar skeleton */}
-        <header className="h-12 border-b border-[#30363D] flex items-center justify-between px-4 bg-[#1c2025] flex-shrink-0">
+        <header className="h-12 border-b border-border-primary flex items-center justify-between px-4 bg-bg-tertiary flex-shrink-0">
           <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 bg-[#1c2128] rounded-full" />
-            <div className="w-16 h-3 bg-[#1c2128] rounded" />
+            <div className="w-4 h-4 bg-bg-tertiary rounded-full" />
+            <div className="w-16 h-3 bg-bg-tertiary rounded" />
           </div>
           <div className="flex items-center space-x-3">
-            <div className="w-24 h-6 bg-[#1c2128] rounded-sm" />
-            <div className="w-6 h-6 bg-[#1c2128] rounded-sm" />
-            <div className="w-6 h-6 bg-[#1c2128] rounded-sm" />
-            <div className="w-16 h-4 bg-[#1c2128] rounded" />
+            <div className="w-24 h-6 bg-bg-tertiary rounded-sm" />
+            <div className="w-6 h-6 bg-bg-tertiary rounded-sm" />
+            <div className="w-6 h-6 bg-bg-tertiary rounded-sm" />
+            <div className="w-16 h-4 bg-bg-tertiary rounded" />
           </div>
         </header>
 
         {/* Workspace body skeleton */}
         <div className="flex-1 flex overflow-hidden">
           {/* Sidebar skeleton */}
-          <div className="w-[300px] border-r border-[#30363D] bg-[#161B22] flex flex-col h-full flex-shrink-0 p-3 space-y-4">
-            <div className="h-7 bg-[#1c2128] rounded-sm w-full" />
+          <div className="w-[300px] border-r border-border-primary bg-bg-secondary flex flex-col h-full flex-shrink-0 p-3 space-y-4">
+            <div className="h-7 bg-bg-tertiary rounded-sm w-full" />
             <div className="flex items-center justify-between">
-              <div className="w-12 h-3 bg-[#1c2128] rounded" />
-              <div className="w-10 h-4 bg-[#1c2128] rounded-sm" />
+              <div className="w-12 h-3 bg-bg-tertiary rounded" />
+              <div className="w-10 h-4 bg-bg-tertiary rounded-sm" />
             </div>
             <div className="space-y-2.5">
-              <div className="h-5 bg-[#1c2128]/60 rounded-sm w-4/5" />
-              <div className="h-5 bg-[#1c2128]/60 rounded-sm w-3/4 pl-4" />
-              <div className="h-5 bg-[#1c2128]/60 rounded-sm w-2/3 pl-4" />
-              <div className="h-5 bg-[#1c2128]/60 rounded-sm w-5/6" />
+              <div className="h-5 bg-bg-tertiary/60 rounded-sm w-4/5" />
+              <div className="h-5 bg-bg-tertiary/60 rounded-sm w-3/4 pl-4" />
+              <div className="h-5 bg-bg-tertiary/60 rounded-sm w-2/3 pl-4" />
+              <div className="h-5 bg-bg-tertiary/60 rounded-sm w-5/6" />
             </div>
           </div>
 
           {/* Main Content Pane skeleton */}
-          <div className="flex-1 flex flex-col bg-[#101419] overflow-hidden p-4 space-y-4">
+          <div className="flex-1 flex flex-col bg-bg-primary overflow-hidden p-4 space-y-4">
             {/* Tabs bar skeleton */}
-            <div className="flex space-x-2 h-7 items-center border-b border-[#30363D]/40 pb-2">
-              <div className="w-20 h-5 bg-[#1c2128] rounded-sm" />
-              <div className="w-20 h-5 bg-[#1c2128]/60 rounded-sm" />
-              <div className="w-6 h-5 bg-[#1c2128]/40 rounded-sm" />
+            <div className="flex space-x-2 h-7 items-center border-b border-border-primary/40 pb-2">
+              <div className="w-20 h-5 bg-bg-tertiary rounded-sm" />
+              <div className="w-20 h-5 bg-bg-tertiary/60 rounded-sm" />
+              <div className="w-6 h-5 bg-bg-tertiary/40 rounded-sm" />
             </div>
 
             {/* URL bar skeleton */}
             <div className="flex space-x-2 items-center">
-              <div className="w-16 h-9 bg-[#1c2128] rounded-sm" />
-              <div className="flex-1 h-9 bg-[#1c2128] rounded-sm" />
-              <div className="w-14 h-9 bg-[#1c2128] rounded-sm" />
-              <div className="w-16 h-9 bg-[#1c2128] rounded-sm" />
+              <div className="w-16 h-9 bg-bg-tertiary rounded-sm" />
+              <div className="flex-1 h-9 bg-bg-tertiary rounded-sm" />
+              <div className="w-14 h-9 bg-bg-tertiary rounded-sm" />
+              <div className="w-16 h-9 bg-bg-tertiary rounded-sm" />
             </div>
 
             {/* Editor Pane skeleton */}
-            <div className="flex-1 border border-[#30363D] rounded-sm bg-[#161B22]/10 p-3 flex flex-col space-y-3">
-              <div className="flex space-x-3 border-b border-[#30363D]/40 pb-2">
-                <div className="w-12 h-4 bg-[#1c2128] rounded-sm" />
-                <div className="w-12 h-4 bg-[#1c2128]/60 rounded-sm" />
-                <div className="w-12 h-4 bg-[#1c2128]/60 rounded-sm" />
+            <div className="flex-1 border border-border-primary rounded-sm bg-bg-secondary/10 p-3 flex flex-col space-y-3">
+              <div className="flex space-x-3 border-b border-border-primary/40 pb-2">
+                <div className="w-12 h-4 bg-bg-tertiary rounded-sm" />
+                <div className="w-12 h-4 bg-bg-tertiary/60 rounded-sm" />
+                <div className="w-12 h-4 bg-bg-tertiary/60 rounded-sm" />
               </div>
-              <div className="flex-1 bg-[#101419]/30 rounded-sm border border-[#30363D]/40 p-4 space-y-2">
-                <div className="h-3 bg-[#1c2128]/40 rounded w-2/5" />
-                <div className="h-3 bg-[#1c2128]/40 rounded w-3/5" />
-                <div className="h-3 bg-[#1c2128]/40 rounded w-1/2" />
+              <div className="flex-1 bg-bg-primary/30 rounded-sm border border-border-primary/40 p-4 space-y-2">
+                <div className="h-3 bg-bg-tertiary/40 rounded w-2/5" />
+                <div className="h-3 bg-bg-tertiary/40 rounded w-3/5" />
+                <div className="h-3 bg-bg-tertiary/40 rounded w-1/2" />
               </div>
             </div>
           </div>
@@ -415,31 +415,31 @@ function App() {
   }
 
   return (
-    <div className="h-screen w-screen bg-[#101419] text-[#e0e2ea] flex flex-col font-sans overflow-hidden select-none">
+    <div className="h-screen w-screen bg-bg-primary text-text-primary flex flex-col font-sans overflow-hidden select-none">
       {/* Header bar */}
       <header
         onMouseDown={handleHeaderMouseDown}
         onDoubleClick={handleHeaderDoubleClick}
-        className="h-12 border-b border-[#30363D] flex items-center justify-between px-4 bg-[#1c2025] flex-shrink-0 select-none cursor-default"
+        className="h-12 border-b border-border-primary flex items-center justify-between px-4 bg-bg-tertiary flex-shrink-0 select-none cursor-default"
       >
         <div className="flex items-center space-x-2">
           <img src="/logo.svg" className="w-4 h-4 object-contain select-none" alt="Boltt Logo" />
-          <span className="font-semibold text-sm tracking-wider text-[#a1c9ff]">
+          <span className="font-semibold text-sm tracking-wider text-text-accent">
             Boltt
           </span>
         </div>
         <div className="flex items-center space-x-3 text-xs text-[#c0c7d3]">
           <EnvironmentDropdown />
-          <button className="p-1 hover:bg-[#272a30] rounded border border-transparent hover:border-[#30363D] transition">
+          <button className="p-1 hover:bg-bg-hover rounded border border-transparent hover:border-border-primary transition">
             <Settings size={14} />
           </button>
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="p-1 hover:bg-[#272a30] rounded border border-transparent hover:border-[#30363D] transition cursor-pointer disabled:opacity-60"
+            className="p-1 hover:bg-bg-hover rounded border border-transparent hover:border-border-primary transition cursor-pointer disabled:opacity-60"
             title="Sync workspace with filesystem"
           >
-            <RefreshCw size={14} className={isRefreshing ? "animate-spin text-[#a1c9ff]" : ""} />
+            <RefreshCw size={14} className={isRefreshing ? "animate-spin text-text-accent" : ""} />
           </button>
           <span className="text-xs select-none flex items-center space-x-1.5" title={isOnline ? "Connected to the internet" : "Disconnected from the internet"}>
             <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? "bg-[#4ade80]" : "bg-[#f87171]"}`} />
@@ -448,24 +448,24 @@ function App() {
               {isOnline ? "Online" : "Offline"}
             </strong>
           </span>
-          <div className="flex items-center space-x-1 pl-2 border-l border-[#30363D] h-6">
+          <div className="flex items-center space-x-1 pl-2 border-l border-border-primary h-6">
             <button
               onClick={() => getCurrentWindow().minimize()}
-              className="p-1 hover:bg-[#272a30] rounded text-[#8b919d] hover:text-[#e0e2ea] transition cursor-pointer flex items-center justify-center"
+              className="p-1 hover:bg-bg-hover rounded text-text-secondary hover:text-text-primary transition cursor-pointer flex items-center justify-center"
               title="Minimize"
             >
               <Minus size={13} />
             </button>
             <button
               onClick={handleToggleMaximize}
-              className="p-1 hover:bg-[#272a30] rounded text-[#8b919d] hover:text-[#e0e2ea] transition cursor-pointer flex items-center justify-center"
+              className="p-1 hover:bg-bg-hover rounded text-text-secondary hover:text-text-primary transition cursor-pointer flex items-center justify-center"
               title="Maximize / Restore"
             >
               <Square size={10} />
             </button>
             <button
               onClick={() => getCurrentWindow().close()}
-              className="p-1 hover:bg-[#ea3e3e]/20 hover:text-[#ff8080] rounded text-[#8b919d] transition cursor-pointer flex items-center justify-center"
+              className="p-1 hover:bg-[#ea3e3e]/20 hover:text-[#ff8080] rounded text-text-secondary transition cursor-pointer flex items-center justify-center"
               title="Close"
             >
               <X size={13} />
@@ -486,16 +486,16 @@ function App() {
             maxSize="400px"
             groupResizeBehavior="preserve-pixel-size"
             collapsible={true}
-            className="flex flex-col bg-[#161B22] h-full overflow-hidden"
+            className="flex flex-col bg-bg-secondary h-full overflow-hidden"
           >
             {/* Sidebar Horizontal Options Tabs */}
-            <div className="flex border-b border-[#30363D] bg-[#1c2025] h-9 flex-shrink-0">
+            <div className="flex border-b border-border-primary bg-bg-tertiary h-9 flex-shrink-0">
               <button
                 onClick={() => setSidebarTab("collections")}
                 className={`flex-1 flex items-center justify-center text-[11px] font-semibold transition px-2 min-w-0 ${
                   sidebarTab === "collections"
-                    ? "bg-[#161B22] text-[#a1c9ff]"
-                    : "text-[#8b919d] hover:text-[#e0e2ea]"
+                    ? "bg-bg-secondary text-text-accent"
+                    : "text-text-secondary hover:text-text-primary"
                 }`}
               >
                 <FolderIcon size={13} className="flex-shrink-0" />
@@ -506,8 +506,8 @@ function App() {
                 onClick={() => setSidebarTab("environments")}
                 className={`flex-1 flex items-center justify-center text-[11px] font-semibold transition px-2 min-w-0 ${
                   sidebarTab === "environments"
-                    ? "bg-[#161B22] text-[#a1c9ff]"
-                    : "text-[#8b919d] hover:text-[#e0e2ea]"
+                    ? "bg-bg-secondary text-text-accent"
+                    : "text-text-secondary hover:text-text-primary"
                 }`}
               >
                 <Globe size={13} className="flex-shrink-0" />
@@ -518,8 +518,8 @@ function App() {
                 onClick={() => setSidebarTab("history")}
                 className={`flex-1 flex items-center justify-center text-[11px] font-semibold transition px-2 min-w-0 ${
                   sidebarTab === "history"
-                    ? "bg-[#161B22] text-[#a1c9ff]"
-                    : "text-[#8b919d] hover:text-[#e0e2ea]"
+                    ? "bg-bg-secondary text-text-accent"
+                    : "text-text-secondary hover:text-text-primary"
                 }`}
               >
                 <Clock size={13} className="flex-shrink-0" />
@@ -536,7 +536,7 @@ function App() {
                     <ProjectsTree />
                   </div>
                   {/* Pinned history panel at bottom */}
-                  <div className="border-t border-[#30363D] p-3 bg-[#161B22]/50 flex-shrink-0">
+                  <div className="border-t border-border-primary p-3 bg-bg-secondary/50 flex-shrink-0">
                     <HistoryPanel limit={8} />
                   </div>
                 </div>
@@ -564,14 +564,14 @@ function App() {
                           onClick={() => setActiveGroup(group)}
                           className={`flex items-center justify-between px-2.5 py-1.5 rounded-sm cursor-pointer transition border ${
                             isActiveGroup
-                              ? "bg-[#1c2025]/50 border-[#30363D] text-[#a1c9ff]"
-                              : "border-transparent text-[#8b919d] hover:text-[#e0e2ea] hover:bg-[#1c2025]/20"
+                              ? "bg-bg-tertiary/50 border-border-primary text-text-accent"
+                              : "border-transparent text-text-secondary hover:text-text-primary hover:bg-bg-tertiary/20"
                           }`}
                         >
                           <div className="flex flex-col min-w-0">
                             <span className="capitalize text-xs font-semibold">{group}</span>
                             {activeEnvName && (
-                              <span className="text-[10px] text-[#8b919d] truncate font-mono mt-0.5">
+                              <span className="text-[10px] text-text-secondary truncate font-mono mt-0.5">
                                 {activeEnvName}
                               </span>
                             )}
@@ -588,7 +588,7 @@ function App() {
 
               {sidebarTab === "history" && (
                 <div className="flex-1 p-3 overflow-y-auto min-h-0 flex flex-col">
-                  <div className="text-[10px] font-bold text-[#8b919d] uppercase tracking-wider mb-2 flex-shrink-0">
+                  <div className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-2 flex-shrink-0">
                     Recent Requests
                   </div>
                   <div className="flex-1 min-h-0">
@@ -598,23 +598,23 @@ function App() {
               )}
             </div>
 
-            <div className="p-3 border-t border-[#30363D] text-[11px] text-[#8b919d] bg-[#1c2025]/20 flex-shrink-0 flex items-center justify-between">
+            <div className="p-3 border-t border-border-primary text-[11px] text-text-secondary bg-bg-tertiary/20 flex-shrink-0 flex items-center justify-between">
               <div>
-                Press <kbd className="bg-[#272a30] px-1 rounded text-[#e0e2ea] font-mono">Ctrl+Enter</kbd> to Send
+                Press <kbd className="bg-bg-hover px-1 rounded text-text-primary font-mono">Ctrl+Enter</kbd> to Send
               </div>
               <button
                 onClick={toggleResponsePane}
-                className="flex items-center space-x-1 px-1.5 py-0.5 bg-[#272a30] hover:bg-[#32353b] border border-[#30363D] text-[#e0e2ea] rounded-sm transition cursor-pointer"
+                className="flex items-center space-x-1 px-1.5 py-0.5 bg-bg-hover hover:bg-bg-hover-light border border-border-primary text-text-primary rounded-sm transition cursor-pointer"
                 title={isResponseCollapsed ? "Expand Response Pane" : "Collapse Response Pane"}
               >
                 {isResponseCollapsed ? (
                   <>
-                    <Eye size={11} className="text-[#a1c9ff]" />
+                    <Eye size={11} className="text-text-accent" />
                     <span>Show Resp</span>
                   </>
                 ) : (
                   <>
-                    <EyeOff size={11} className="text-[#8b919d]" />
+                    <EyeOff size={11} className="text-text-secondary" />
                     <span>Hide Resp</span>
                   </>
                 )}
@@ -623,14 +623,14 @@ function App() {
           </Panel>
 
           {/* Resize Handle 1 */}
-          <Separator className="w-2 hover:bg-[#a1c9ff]/10 active:bg-[#a1c9ff]/20 transition-all cursor-col-resize self-stretch flex-shrink-0 flex items-center justify-center">
-            <div className="w-[1px] h-full bg-[#30363D]" />
+          <Separator className="w-2 hover:bg-text-accent/10 active:bg-text-accent/20 transition-all cursor-col-resize self-stretch flex-shrink-0 flex items-center justify-center">
+            <div className="w-[1px] h-full bg-border-primary" />
           </Separator>
 
           {/* 2. Main Workstage Panel (Request Stage + Response Stage) */}
           <Panel className="h-full overflow-hidden">
             {tabs.length === 0 ? (
-              <div className="flex-1 flex flex-col items-center justify-center bg-[#101419] p-8 text-center select-none font-sans h-full relative overflow-hidden">
+              <div className="flex-1 flex flex-col items-center justify-center bg-bg-primary p-8 text-center select-none font-sans h-full relative overflow-hidden">
                 {/* Background ambient glow */}
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] bg-blue-500/5 rounded-full blur-[100px] pointer-events-none"></div>
                 
@@ -641,10 +641,10 @@ function App() {
                   </div>
                   
                   <div className="space-y-2">
-                    <h1 className="text-xl font-bold text-[#e0e2ea] tracking-tight">
+                    <h1 className="text-xl font-bold text-text-primary tracking-tight">
                       Start your first request
                     </h1>
-                    <p className="text-xs text-[#8b919d] leading-relaxed max-w-xs mx-auto">
+                    <p className="text-xs text-text-secondary leading-relaxed max-w-xs mx-auto">
                       Create a request tab to start testing API endpoints, or open/import a collection project to organize your requests.
                     </p>
                   </div>
@@ -653,28 +653,28 @@ function App() {
                   <div className="grid grid-cols-1 gap-2.5 pt-2 max-w-[280px] mx-auto">
                     <button
                       onClick={() => openTab()}
-                      className="flex items-center justify-center space-x-2 w-full py-2 bg-[#a1c9ff] hover:bg-blue-300 text-[#00325a] rounded text-xs font-bold transition duration-150 cursor-pointer shadow-lg shadow-blue-950/20"
+                      className="flex items-center justify-center space-x-2 w-full py-2 bg-text-accent hover:bg-blue-300 text-[#00325a] rounded text-xs font-bold transition duration-150 cursor-pointer shadow-lg shadow-blue-950/20"
                     >
                       <Plus size={14} />
                       <span>Create a Request</span>
                     </button>
                     
-                    <div className="flex items-center space-x-2 text-xs text-[#8b919d] py-1 select-none">
-                      <div className="flex-1 h-[1px] bg-[#30363D]/60"></div>
+                    <div className="flex items-center space-x-2 text-xs text-text-secondary py-1 select-none">
+                      <div className="flex-1 h-[1px] bg-border-primary/60"></div>
                       <span>OR</span>
-                      <div className="flex-1 h-[1px] bg-[#30363D]/60"></div>
+                      <div className="flex-1 h-[1px] bg-border-primary/60"></div>
                     </div>
 
                     <div className="flex space-x-2">
                       <button
                         onClick={() => window.dispatchEvent(new CustomEvent("create-project-dialog"))}
-                        className="flex-1 py-2 bg-[#1c2025] hover:bg-[#272a30] border border-[#30363D] text-[#e0e2ea] hover:text-[#a1c9ff] rounded text-xs font-semibold transition cursor-pointer"
+                        className="flex-1 py-2 bg-bg-tertiary hover:bg-bg-hover border border-border-primary text-text-primary hover:text-text-accent rounded text-xs font-semibold transition cursor-pointer"
                       >
                         New Project
                       </button>
                       <button
                         onClick={handleImportProject}
-                        className="flex-1 py-2 bg-[#1c2025] hover:bg-[#272a30] border border-[#30363D] text-[#e0e2ea] hover:text-[#a1c9ff] rounded text-xs font-semibold transition cursor-pointer"
+                        className="flex-1 py-2 bg-bg-tertiary hover:bg-bg-hover border border-border-primary text-text-primary hover:text-text-accent rounded text-xs font-semibold transition cursor-pointer"
                       >
                         Import Project
                       </button>
@@ -686,7 +686,7 @@ function App() {
               <Group id="workstage-group-v5" orientation="horizontal">
                 
                 {/* Left stage: Request Builder Panel */}
-                <Panel defaultSize="55%" minSize="500px" className="flex flex-col bg-[#101419] h-full overflow-hidden min-w-0">
+                <Panel defaultSize="55%" minSize="500px" className="flex flex-col bg-bg-primary h-full overflow-hidden min-w-0">
                   <TabBar />
                   <div className="flex-1 flex flex-col p-4 space-y-4 overflow-hidden min-h-0">
                     <UrlBar />
@@ -695,8 +695,8 @@ function App() {
                 </Panel>
 
                 {/* Resize Handle 2 */}
-                <Separator className="w-2 hover:bg-[#a1c9ff]/10 active:bg-[#a1c9ff]/20 transition-all cursor-col-resize self-stretch flex-shrink-0 flex items-center justify-center">
-                  <div className="w-[1px] h-full bg-[#30363D]" />
+                <Separator className="w-2 hover:bg-text-accent/10 active:bg-text-accent/20 transition-all cursor-col-resize self-stretch flex-shrink-0 flex items-center justify-center">
+                  <div className="w-[1px] h-full bg-border-primary" />
                 </Separator>
 
                 {/* Right stage: Response Pane Panel */}
@@ -709,7 +709,7 @@ function App() {
                   onResize={(size) => {
                     setIsResponseCollapsed(size.inPixels === 0);
                   }}
-                  className="flex flex-col p-4 bg-[#161B22] h-full overflow-hidden min-w-0"
+                  className="flex flex-col p-4 bg-bg-secondary h-full overflow-hidden min-w-0"
                 >
                   <ResponsePane />
                 </Panel>

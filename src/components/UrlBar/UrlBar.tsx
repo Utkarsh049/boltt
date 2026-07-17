@@ -51,10 +51,10 @@ const getMethodColors = (method: string) => {
       };
     default: // HEAD or other
       return {
-        text: "text-[#e0e2ea]",
-        bg: "bg-[#1c2025]",
-        border: "border-[#30363D]",
-        hoverBg: "hover:bg-[#272a30]",
+        text: "text-text-primary",
+        bg: "bg-bg-tertiary",
+        border: "border-border-primary",
+        hoverBg: "hover:bg-bg-hover",
       };
   }
 };
@@ -144,7 +144,7 @@ export const UrlBar: React.FC = () => {
           </button>
 
           {isDropdownOpen && (
-            <div className="absolute left-0 mt-1 w-[125px] bg-[#161B22] border border-[#30363D] rounded shadow-2xl z-50 py-1 overflow-hidden">
+            <div className="absolute left-0 mt-1 w-[125px] bg-bg-secondary border border-border-primary rounded shadow-2xl z-50 py-1 overflow-hidden">
               {methods.map((method) => {
                 const methodColors = getMethodColors(method);
                 const isSelected = activeRequest.method === method;
@@ -160,12 +160,12 @@ export const UrlBar: React.FC = () => {
                       methodColors.text
                     } ${
                       isSelected
-                        ? "bg-[#1c2025]"
-                        : "hover:bg-[#1c2025]/60"
+                        ? "bg-bg-tertiary"
+                        : "hover:bg-bg-tertiary/60"
                     }`}
                   >
                     <span>{method}</span>
-                    {isSelected && <Check size={12} className="text-[#a1c9ff]" />}
+                    {isSelected && <Check size={12} className="text-text-accent" />}
                   </button>
                 );
               })}
@@ -183,10 +183,10 @@ export const UrlBar: React.FC = () => {
             onKeyDown={handleKeyDown}
             disabled={isLoading}
             placeholder="Enter request URL (e.g. https://httpbin.org/get)"
-            className={`w-full bg-[#101419] text-[#e0e2ea] border px-3 pr-24 h-9 rounded-sm text-xs font-mono focus:outline-none focus:border-[#a1c9ff] placeholder-[#8b919d]/60 transition-colors ${
+            className={`w-full bg-bg-primary text-text-primary border px-3 pr-24 h-9 rounded-sm text-xs font-mono focus:outline-none focus:border-text-accent placeholder-text-secondary/60 transition-colors ${
               activeRequest.ssl_verify === false
                 ? "border-amber-500/60 focus:border-amber-500"
-                : "border-[#30363D]"
+                : "border-border-primary"
             }`}
           />
           
@@ -201,8 +201,8 @@ export const UrlBar: React.FC = () => {
             <button
               type="button"
               onClick={() => setIsSslPopoverOpen(!isSslPopoverOpen)}
-              className={`p-1 hover:bg-[#272a30]/80 rounded transition cursor-pointer ${
-                activeRequest.ssl_verify === false ? "text-amber-400" : "text-[#8b919d] hover:text-[#e0e2ea]"
+              className={`p-1 hover:bg-bg-hover/80 rounded transition cursor-pointer ${
+                activeRequest.ssl_verify === false ? "text-amber-400" : "text-text-secondary hover:text-text-primary"
               }`}
               title="SSL Verification Settings"
             >
@@ -210,22 +210,22 @@ export const UrlBar: React.FC = () => {
             </button>
             
             {isSslPopoverOpen && (
-              <div className="absolute right-0 top-full mt-1.5 w-56 bg-[#161B22] border border-[#30363D] rounded shadow-2xl p-3 z-50 flex flex-col space-y-2 font-sans select-none">
-                <div className="text-[10px] font-bold text-[#8b919d] uppercase tracking-wider">
+              <div className="absolute right-0 top-full mt-1.5 w-56 bg-bg-secondary border border-border-primary rounded shadow-2xl p-3 z-50 flex flex-col space-y-2 font-sans select-none">
+                <div className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">
                   SSL Settings
                 </div>
-                <label className="flex items-center space-x-2.5 cursor-pointer text-xs text-[#e0e2ea] py-1">
+                <label className="flex items-center space-x-2.5 cursor-pointer text-xs text-text-primary py-1">
                   <input
                     type="checkbox"
                     checked={activeRequest.ssl_verify !== false}
                     onChange={(e) => {
                       setSslVerify(e.target.checked);
                     }}
-                    className="w-3.5 h-3.5 rounded bg-[#101419] border-[#30363D] text-[#a1c9ff] focus:ring-0 cursor-pointer"
+                    className="w-3.5 h-3.5 rounded bg-bg-primary border-border-primary text-text-accent focus:ring-0 cursor-pointer"
                   />
                   <span>Verify SSL certificates</span>
                 </label>
-                <div className="text-[10px] text-[#8b919d] leading-normal border-t border-[#30363D]/40 pt-1.5">
+                <div className="text-[10px] text-text-secondary leading-normal border-t border-border-primary/40 pt-1.5">
                   Disabling verification allows self-signed or invalid certificates to be accepted.
                 </div>
               </div>
@@ -237,7 +237,7 @@ export const UrlBar: React.FC = () => {
         <button
           onClick={handleSave}
           disabled={isLoading}
-          className="bg-[#272a30] text-[#a1c9ff] border border-[#30363D] px-4 h-9 rounded-sm text-xs font-semibold hover:bg-[#32353b] transition cursor-pointer flex items-center space-x-1.5"
+          className="bg-bg-hover text-text-accent border border-border-primary px-4 h-9 rounded-sm text-xs font-semibold hover:bg-bg-hover-light transition cursor-pointer flex items-center space-x-1.5"
           title="Save request (Ctrl+S / Cmd+S)"
         >
           <Save size={12} />
@@ -248,7 +248,7 @@ export const UrlBar: React.FC = () => {
         <button
           onClick={handleSend}
           disabled={isLoading}
-          className="bg-[#a1c9ff] text-[#00325a] hover:bg-blue-300 px-5 h-9 rounded-sm text-xs font-bold transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-1.5 min-w-[80px]"
+          className="bg-text-accent text-[#00325a] hover:bg-blue-300 px-5 h-9 rounded-sm text-xs font-bold transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-1.5 min-w-[80px]"
         >
           {isLoading ? (
             <span className="w-4 h-4 border-2 border-[#00325a] border-t-transparent rounded-full animate-spin"></span>

@@ -171,7 +171,7 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
                 >
                   <div className="flex items-center space-x-2 truncate flex-1 pr-2">
                     {/* Method label */}
-                    <span className={`text-[9px] font-black w-[35px] text-left flex-shrink-0 ${getMethodColor(entry.method)}`}>
+                    <span className={`text-[12px] font-black w-[35px] text-left flex-shrink-0 ${getMethodColor(entry.method)}`}>
                       {entry.method}
                     </span>
                     
@@ -183,7 +183,7 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
 
                   <div className="flex items-center space-x-1.5 flex-shrink-0">
                     {/* Status code */}
-                    <span className={`px-1.5 py-0.2 text-[9px] rounded-sm ${getStatusColor(entry.status)}`}>
+                    <span className={`px-1.5 py-0.2 text-[12px] rounded-sm ${getStatusColor(entry.status)}`}>
                       {entry.status === 0 ? "ERR" : entry.status}
                     </span>
 

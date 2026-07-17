@@ -493,7 +493,7 @@ export const ProjectsTree: React.FC = () => {
               {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
             </span>
             <Briefcase size={13} className="text-text-secondary flex-shrink-0" />
-            <span className="truncate uppercase tracking-wider text-[10px]">{project.name}</span>
+            <span className="truncate uppercase tracking-wider text-[12px]">{project.name}</span>
           </div>
 
           <div className="flex items-center space-x-1">
@@ -545,7 +545,7 @@ export const ProjectsTree: React.FC = () => {
     <div className="space-y-3">
       {/* List Header */}
       <div className="flex items-center justify-between select-none">
-        <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">
+        <span className="text-[12px] font-bold text-text-secondary uppercase tracking-wider">
           Projects
         </span>
         <div className="flex items-center space-x-1.5">

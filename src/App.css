@@ -1,5 +1,23 @@
 @import "tailwindcss";
 
+/* 1. Register Inter (Sans-Serif) font */
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/Inter.ttf') format('truetype');
+  font-weight: 100 900; /* Supports all variable weights */
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 2. Register JetBrains Mono (Monospace) font */
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/JetBrainsMono.ttf') format('truetype');
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   --bg-primary: #101419;
   --bg-secondary: #161B22;
@@ -14,6 +32,9 @@
 }
 
 @theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
   --color-bg-primary: var(--bg-primary);
   --color-bg-secondary: var(--bg-secondary);
   --color-bg-tertiary: var(--bg-tertiary);

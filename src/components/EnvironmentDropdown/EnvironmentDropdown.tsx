@@ -41,7 +41,7 @@ export const EnvironmentDropdown: React.FC = () => {
     <div className="relative inline-block text-left" ref={containerRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center space-x-2 px-3 py-1.5 bg-bg-tertiary/50 border border-border-primary hover:bg-bg-hover hover:border-text-secondary/40 rounded text-xs text-[#c0c7d3] hover:text-text-primary transition cursor-pointer select-none"
+        className="flex space-x-2 px-3 py-1.5 bg-bg-tertiary/50 border border-border-primary hover:bg-bg-hover hover:border-text-secondary/40 rounded text-xs text-[#c0c7d3] hover:text-text-primary transition cursor-pointer select-none"
       >
         <Globe size={13} className={activeId ? "text-green-400" : "text-text-secondary"} />
         <span className="font-mono max-w-[120px] truncate capitalize">

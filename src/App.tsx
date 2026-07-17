@@ -19,10 +19,10 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { ToastList } from "./components/Toast/Toast";
 import { useToastStore } from "./store/toastStore";
 
-type SidebarTab = "collections" | "environments" | "history";
+type SidebarTab = "workspace" | "environments" | "history";
 
 function App() {
-  const [sidebarTab, setSidebarTab] = useState<SidebarTab>("collections");
+  const [sidebarTab, setSidebarTab] = useState<SidebarTab>("workspace");
   const [isResponseCollapsed, setIsResponseCollapsed] = useState(false);
   const responsePanelRef = useRef<PanelImperativeHandle>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -564,7 +564,7 @@ function App() {
           </button>
           <span className="text-xs select-none flex items-center space-x-1.5" title={isOnline ? "Connected to the internet" : "Disconnected from the internet"}>
             <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? "bg-[#4ade80]" : "bg-[#f87171]"}`} />
-            <span>Status:</span>
+            <span>  :</span>
             <strong className={isOnline ? "text-[#4ade80]" : "text-[#f87171]"}>
               {isOnline ? "Online" : "Offline"}
             </strong>
@@ -612,58 +612,58 @@ function App() {
             {/* Sidebar Horizontal Options Tabs */}
             <div className="flex border-b border-border-primary bg-bg-tertiary h-9 flex-shrink-0">
               <button
-                onClick={() => setSidebarTab("collections")}
-                className={`flex-1 flex items-center justify-center text-[11px] font-semibold transition px-2 min-w-0 ${sidebarTab === "collections"
+                onClick={() => setSidebarTab("workspace")}
+                className={`flex-1 flex items-center justify-center text-[11px] font-semibold transition px-2 min-w-0 ${sidebarTab === "workspace"
                     ? "bg-bg-secondary text-text-accent"
                     : "text-text-secondary hover:text-text-primary"
                   }`}
-              >
-                <FolderIcon size={13} className="flex-shrink-0" />
-                {sidebarTab === "collections" && <span className="ml-1.5 truncate whitespace-nowrap">Collections</span>}
-              </button>
-
-              <button
-                onClick={() => setSidebarTab("environments")}
-                className={`flex-1 flex items-center justify-center text-[11px] font-semibold transition px-2 min-w-0 ${sidebarTab === "environments"
-                    ? "bg-bg-secondary text-text-accent"
-                    : "text-text-secondary hover:text-text-primary"
-                  }`}
-              >
-                <Globe size={13} className="flex-shrink-0" />
-                {sidebarTab === "environments" && <span className="ml-1.5 truncate whitespace-nowrap">Environments</span>}
-              </button>
-
-              <button
-                onClick={() => setSidebarTab("history")}
-                className={`flex-1 flex items-center justify-center text-[11px] font-semibold transition px-2 min-w-0 ${sidebarTab === "history"
-                    ? "bg-bg-secondary text-text-accent"
-                    : "text-text-secondary hover:text-text-primary"
-                  }`}
-              >
-                <Clock size={13} className="flex-shrink-0" />
-                {sidebarTab === "history" && <span className="ml-1.5 truncate whitespace-nowrap">History</span>}
-              </button>
-            </div>
-
-            {/* Sidebar Content Area */}
-            <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-              {sidebarTab === "collections" && (
-                <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-                  {/* Projects tree area scrollable */}
-                  <div className="flex-1 p-3 overflow-y-auto min-h-0">
-                    <ProjectsTree />
-                  </div>
-                  {/* Pinned history panel at bottom */}
-                  <div className="border-t border-border-primary p-3 bg-bg-secondary/50 flex-shrink-0">
-                    <HistoryPanel limit={8} />
-                  </div>
-                </div>
-              )}
+               >
+                 <FolderIcon size={13} className="flex-shrink-0" />
+                 {sidebarTab === "workspace" && <span className="ml-1.5 truncate whitespace-nowrap">Workspace</span>}
+               </button>
+ 
+               <button
+                 onClick={() => setSidebarTab("environments")}
+                 className={`flex-1 flex items-center justify-center text-[11px] font-semibold transition px-2 min-w-0 ${sidebarTab === "environments"
+                     ? "bg-bg-secondary text-text-accent"
+                     : "text-text-secondary hover:text-text-primary"
+                   }`}
+               >
+                 <Globe size={13} className="flex-shrink-0" />
+                 {sidebarTab === "environments" && <span className="ml-1.5 truncate whitespace-nowrap">Environments</span>}
+               </button>
+ 
+               <button
+                 onClick={() => setSidebarTab("history")}
+                 className={`flex-1 flex items-center justify-center text-[11px] font-semibold transition px-2 min-w-0 ${sidebarTab === "history"
+                     ? "bg-bg-secondary text-text-accent"
+                     : "text-text-secondary hover:text-text-primary"
+                   }`}
+               >
+                 <Clock size={13} className="flex-shrink-0" />
+                 {sidebarTab === "history" && <span className="ml-1.5 truncate whitespace-nowrap">History</span>}
+               </button>
+             </div>
+ 
+             {/* Sidebar Content Area */}
+             <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+               {sidebarTab === "workspace" && (
+                 <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
+                   {/* Projects tree area scrollable */}
+                   <div className="flex-1 p-3 overflow-y-auto min-h-0">
+                     <ProjectsTree />
+                   </div>
+                   {/* Pinned history panel at bottom */}
+                   <div className="border-t border-border-primary p-3 bg-bg-secondary/50 flex-shrink-0">
+                     <HistoryPanel limit={8} />
+                   </div>
+                 </div>
+               )}
 
               {sidebarTab === "environments" && (
                 <div className="flex-1 p-3 overflow-y-auto min-h-0 space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] font-bold text-[#8b919d] uppercase tracking-wider">
+                    <span className="text-[12px] font-bold text-[#8b919d] uppercase tracking-wider">
                       Environments
                     </span>
                   </div>
@@ -705,7 +705,7 @@ function App() {
 
               {sidebarTab === "history" && (
                 <div className="flex-1 p-3 overflow-y-auto min-h-0 flex flex-col">
-                  <div className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-2 flex-shrink-0">
+                  <div className="text-[12px] font-bold text-text-secondary uppercase tracking-wider mb-2 flex-shrink-0">
                     Recent Requests
                   </div>
                   <div className="flex-1 min-h-0">
@@ -715,9 +715,9 @@ function App() {
               )}
             </div>
 
-            <div className="p-3 border-t border-border-primary text-[11px] text-text-secondary bg-bg-tertiary/20 flex-shrink-0 flex items-center justify-between">
+            <div className="p-3 border-t border-border-primary text-[12px] text-text-secondary bg-bg-tertiary/20 flex-shrink-0 flex items-center justify-between">
               <div>
-                Press <kbd className="bg-bg-hover px-1 rounded text-text-primary font-mono">Ctrl+Enter</kbd> to Send
+                Press <kbd className="bg-bg-hover px-1.5 py-1 rounded text-text-primary font-mono">Ctrl+Enter</kbd> to Send
               </div>
               <button
                 onClick={toggleResponsePane}
@@ -803,7 +803,7 @@ function App() {
               <Group id="workstage-group-v5" orientation="horizontal">
 
                 {/* Left stage: Request Builder Panel */}
-                <Panel defaultSize="55%" minSize="500px" className="flex flex-col bg-bg-primary h-full overflow-hidden min-w-0">
+                <Panel defaultSize="55%" minSize="300px" className="flex flex-col bg-bg-primary h-full overflow-hidden min-w-0">
                   <TabBar />
                   <div className="flex-1 flex flex-col p-4 space-y-4 overflow-hidden min-h-0">
                     <UrlBar />
@@ -821,7 +821,7 @@ function App() {
                   id="response-panel"
                   panelRef={responsePanelRef}
                   defaultSize={45}
-                  minSize="420px"
+                  minSize="250px"
                   collapsible={true}
                   onResize={(size) => {
                     setIsResponseCollapsed(size.inPixels === 0);

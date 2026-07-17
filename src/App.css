@@ -60,5 +60,42 @@ html, body, #root {
   height: 100%;
   margin: 0;
   padding: 0;
-  background-color: #161B22;
+  background-color: var(--bg-secondary);
+}
+
+/* Theme overrides */
+html.theme-light {
+  --bg-primary: #f6f8fa;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f0f2f5;
+  --border-primary: #d0d7de;
+  --text-primary: #24292f;
+  --text-secondary: #57606a;
+  --text-accent: #0969da;
+  --bg-hover: #eaeef2;
+  --bg-hover-light: #e1e8f0;
+}
+
+html.theme-nord {
+  --bg-primary: #2e3440;
+  --bg-secondary: #3b4252;
+  --bg-tertiary: #434c5e;
+  --border-primary: #4c566a;
+  --text-primary: #d8dee9;
+  --text-secondary: #e5e9f0;
+  --text-accent: #88c0d0;
+  --bg-hover: #4c566a;
+  --bg-hover-light: #5e81ac;
+}
+
+html.theme-dracula {
+  --bg-primary: #282a36;
+  --bg-secondary: #1e1f29;
+  --bg-tertiary: #21222c;
+  --border-primary: #44475a;
+  --text-primary: #f8f8f2;
+  --text-secondary: #6272a4;
+  --text-accent: #bd93f9;
+  --bg-hover: #44475a;
+  --bg-hover-light: #ff79c6;
 }

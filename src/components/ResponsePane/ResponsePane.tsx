@@ -15,7 +15,7 @@ import { buildCurlCommand } from "../../utils/curl";
 import { useToastStore } from "../../store/toastStore";
 
 export const ResponsePane: React.FC = () => {
-  const { response, isLoading, activeRequest } = useRequestStore();
+  const { response, isLoading, activeRequest, theme } = useRequestStore();
   const { showToast } = useToastStore();
 
   const [headersExpanded, setHeadersExpanded] = useState(true);
@@ -276,7 +276,7 @@ export const ResponsePane: React.FC = () => {
                         value={renderResponseBody(response.body)}
                         height="100%"
                         extensions={[json()]}
-                        theme="dark"
+                        theme={theme === "light" ? "light" : "dark"}
                         readOnly={true}
                         className="flex-1 min-h-0"
                         style={{ height: "100%" }}

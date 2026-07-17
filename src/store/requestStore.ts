@@ -63,6 +63,7 @@ interface RequestStore {
   error: string | null;
   tabs: Tab[];
   activeTabId: string | null;
+  theme: string;
 
   setMethod: (method: HttpMethod) => void;
   setUrl: (url: string) => void;
@@ -81,6 +82,7 @@ interface RequestStore {
   markTabClean: (id: string) => void;
   reorderTabs: (startIndex: number, endIndex: number) => void;
   updateRequestName: (requestId: string, newName: string) => void;
+  setTheme: (theme: string) => void;
 }
 
 export const createInitialRequest = (): BoltRequest => ({
@@ -120,6 +122,18 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
   error: null,
   tabs: [initialTab],
   activeTabId: initialTabId,
+  theme: localStorage.getItem("boltt-theme") || "dark",
+
+  setTheme: (theme) => {
+    localStorage.setItem("boltt-theme", theme);
+    // Sync class list
+    const root = document.documentElement;
+    root.className = "";
+    if (theme !== "dark") {
+      root.classList.add(`theme-${theme}`);
+    }
+    set({ theme });
+  },
 
   setMethod: (method) =>
     set((state) => {

@@ -10,7 +10,7 @@ type TabType = "params" | "headers" | "body" | "auth";
 
 export const RequestPane: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>("params");
-  const { activeRequest, setParams, setHeaders, setBody, setAuth, tabs, activeTabId } = useRequestStore();
+  const { activeRequest, setParams, setHeaders, setBody, setAuth, tabs, activeTabId, theme } = useRequestStore();
 
   const [isAuthDropdownOpen, setIsAuthDropdownOpen] = useState(false);
   const authDropdownRef = useRef<HTMLDivElement>(null);
@@ -255,7 +255,7 @@ export const RequestPane: React.FC = () => {
                     minHeight="200px"
                     extensions={[json()]}
                     onChange={handleBodyContentChange}
-                    theme="dark"
+                    theme={theme === "light" ? "light" : "dark"}
                     className="font-mono h-full"
                   />
                 </div>

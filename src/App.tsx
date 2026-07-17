@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { UrlBar } from "./components/UrlBar/UrlBar";
 import { RequestPane } from "./components/RequestPane/RequestPane";
-import { Settings, RefreshCw, Folder as FolderIcon, Globe, Clock, Eye, EyeOff, Plus, Minus, Square, X } from "lucide-react";
+import { Palette, RefreshCw, Folder as FolderIcon, Globe, Clock, Eye, EyeOff, Plus, Minus, Square, X } from "lucide-react";
 import "./App.css";
 import { Group, Panel, Separator, type PanelImperativeHandle } from "react-resizable-panels";
 import { ResponsePane } from "./components/ResponsePane/ResponsePane";
@@ -28,6 +28,32 @@ function App() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isAppLoading, setIsAppLoading] = useState(true);
+
+  const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
+  const themeDropdownRef = useRef<HTMLDivElement>(null);
+  const theme = useRequestStore((state) => state.theme);
+  const setTheme = useRequestStore((state) => state.setTheme);
+
+  // Sync theme class list on mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem("boltt-theme") || "dark";
+    const root = document.documentElement;
+    root.className = "";
+    if (savedTheme !== "dark") {
+      root.classList.add(`theme-${savedTheme}`);
+    }
+  }, []);
+
+  // Theme dropdown click outside handler
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (themeDropdownRef.current && !themeDropdownRef.current.contains(event.target as Node)) {
+        setIsThemeDropdownOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const response = useRequestStore((state) => state.response);
   const isLoading = useRequestStore((state) => state.isLoading);
@@ -430,9 +456,42 @@ function App() {
         </div>
         <div className="flex items-center space-x-3 text-xs text-[#c0c7d3]">
           <EnvironmentDropdown />
-          <button className="p-1 hover:bg-bg-hover rounded border border-transparent hover:border-border-primary transition">
-            <Settings size={14} />
-          </button>
+          <div className="relative" ref={themeDropdownRef}>
+            <button
+              onClick={() => setIsThemeDropdownOpen(!isThemeDropdownOpen)}
+              className={`p-1 hover:bg-bg-hover rounded border border-transparent hover:border-border-primary transition cursor-pointer flex items-center justify-center ${isThemeDropdownOpen ? "bg-bg-hover border-border-primary" : ""}`}
+              title="Select color theme"
+            >
+              <Palette size={14} className="text-text-secondary hover:text-text-primary" />
+            </button>
+
+            {isThemeDropdownOpen && (
+              <div className="absolute right-0 mt-1 w-32 bg-bg-secondary border border-border-primary rounded shadow-2xl z-50 py-1 font-sans flex flex-col">
+                {([
+                  { id: "dark", name: "Dark Theme" },
+                  { id: "light", name: "Light Theme" },
+                  { id: "nord", name: "Nord Theme" },
+                  { id: "dracula", name: "Dracula" },
+                ] as const).map((t) => {
+                  const isSelected = theme === t.id;
+                  return (
+                    <button
+                      key={t.id}
+                      onClick={() => {
+                        setTheme(t.id);
+                        setIsThemeDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-3 py-1.5 text-[11px] flex items-center justify-between transition cursor-pointer hover:bg-bg-tertiary/60 ${
+                        isSelected ? "text-text-accent font-semibold bg-bg-tertiary" : "text-text-primary"
+                      }`}
+                    >
+                      <span>{t.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}

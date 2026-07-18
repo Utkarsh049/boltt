@@ -99,10 +99,10 @@ pub async fn export_folder_pdf(
 
     // Open native save file dialog
     let file_handle = rfd::AsyncFileDialog::new()
-        .add_filter("PDF Document", &["pdf"])
-        .set_file_name(&format!("{}.pdf", folder.name))
-        .save_file()
-        .await;
+      .add_filter("PDF Document", &["pdf"])
+      .set_file_name(format!("{}.pdf", folder.name))
+      .save_file()
+      .await;
 
     if let Some(file) = file_handle {
         let save_path = file.path();

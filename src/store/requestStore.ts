@@ -82,7 +82,7 @@ interface RequestStore {
   markTabClean: (id: string) => void;
   reorderTabs: (startIndex: number, endIndex: number) => void;
   updateRequestName: (requestId: string, newName: string) => void;
-  setTheme: (theme: string) => void;
+  setTheme: (theme: string, options?: { persist?: boolean }) => void;
 }
 
 export const createInitialRequest = (): BoltRequest => ({
@@ -124,8 +124,13 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
   activeTabId: initialTabId,
   theme: localStorage.getItem("boltt-theme") || "dark",
 
-  setTheme: (theme) => {
-    localStorage.setItem("boltt-theme", theme);
+  setTheme: (theme, options = { persist: true }) => {
+    const validThemes = ["dark", "light", "nord", "dracula", "space", "glass"];
+    if (!validThemes.includes(theme)) return;
+
+    if (options.persist) {
+      localStorage.setItem("boltt-theme", theme);
+    }
     // Sync class list
     const root = document.documentElement;
     root.className = "";
@@ -135,11 +140,15 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
     set({ theme });
     
     // Broadcast theme changes to other windows (multi-window sync)
-    import("@tauri-apps/api/event").then(({ emit }) => {
-      emit("theme-changed", theme).catch((err) => {
-        console.warn("Failed to broadcast theme change:", err);
+    if (typeof window !== "undefined" && (window as any).__TAURI_INTERNALS__) {
+      import("@tauri-apps/api/event").then(({ emit }) => {
+        emit("theme-changed", theme).catch((err) => {
+          console.warn("Failed to broadcast theme change:", err);
+        });
+      }).catch((err) => {
+        console.debug("Tauri event API not resolved:", err);
       });
-    });
+    }
   },
 
   setMethod: (method) =>

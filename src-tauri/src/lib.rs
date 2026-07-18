@@ -26,26 +26,37 @@ pub fn run() {
 
                 if let Some(home_dir) = std::env::var_os("HOME").map(PathBuf::from) {
                     let desktop_dir = home_dir.join(".local/share/applications");
-                    if desktop_dir.exists() {
-                        let desktop_file = desktop_dir.join("boltt.desktop");
-                        if let Ok(current_exe) = std::env::current_exe() {
-                            if let Ok(current_dir) = std::env::current_dir() {
-                                let icon_path = current_dir.join("icons/icon.png");
-                                if icon_path.exists() {
-                                    let content = format!(
-                                        "[Desktop Entry]\n\
-                                         Type=Application\n\
-                                         Name=Boltt\n\
-                                         Exec={}\n\
-                                         Icon={}\n\
-                                         Terminal=false\n\
-                                         StartupWMClass=boltt\n",
-                                        current_exe.to_string_lossy(),
-                                        icon_path.to_string_lossy()
-                                    );
-                                    let _ = fs::write(desktop_file, content);
-                                }
-                            }
+                    let _ = fs::create_dir_all(&desktop_dir);
+                    let desktop_file = desktop_dir.join("boltt.desktop");
+                    if let Ok(current_exe) = std::env::current_exe() {
+                        let icon_path = app
+                            .path()
+                            .resource_dir()
+                            .ok()
+                            .map(|d| d.join("icons/icon.png"))
+                            .unwrap_or_else(|| PathBuf::from("icons/icon.png"));
+
+                        let final_icon_path = if icon_path.exists() {
+                            icon_path
+                        } else {
+                            std::env::current_dir()
+                                .map(|d| d.join("icons/icon.png"))
+                                .unwrap_or(icon_path)
+                        };
+
+                        if final_icon_path.exists() {
+                            let content = format!(
+                                "[Desktop Entry]\n\
+                                 Type=Application\n\
+                                 Name=Boltt\n\
+                                 Exec=\"{}\"\n\
+                                 Icon={}\n\
+                                 Terminal=false\n\
+                                 StartupWMClass=boltt\n",
+                                current_exe.to_string_lossy().replace('"', "\\\""),
+                                final_icon_path.to_string_lossy()
+                            );
+                            let _ = fs::write(desktop_file, content);
                         }
                     }
                 }

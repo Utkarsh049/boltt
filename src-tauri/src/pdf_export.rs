@@ -635,7 +635,7 @@ pub fn generate_pdf_document(
         for var in &variables {
             ctx.check_page_break(5.5);
             ctx.current_layer().use_text("•", 9.0, Mm(22.0), Mm(ctx.y), &ctx.font_regular);
-            ctx.current_layer().use_text(&format!("{{{{{}}}}}", var), 8.5, Mm(25.0), Mm(ctx.y), &ctx.font_bold);
+            ctx.current_layer().use_text(format!("{{{{{}}}}}", var), 8.5, Mm(25.0), Mm(ctx.y), &ctx.font_bold);
             ctx.current_layer().use_text("Runtime substituted environment placeholder", 8.0, Mm(80.0), Mm(ctx.y), &ctx.font_regular);
             ctx.y -= 5.0;
         }

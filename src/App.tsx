@@ -40,18 +40,12 @@ function App() {
     let savedTheme = localStorage.getItem("boltt-theme") || "dark";
     if (savedTheme === "one-dark-glass") {
       savedTheme = "glass";
-      localStorage.setItem("boltt-theme", "glass");
     }
     const validThemes = ["dark", "light", "nord", "dracula", "space", "glass"];
     if (!validThemes.includes(savedTheme)) {
       savedTheme = "dark";
-      setTheme("dark");
     }
-    const root = document.documentElement;
-    root.className = "";
-    if (savedTheme !== "dark") {
-      root.classList.add(`theme-${savedTheme}`);
-    }
+    setTheme(savedTheme);
   }, [setTheme]);
 
   // Theme dropdown click outside handler
@@ -59,7 +53,7 @@ function App() {
     const handleClickOutside = (event: MouseEvent) => {
       if (themeDropdownRef.current && !themeDropdownRef.current.contains(event.target as Node)) {
         if (isThemeDropdownOpen && initialThemeRef.current) {
-          setTheme(initialThemeRef.current);
+          setTheme(initialThemeRef.current, { persist: false });
         }
         setIsThemeDropdownOpen(false);
       }
@@ -74,18 +68,25 @@ function App() {
     let unlistenFn: (() => void) | undefined;
 
     const setupListener = async () => {
-      const { listen } = await import("@tauri-apps/api/event");
-      const fn = await listen<string>("theme-changed", (event) => {
-        const currentTheme = useRequestStore.getState().theme;
-        const newTheme = event.payload;
-        if (newTheme !== currentTheme) {
-          setTheme(newTheme);
+      try {
+        const { listen } = await import("@tauri-apps/api/event");
+        const fn = await listen<unknown>("theme-changed", (event) => {
+          const currentTheme = useRequestStore.getState().theme;
+          const newTheme = event.payload;
+          if (typeof newTheme === "string") {
+            const validThemes = ["dark", "light", "nord", "dracula", "space", "glass"];
+            if (validThemes.includes(newTheme) && newTheme !== currentTheme) {
+              setTheme(newTheme, { persist: false });
+            }
+          }
+        });
+        if (!active) {
+          fn();
+        } else {
+          unlistenFn = fn;
         }
-      });
-      if (!active) {
-        fn();
-      } else {
-        unlistenFn = fn;
+      } catch (err) {
+        console.debug("Tauri event listener not available (running in browser/testing environment)");
       }
     };
     setupListener();
@@ -378,7 +379,7 @@ function App() {
     }
   };
 
-  const handleHeaderMouseDown = (e: React.MouseEvent) => {
+  const handleHeaderMouseDown = async (e: React.MouseEvent) => {
     if (e.button === 0) {
       const target = e.target as HTMLElement;
       if (
@@ -391,7 +392,7 @@ function App() {
         return;
       }
       try {
-        getCurrentWindow().startDragging();
+        await getCurrentWindow().startDragging();
       } catch (err) {
         console.error("Failed to start window drag:", err);
       }
@@ -522,7 +523,7 @@ function App() {
               <div
                 onMouseLeave={() => {
                   if (initialThemeRef.current) {
-                    setTheme(initialThemeRef.current);
+                    setTheme(initialThemeRef.current, { persist: false });
                   }
                 }}
                 className="absolute right-0 mt-1 w-40 bg-bg-secondary border border-border-primary rounded shadow-2xl z-50 py-1 font-sans flex flex-col"
@@ -540,7 +541,7 @@ function App() {
                     <button
                       key={t.id}
                       onMouseEnter={() => {
-                        setTheme(t.id);
+                        setTheme(t.id, { persist: false });
                       }}
                       onClick={() => {
                         initialThemeRef.current = t.id; // Commit the selection

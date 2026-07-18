@@ -148,7 +148,7 @@ pub fn save_project(_app_handle: tauri::AppHandle, project: Project) -> Result<(
 pub async fn create_project_dialog(app_handle: tauri::AppHandle, default_name: String) -> Result<Option<Project>, String> {
     let file_handle = rfd::AsyncFileDialog::new()
         .add_filter("Boltt Project JSON", &["json"])
-        .set_file_name(&format!("{}.json", default_name))
+        .set_file_name(format!("{}.json", default_name))
         .save_file()
         .await;
 
@@ -170,7 +170,7 @@ pub async fn create_project_dialog(app_handle: tauri::AppHandle, default_name: S
 
         let content = serde_json::to_string_pretty(&new_project)
             .map_err(|e| format!("Failed to serialize project: {}", e))?;
-        fs::write(&save_path, content)
+        fs::write(save_path, content)
             .map_err(|e| format!("Failed to write project file: {}", e))?;
 
         let mut config = load_workspace_config(&app_handle)?;

@@ -95,7 +95,7 @@ export const EnvironmentModal: React.FC = () => {
     }
   };
 
-  const handleHeaderMouseDown = (e: React.MouseEvent) => {
+  const handleHeaderMouseDown = async (e: React.MouseEvent) => {
     if (!isEnvWindow) return;
     if (e.button === 0) {
       const target = e.target as HTMLElement;
@@ -109,7 +109,7 @@ export const EnvironmentModal: React.FC = () => {
         return;
       }
       try {
-        getCurrentWindow().startDragging();
+        await getCurrentWindow().startDragging();
       } catch (err) {
         console.error("Failed to start window drag:", err);
       }

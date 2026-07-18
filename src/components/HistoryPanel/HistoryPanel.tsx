@@ -197,19 +197,6 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
                   </div>
                 </div>
               ))}
-
-              {/* Pinned history list */}
-              {alwaysExpanded && (
-                <div className="pt-2 flex justify-end">
-                  <button
-                    onClick={handleClearHistory}
-                    className="flex items-center space-x-1 px-2 py-1 text-[10px] text-red-400 hover:text-red-300 font-medium hover:underline transition cursor-pointer"
-                  >
-                    <Trash2 size={11} />
-                    <span>Clear History</span>
-                  </button>
-                </div>
-              )}
             </div>
           )}
         </div>

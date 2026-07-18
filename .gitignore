@@ -22,7 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-TIMELINE.md
-design_images
-projectGuide.md

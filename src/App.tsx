@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { UrlBar } from "./components/UrlBar/UrlBar";
 import { RequestPane } from "./components/RequestPane/RequestPane";
-import { Palette, RefreshCw, Folder as FolderIcon, Globe, Clock, Eye, EyeOff, Plus, Minus, Square, X } from "lucide-react";
+import { Palette, RefreshCw, Folder as FolderIcon, Globe, Clock, Eye, EyeOff, Plus, Minus, Square, X, Trash2 } from "lucide-react";
 import "./App.css";
 import { Group, Panel, Separator, type PanelImperativeHandle } from "react-resizable-panels";
 import { ResponsePane } from "./components/ResponsePane/ResponsePane";
@@ -109,6 +109,9 @@ function App() {
   const groupActiveIds = useEnvStore((state) => state.groupActiveIds);
   const setActiveGroup = useEnvStore((state) => state.setActiveGroup);
   const environments = useEnvStore((state) => state.environments);
+  const historyEntries = useHistoryStore((state) => state.entries);
+  const clearHistory = useHistoryStore((state) => state.clearHistory);
+  const showToast = useToastStore((state) => state.showToast);
 
   const handleRefresh = async () => {
     if (isRefreshing) return;
@@ -564,7 +567,7 @@ function App() {
           </button>
           <span className="text-xs select-none flex items-center space-x-1.5" title={isOnline ? "Connected to the internet" : "Disconnected from the internet"}>
             <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? "bg-[#4ade80]" : "bg-[#f87171]"}`} />
-            <span>  :</span>
+            <span>Status:</span>
             <strong className={isOnline ? "text-[#4ade80]" : "text-[#f87171]"}>
               {isOnline ? "Online" : "Offline"}
             </strong>
@@ -705,8 +708,23 @@ function App() {
 
               {sidebarTab === "history" && (
                 <div className="flex-1 p-3 overflow-y-auto min-h-0 flex flex-col">
-                  <div className="text-[12px] font-bold text-text-secondary uppercase tracking-wider mb-2 flex-shrink-0">
-                    Recent Requests
+                  <div className="flex items-center justify-between mb-2 flex-shrink-0">
+                    <span className="text-[12px] font-bold text-text-secondary uppercase tracking-wider">
+                      Recent Requests
+                    </span>
+                    {historyEntries.length > 0 && (
+                      <button
+                        onClick={() => {
+                          clearHistory();
+                          showToast("History cleared", "info");
+                        }}
+                        className="flex items-center space-x-1 px-1.5 py-0.5 text-[10px] font-semibold text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded transition cursor-pointer"
+                        title="Clear all recent request logs"
+                      >
+                        <Trash2 size={11} />
+                        <span>Clear</span>
+                      </button>
+                    )}
                   </div>
                   <div className="flex-1 min-h-0">
                     <HistoryPanel alwaysExpanded={true} limit={100} />

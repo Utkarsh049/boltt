@@ -75,7 +75,7 @@ export const TabBar: React.FC = () => {
   };
 
   return (
-    <div className="flex items-center w-full h-9 bg-[#161B22] select-none flex-shrink-0">
+    <div className="flex items-center w-full h-9 bg-bg-secondary select-none flex-shrink-0">
       {/* Scrollable Tabs Container */}
       <div className="flex items-center overflow-x-auto overflow-y-hidden h-full max-w-[calc(100%-40px)] scrollbar-none">
         {tabs.map((tab, index) => {
@@ -100,14 +100,14 @@ export const TabBar: React.FC = () => {
                 }
               }}
               style={style}
-              className={`group flex items-center space-x-2 px-3 h-full border-r border-[#30363D] select-none text-[11px] font-semibold min-w-[120px] max-w-[160px] ${
+              className={`group flex items-center space-x-2 px-3 h-full border-r border-border-primary select-none text-[11px] font-semibold min-w-[120px] max-w-[160px] ${
                 activeDragIndex !== null
                   ? isDragged
-                    ? "cursor-grabbing bg-[#101419] text-[#a1c9ff]"
-                    : "cursor-default opacity-60 border-b border-b-[#30363D]"
+                    ? "cursor-grabbing bg-bg-primary text-text-accent"
+                    : "cursor-default opacity-60 border-b border-b-border-primary"
                   : isActive
-                  ? "bg-[#101419] text-[#a1c9ff] border-b border-b-transparent cursor-grab"
-                  : "bg-[#161B22]/50 text-[#8b919d] hover:bg-[#161B22]/80 hover:text-[#e0e2ea] border-b border-b-[#30363D] cursor-grab"
+                  ? "bg-bg-primary text-text-accent border-b border-b-transparent cursor-grab"
+                  : "bg-bg-secondary/50 text-text-secondary hover:bg-bg-secondary/80 hover:text-text-primary border-b border-b-border-primary cursor-grab"
               }`}
             >
               {/* Colored Method Tag */}
@@ -132,7 +132,7 @@ export const TabBar: React.FC = () => {
                     e.stopPropagation();
                     closeTab(tab.id);
                   }}
-                  className={`absolute flex items-center justify-center w-3.5 h-3.5 rounded-sm hover:bg-[#272a30] text-[#8b919d] hover:text-[#e0e2ea] transition-all cursor-pointer ${
+                  className={`absolute flex items-center justify-center w-3.5 h-3.5 rounded-sm hover:bg-bg-hover text-text-secondary hover:text-text-primary transition-all cursor-pointer ${
                     tab.isDirty
                       ? "opacity-0 group-hover:opacity-100"
                       : "opacity-40 group-hover:opacity-100"
@@ -149,7 +149,7 @@ export const TabBar: React.FC = () => {
         <button
           type="button"
           onClick={() => openTab()}
-          className="flex items-center justify-center w-9 h-full text-[#8b919d] hover:text-[#e0e2ea] hover:bg-[#272a30]/30 transition cursor-pointer border-b border-b-[#30363D] flex-shrink-0"
+          className="flex items-center justify-center w-9 h-full text-text-secondary hover:text-text-primary hover:bg-bg-hover/30 transition cursor-pointer border-b border-b-border-primary flex-shrink-0"
           title="Open new tab (Ctrl+T)"
         >
           <Plus size={14} />
@@ -157,7 +157,7 @@ export const TabBar: React.FC = () => {
       </div>
 
       {/* Spacer filling remaining tabs bar width */}
-      <div className="flex-1 h-full border-b border-b-[#30363D] bg-[#161B22]/30" />
+      <div className="flex-1 h-full border-b border-b-border-primary bg-bg-secondary/30" />
     </div>
   );
 };

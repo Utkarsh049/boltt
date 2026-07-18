@@ -122,7 +122,7 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
       {!alwaysExpanded && (
         <div
           onClick={() => setIsCollapsed(!isCollapsed)}
-          className="flex items-center justify-between py-1.5 px-1 hover:text-[#e0e2ea] text-[#8b919d] cursor-pointer transition select-none flex-shrink-0"
+          className="flex items-center justify-between py-1.5 px-1 hover:text-text-primary text-text-secondary cursor-pointer transition select-none flex-shrink-0"
         >
           <div className="flex items-center space-x-1.5">
             {isCollapsed ? <ChevronRight size={14} /> : <ChevronDown size={14} />}
@@ -130,7 +130,7 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
               Recent History
             </span>
             {entries.length > 0 && (
-              <span className="text-[10px] bg-[#272a30] text-[#a1c9ff] px-1.5 py-0.5 rounded-full border border-[#30363D]">
+              <span className="text-[10px] bg-bg-hover text-text-accent px-1.5 py-0.5 rounded-full border border-border-primary">
                 {entries.length}
               </span>
             )}
@@ -156,7 +156,7 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
       {(!isCollapsed || alwaysExpanded) && (
         <div className="flex-1 flex flex-col min-h-0 overflow-y-auto">
           {entries.length === 0 ? (
-            <div className="text-[11px] text-[#8b919d]/60 italic p-3 text-center flex items-center justify-center space-x-1">
+            <div className="text-[11px] text-text-secondary/60 italic p-3 text-center flex items-center justify-center space-x-1">
               <Clock size={11} />
               <span>No recent requests.</span>
             </div>
@@ -167,49 +167,36 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
                   key={entry.id}
                   onClick={() => handleLoadEntry(entry)}
                   title={entry.url}
-                  className="group flex items-center justify-between p-1.5 rounded border border-[#30363D]/40 bg-[#161B22]/30 hover:bg-[#1c2025]/80 hover:border-[#a1c9ff]/30 transition cursor-pointer font-mono text-[11px]"
+                  className="group flex items-center justify-between p-1.5 rounded border border-border-primary/40 bg-bg-secondary/30 hover:bg-bg-tertiary/80 hover:border-text-accent/30 transition cursor-pointer font-mono text-[11px]"
                 >
                   <div className="flex items-center space-x-2 truncate flex-1 pr-2">
                     {/* Method label */}
-                    <span className={`text-[9px] font-black w-[35px] text-left flex-shrink-0 ${getMethodColor(entry.method)}`}>
+                    <span className={`text-[12px] font-black w-[35px] text-left flex-shrink-0 ${getMethodColor(entry.method)}`}>
                       {entry.method}
                     </span>
                     
                     {/* Truncated URL */}
-                    <span className="text-[#c0c7d3] truncate select-none">
+                    <span className="text-text-primary/90 truncate select-none">
                       {truncateUrl(entry.url)}
                     </span>
                   </div>
 
                   <div className="flex items-center space-x-1.5 flex-shrink-0">
                     {/* Status code */}
-                    <span className={`px-1.5 py-0.2 text-[9px] rounded-sm ${getStatusColor(entry.status)}`}>
+                    <span className={`px-1.5 py-0.2 text-[12px] rounded-sm ${getStatusColor(entry.status)}`}>
                       {entry.status === 0 ? "ERR" : entry.status}
                     </span>
 
                     {/* Relative timestamp */}
-                    <span className="text-[9px] text-[#8b919d] w-[45px] text-right">
+                    <span className="text-[9px] text-text-secondary w-[45px] text-right">
                       {formatRelativeTime(entry.sentAt)}
                     </span>
                     
                     {/* Load arrow helper on hover */}
-                    <ArrowUpRight size={10} className="text-[#a1c9ff] opacity-0 group-hover:opacity-100 transition flex-shrink-0" />
+                    <ArrowUpRight size={10} className="text-text-accent opacity-0 group-hover:opacity-100 transition flex-shrink-0" />
                   </div>
                 </div>
               ))}
-
-              {/* Pinned history list */}
-              {alwaysExpanded && (
-                <div className="pt-2 flex justify-end">
-                  <button
-                    onClick={handleClearHistory}
-                    className="flex items-center space-x-1 px-2 py-1 text-[10px] text-red-400 hover:text-red-300 font-medium hover:underline transition cursor-pointer"
-                  >
-                    <Trash2 size={11} />
-                    <span>Clear History</span>
-                  </button>
-                </div>
-              )}
             </div>
           )}
         </div>

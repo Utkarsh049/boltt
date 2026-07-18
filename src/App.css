@@ -1,7 +1,56 @@
 @import "tailwindcss";
 
+/* 1. Register Inter (Sans-Serif) font */
+@font-face {
+  font-family: 'Inter';
+  src: url('/fonts/Inter.ttf') format('truetype');
+  font-weight: 100 900; /* Supports all variable weights */
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 2. Register JetBrains Mono (Monospace) font */
+@font-face {
+  font-family: 'JetBrains Mono';
+  src: url('/fonts/JetBrainsMono.ttf') format('truetype');
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  --bg-primary: #101419;
+  --bg-secondary: #161B22;
+  --bg-tertiary: #1c2025;
+  --border-primary: #30363D;
+  --text-primary: #e0e2ea;
+  --text-secondary: #8b919d;
+  --text-accent: #a1c9ff;
+  --bg-hover: #272a30;
+  --bg-hover-light: #32353b;
+  --bg-editor: #161B22;
+}
+
+@theme {
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --color-bg-primary: var(--bg-primary);
+  --color-bg-secondary: var(--bg-secondary);
+  --color-bg-tertiary: var(--bg-tertiary);
+  --color-border-primary: var(--border-primary);
+  --color-text-primary: var(--text-primary);
+  --color-text-secondary: var(--text-secondary);
+  --color-text-accent: var(--text-accent);
+  --color-bg-hover: var(--bg-hover);
+  --color-bg-hover-light: var(--bg-hover-light);
+}
+
 /* Prevent native browser/OS focus outlines and boxes on buttons globally */
-button, button:focus, button:active, button:focus-visible {
+button,
+button:focus,
+button:active,
+button:focus-visible {
   outline: none !important;
   box-shadow: none !important;
 }
@@ -11,6 +60,7 @@ button, button:focus, button:active, button:focus-visible {
     transform: translateY(12px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -22,6 +72,7 @@ button, button:focus, button:active, button:focus-visible {
     opacity: 0;
     transform: translateY(2px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -32,9 +83,153 @@ button, button:focus, button:active, button:focus-visible {
   animation: tab-fade-in 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-html, body, #root {
+html,
+body,
+#root {
   height: 100%;
   margin: 0;
   padding: 0;
-  background-color: #161B22;
+  background-color: var(--bg-secondary);
+}
+
+/* Theme overrides */
+html.theme-light {
+  --bg-primary: #f6f8fa;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f0f2f5;
+  --border-primary: #d0d7de;
+  --text-primary: #24292f;
+  --text-secondary: #57606a;
+  --text-accent: #0969da;
+  --bg-hover: #eaeef2;
+  --bg-hover-light: #e1e8f0;
+  --bg-editor: #ffffff;
+}
+
+html.theme-nord {
+  --bg-primary: #2e3440;
+  --bg-secondary: #3b4252;
+  --bg-tertiary: #434c5e;
+  --border-primary: #4c566a;
+  --text-primary: #d8dee9;
+  --text-secondary: #e5e9f0;
+  --text-accent: #88c0d0;
+  --bg-hover: #4c566a;
+  --bg-hover-light: #5e81ac;
+  --bg-editor: #242933;
+}
+
+html.theme-dracula {
+  --bg-primary: #282a36;
+  --bg-secondary: #1e1f29;
+  --bg-tertiary: #21222c;
+  --border-primary: #44475a;
+  --text-primary: #f8f8f2;
+  --text-secondary: #6272a4;
+  --text-accent: #bd93f9;
+  --bg-hover: #44475a;
+  --bg-hover-light: #ff79c6;
+  --bg-editor: #1e1f29;
+}
+
+html.theme-space {
+  --bg-primary: #080909;
+  --bg-secondary: #080909;
+  --bg-tertiary: #0f1010;
+  --border-primary: #212121;
+  --text-primary: #abb2bf;
+  --text-secondary: #7f838c;
+  --text-accent: #61afef;
+  --bg-hover: #2c313a;
+  --bg-hover-light: #3e4451;
+  --bg-editor: #181a1f;
+}
+
+html.theme-glass {
+  --bg-primary: rgba(8, 9, 9, 0.78);
+  --bg-secondary: rgba(12, 13, 13, 0.82);
+  --bg-tertiary: rgba(24, 25, 25, 0.88);
+  --border-primary: rgba(55, 55, 55, 0.75);
+  --text-primary: #abb2bf;
+  --text-secondary: #7f838c;
+  --text-accent: #61afef;
+  --bg-hover: rgba(44, 49, 58, 0.55);
+  --bg-hover-light: rgba(62, 68, 81, 0.7);
+  --bg-editor: rgba(20, 22, 26, 0.65);
+
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+html.theme-glass #root,
+html.theme-glass .h-screen.w-screen {
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+html.theme-glass body {
+  background-color: rgba(8, 9, 9, 0.78) !important;
+  background: rgba(8, 9, 9, 0.78) !important;
+}
+
+/* Glassmorphism panel blurs - apply blur ONLY on the static sidebar panels to prevent WebKitGTK graphics buffer memory leaks on active workspace/editor repaints */
+html.theme-glass .w-64.bg-bg-secondary,
+html.theme-glass .w-\[300px\].bg-bg-secondary,
+html.theme-glass .w-1\/3 {
+  backdrop-filter: blur(20px) saturate(125%);
+  -webkit-backdrop-filter: blur(20px) saturate(125%);
+}
+
+/* Exclude header, its children, and absolute-positioned elements (like dropdowns/modals) from backdrop-filter 
+   to completely prevent GTK WebKit input-region / click-blocking rendering bugs */
+html.theme-glass header,
+html.theme-glass header *,
+html.theme-glass .absolute,
+html.theme-glass .absolute * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+/* Ensure nested layout blocks inside the workspace and environment modal do not compound opacity in glass mode */
+html.theme-glass .flex-grow.bg-bg-primary,
+html.theme-glass .flex-1.p-4.bg-bg-primary,
+html.theme-glass .flex-grow.bg-bg-secondary,
+html.theme-glass .bg-bg-secondary:not(.w-64):not(.w-\[300px\]),
+html.theme-glass .bg-bg-primary:not(.h-screen),
+html.theme-glass .w-1\/3.bg-bg-primary\/50,
+html.theme-glass .w-2\/3.flex.flex-col.bg-bg-secondary,
+html.theme-glass .flex-1.border.border-border-primary.rounded.bg-bg-primary\/30,
+html.theme-glass .flex.items-center.border-b.border-border-primary.bg-bg-primary {
+  background-color: transparent !important;
+  background: transparent !important;
+}
+
+/* CodeMirror Theme Sync Overrides */
+.cm-editor {
+  background-color: var(--bg-editor) !important;
+  color: var(--text-primary) !important;
+}
+
+.cm-scroller {
+  background-color: var(--bg-editor) !important;
+}
+
+.cm-gutters {
+  background-color: var(--bg-editor) !important;
+  border-right: 1px solid var(--border-primary) !important;
+  color: var(--text-secondary) !important;
+}
+
+.cm-activeLine {
+  background-color: var(--bg-hover) !important;
+}
+
+.cm-activeLineGutter {
+  background-color: var(--bg-hover) !important;
+  color: var(--text-accent) !important;
+}
+
+.cm-cursor,
+.cm-dropCursor {
+  border-left-color: var(--text-accent) !important;
 }

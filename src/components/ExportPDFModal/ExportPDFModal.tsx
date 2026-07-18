@@ -69,18 +69,18 @@ export const ExportPDFModal: React.FC<ExportPDFModalProps> = ({
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4 font-sans select-none">
-      <div className="w-[440px] bg-[#161B22] border border-[#30363D] rounded-lg shadow-2xl flex flex-col animate-slide-up">
+      <div className="w-[440px] bg-bg-secondary border border-border-primary rounded-lg shadow-2xl flex flex-col animate-slide-up">
         {/* Header */}
-        <div className="h-12 border-b border-[#30363D] bg-[#1c2025] flex items-center justify-between px-4 flex-shrink-0 rounded-t-lg">
+        <div className="h-12 border-b border-border-primary bg-bg-tertiary flex items-center justify-between px-4 flex-shrink-0 rounded-t-lg">
           <div className="flex items-center space-x-2">
-            <FileDown size={15} className="text-[#a1c9ff]" />
-            <span className="font-semibold text-xs uppercase tracking-wider text-[#e0e2ea]">
+            <FileDown size={15} className="text-text-accent" />
+            <span className="font-semibold text-xs uppercase tracking-wider text-text-primary">
               {folderId === "" ? "Export Project as PDF" : "Export Collection as PDF"}
             </span>
           </div>
           <button
             onClick={onClose}
-            className="text-[#8b919d] hover:text-[#e0e2ea] transition cursor-pointer focus:outline-none outline-none"
+            className="text-text-secondary hover:text-text-primary transition cursor-pointer focus:outline-none outline-none"
           >
             <X size={18} />
           </button>
@@ -92,25 +92,25 @@ export const ExportPDFModal: React.FC<ExportPDFModalProps> = ({
             <div className="py-6 flex flex-col items-center justify-center space-y-3 text-center">
               <CheckCircle size={36} className="text-green-400 animate-bounce" />
               <div className="space-y-1">
-                <p className="text-sm font-semibold text-[#e0e2ea]">Export Successful!</p>
-                <p className="text-xs text-[#8b919d] max-w-[320px] truncate" title={successPath}>
-                  Saved to: <span className="font-mono text-[#a1c9ff]">{successPath.split(/[/\\]/).pop()}</span>
+                <p className="text-sm font-semibold text-text-primary">Export Successful!</p>
+                <p className="text-xs text-text-secondary max-w-[320px] truncate" title={successPath}>
+                  Saved to: <span className="font-mono text-text-accent">{successPath.split(/[/\\]/).pop()}</span>
                 </p>
               </div>
             </div>
           ) : (
             <>
               {/* Folder Details */}
-              <div className="bg-[#101419] border border-[#30363D] p-4 rounded-sm space-y-2">
+              <div className="bg-bg-primary border border-border-primary p-4 rounded-sm space-y-2">
                 <div className="flex justify-between text-xs">
-                  <span className="text-[#8b919d]">
+                  <span className="text-text-secondary">
                     {folderId === "" ? "Target Project:" : "Target Folder:"}
                   </span>
-                  <span className="font-semibold text-[#e0e2ea]">{folderName}</span>
+                  <span className="font-semibold text-text-primary">{folderName}</span>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span className="text-[#8b919d]">Total Requests:</span>
-                  <span className="font-bold text-[#a1c9ff] bg-[#a1c9ff]/10 px-2 py-0.5 rounded-full border border-[#a1c9ff]/20">
+                  <span className="text-text-secondary">Total Requests:</span>
+                  <span className="font-bold text-text-accent bg-text-accent/10 px-2 py-0.5 rounded-full border border-text-accent/20">
                     {requestsCount} {requestsCount === 1 ? "request" : "requests"}
                   </span>
                 </div>
@@ -122,7 +122,7 @@ export const ExportPDFModal: React.FC<ExportPDFModalProps> = ({
                 <div className="space-y-1">
                   <p className="font-semibold">Security Notice</p>
                   <p>
-                    For your privacy, environment variable values (such as <code className="bg-[#101419] px-1 py-0.2 rounded border border-[#30363D] text-[#a1c9ff] font-mono">{"{{api_key}}"}</code>) are <strong>not</strong> resolved into plain text in the exported document. Unmatched patterns remain intact.
+                    For your privacy, environment variable values (such as <code className="bg-bg-primary px-1 py-0.2 rounded border border-border-primary text-text-accent font-mono">{"{{api_key}}"}</code>) are <strong>not</strong> resolved into plain text in the exported document. Unmatched patterns remain intact.
                   </p>
                 </div>
               </div>
@@ -135,7 +135,7 @@ export const ExportPDFModal: React.FC<ExportPDFModalProps> = ({
                 </div>
               )}
 
-              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-[#30363D]/30">
+              <div className="flex items-center justify-end space-x-2 pt-3 border-t border-border-primary/30">
                 <button
                   type="button"
                   onClick={() => {
@@ -143,7 +143,7 @@ export const ExportPDFModal: React.FC<ExportPDFModalProps> = ({
                       onClose();
                     }
                   }}
-                  className={`px-3.5 py-2 border border-[#30363D] rounded text-xs text-[#c0c7d3] hover:bg-[#272a30] cursor-pointer font-medium focus:outline-none outline-none ${
+                  className={`px-3.5 py-2 border border-border-primary rounded text-xs text-[#c0c7d3] hover:bg-bg-hover cursor-pointer font-medium focus:outline-none outline-none ${
                     isExporting ? "opacity-50 cursor-not-allowed pointer-events-none" : ""
                   }`}
                 >
@@ -156,7 +156,7 @@ export const ExportPDFModal: React.FC<ExportPDFModalProps> = ({
                       handleExport();
                     }
                   }}
-                  className={`px-5 py-2 bg-[#a1c9ff] hover:bg-blue-300 text-[#00325a] rounded text-xs cursor-pointer font-bold flex items-center space-x-1.5 focus:outline-none outline-none ${
+                  className={`px-5 py-2 bg-text-accent hover:bg-blue-300 text-[#00325a] rounded text-xs cursor-pointer font-bold flex items-center space-x-1.5 focus:outline-none outline-none ${
                     (isExporting || requestsCount === 0) ? "opacity-50 cursor-not-allowed pointer-events-none" : ""
                   }`}
                 >

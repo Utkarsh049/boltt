@@ -40,18 +40,12 @@ function App() {
     let savedTheme = localStorage.getItem("boltt-theme") || "dark";
     if (savedTheme === "one-dark-glass") {
       savedTheme = "glass";
-      localStorage.setItem("boltt-theme", "glass");
     }
     const validThemes = ["dark", "light", "nord", "dracula", "space", "glass"];
     if (!validThemes.includes(savedTheme)) {
       savedTheme = "dark";
-      setTheme("dark");
     }
-    const root = document.documentElement;
-    root.className = "";
-    if (savedTheme !== "dark") {
-      root.classList.add(`theme-${savedTheme}`);
-    }
+    setTheme(savedTheme);
   }, [setTheme]);
 
   // Theme dropdown click outside handler
@@ -378,7 +372,7 @@ function App() {
     }
   };
 
-  const handleHeaderMouseDown = (e: React.MouseEvent) => {
+  const handleHeaderMouseDown = async (e: React.MouseEvent) => {
     if (e.button === 0) {
       const target = e.target as HTMLElement;
       if (
@@ -391,7 +385,7 @@ function App() {
         return;
       }
       try {
-        getCurrentWindow().startDragging();
+        await getCurrentWindow().startDragging();
       } catch (err) {
         console.error("Failed to start window drag:", err);
       }

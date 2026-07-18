@@ -292,21 +292,21 @@ export const EnvironmentModal: React.FC = () => {
               className="p-1 hover:bg-bg-hover rounded text-text-secondary hover:text-text-primary transition cursor-pointer flex items-center justify-center"
               title="Minimize"
             >
-              <Minus size={13} />
+              <Minus size={16} />
             </button>
             <button
               onClick={handleToggleMaximize}
               className="p-1 hover:bg-bg-hover rounded text-text-secondary hover:text-text-primary transition cursor-pointer flex items-center justify-center"
               title="Maximize / Restore"
             >
-              <Square size={10} />
+              <Square size={13} />
             </button>
             <button
               onClick={() => getCurrentWindow().close()}
               className="p-1 hover:bg-[#ea3e3e]/20 hover:text-[#ff8080] rounded text-text-secondary transition cursor-pointer flex items-center justify-center"
               title="Close"
             >
-              <X size={13} />
+              <X size={16} />
             </button>
           </div>
         ) : (

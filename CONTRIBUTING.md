@@ -127,3 +127,28 @@ Before committing changes:
    ```
 3. Push your branch to your fork and open a Pull Request against `main`.
 4. Include a clear explanation of what changed and any verification steps.
+
+---
+
+## 6. Release Process (Maintainers)
+
+Releases are fully automated across Linux, macOS, and Windows using GitHub Actions (`.github/workflows/release.yml`).
+
+### To Create a New Release:
+
+1. Update the version number in:
+   - `package.json` (`"version": "x.y.z"`)
+   - `src-tauri/tauri.conf.json` (`"version": "x.y.z"`)
+   - `src-tauri/Cargo.toml` (`version = "x.y.z"`)
+2. Commit and tag the release:
+   ```bash
+   git commit -am "chore: bump version to x.y.z"
+   git tag vx.y.z
+   git push origin main --tags
+   ```
+3. GitHub Actions will automatically trigger a multi-OS build matrix on:
+   - **Ubuntu 22.04**: Builds `.deb` and `.AppImage`
+   - **Windows**: Builds NSIS `.exe` installer and `.msi`
+   - **macOS**: Builds `.dmg`
+4. The installers will be attached as assets to a new GitHub Release draft. Review and publish the release when ready.
+

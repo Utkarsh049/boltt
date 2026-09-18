@@ -89,14 +89,14 @@ export const KVEditor: React.FC<KVEditorProps> = ({
                     type="checkbox"
                     disabled
                     checked={false}
-                    className="w-3.5 h-3.5 rounded-sm border-border-primary bg-bg-secondary/30 cursor-not-allowed opacity-30"
+                    className="w-3.5 h-3.5"
                   />
                 ) : (
                   <input
                     type="checkbox"
                     checked={row.enabled}
                     onChange={(e) => handleRowChange(index, "enabled", e.target.checked)}
-                    className="w-3.5 h-3.5 rounded-sm border-border-primary bg-bg-tertiary text-text-accent focus:ring-0 focus:ring-offset-0 cursor-pointer"
+                    className="w-3.5 h-3.5"
                   />
                 )}
               </div>

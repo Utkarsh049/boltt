@@ -55,6 +55,57 @@ button:focus-visible {
   box-shadow: none !important;
 }
 
+/* Custom Modern Checkbox Design System */
+input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid var(--border-primary);
+  border-radius: 3px;
+  background-color: var(--bg-primary);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: background-color 0.12s ease, border-color 0.12s ease, box-shadow 0.12s ease;
+  outline: none;
+  flex-shrink: 0;
+  vertical-align: middle;
+  margin: 0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+input[type="checkbox"]:hover:not(:disabled) {
+  border-color: var(--text-accent);
+}
+
+input[type="checkbox"]:checked {
+  background-color: var(--text-accent);
+  border-color: var(--text-accent);
+  background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='%230b1320' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+  background-size: 100% 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+html.theme-light input[type="checkbox"]:checked {
+  background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='%23ffffff' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+}
+
+input[type="checkbox"]:disabled {
+  opacity: 0.25;
+  cursor: not-allowed;
+  border-color: var(--border-primary);
+  background-color: transparent;
+  box-shadow: none;
+}
+
+input[type="checkbox"]:focus-visible {
+  box-shadow: 0 0 0 1.5px var(--bg-primary), 0 0 0 3px var(--text-accent) !important;
+}
+
 @keyframes toast-slide-in {
   from {
     transform: translateY(12px);

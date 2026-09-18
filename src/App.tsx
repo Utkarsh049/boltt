@@ -840,7 +840,7 @@ function App() {
                   id="response-panel"
                   panelRef={responsePanelRef}
                   defaultSize={45}
-                  minSize="250px"
+                  minSize="450px"
                   collapsible={true}
                   onResize={(size) => {
                     setIsResponseCollapsed(size.inPixels === 0);

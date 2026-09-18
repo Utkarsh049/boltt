@@ -79,39 +79,62 @@ Boltt saves settings and project directories locally inside standard OS configur
 
 ---
 
-## Requirements
+## Getting Started & Development Setup
 
-### Development Prerequisites
-* **Rust**: `stable` (Rustup recommended)
-* **Node.js**: `v18+` and **pnpm**
-* **Tauri Prerequisites**: Setup guides available at [Tauri Prerequisites](https://v2.tauri.app/start/prerequisites/)
+Boltt includes automated setup scripts that inspect your operating system, install missing system C-libraries, configure the Rust toolchain, and set up project dependencies automatically.
 
-#### Linux System Packages (Debian/Ubuntu)
+### Automated Setup (Recommended)
+
+If you already have Node.js and pnpm installed:
 ```bash
-sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev build-essential
+git clone https://github.com/your-username/boltt.git
+cd boltt
+pnpm setup:dev
+```
+
+### Fresh OS Setup (Zero Prior Dependencies)
+
+If you are setting up a fresh machine and haven't installed Node or Rust yet, run the native setup script for your platform:
+
+#### Linux (Ubuntu / Debian / Fedora / Arch)
+```bash
+bash scripts/setup-linux.sh
+```
+*Installs WebKit2GTK 4.1, GTK 3, build tools, Rustup, Node.js, and pnpm automatically.*
+
+#### macOS
+```bash
+bash scripts/setup-macos.sh
+```
+*Verifies Xcode Command Line Tools, Rustup, Node.js, and pnpm (WebKit is built natively into macOS).*
+
+#### Windows (PowerShell)
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\setup-windows.ps1
+```
+*Uses `winget` to configure Visual Studio C++ Build Tools, Rustup, Node.js, and pnpm.*
+
+---
+
+### Environment Healthcheck
+
+At any time, you can verify your environment's readiness with the built-in diagnostic doctor:
+```bash
+pnpm check:env
+# or
+pnpm run doctor
 ```
 
 ---
 
-## Build & Development Commands
+## Build & Run Commands
 
-### 1. Clone the repository
-```bash
-git clone https://github.com/your-username/boltt.git
-cd boltt
-```
-
-### 2. Install dependencies
-```bash
-pnpm install
-```
-
-### 3. Run development build (with hot reload)
+### 1. Run development build (with hot reload)
 ```bash
 pnpm tauri dev
 ```
 
-### 4. Build production platform bundle
+### 2. Build production platform bundle
 ```bash
 pnpm tauri build
 ```

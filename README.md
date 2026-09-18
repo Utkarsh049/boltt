@@ -36,29 +36,34 @@ Built with **Rust, Tauri v2, and React + TypeScript**, Boltt compiles to a self-
 
 ```
 boltt/
+├── scripts/
+│   ├── setup.js             # Cross-platform runner & environment doctor
+│   ├── setup-linux.sh       # Linux (Ubuntu/Debian, Fedora, Arch) setup script
+│   ├── setup-macos.sh       # macOS (Xcode, Homebrew, Rust) setup script
+│   └── setup-windows.ps1    # Windows (winget, Visual Studio C++) setup script
 ├── src-tauri/
 │   ├── src/
-│   │   ├── main.rs              # Tauri bootstrap & window events
-│   │   ├── lib.rs               # Linux launcher setup & setup hooks
-│   │   ├── commands.rs          # IPC bridge definitions
-│   │   ├── http_client.rs       # Reqwest request handler & variable substitutes
-│   │   ├── projects.rs          # Project file filesystem commands
-│   │   ├── environments.rs      # Environment variables I/O
-│   │   ├── history.rs           # Request logs manager
-│   │   └── pdf_export.rs        # Printpdf generator layout engine
+│   │   ├── main.rs          # Tauri bootstrap & window events
+│   │   ├── lib.rs           # Linux launcher setup & setup hooks
+│   │   ├── commands.rs      # IPC bridge definitions
+│   │   ├── http_client.rs   # Reqwest request handler & variable substitutes
+│   │   ├── projects.rs      # Project file filesystem commands
+│   │   ├── environments.rs  # Environment variables I/O
+│   │   ├── history.rs       # Request logs manager
+│   │   └── pdf_export.rs    # Printpdf generator layout engine
 │   └── Cargo.toml
 ├── src/
 │   ├── components/
-│   │   ├── Sidebar/             # Workspace tree, environments, and history
-│   │   ├── TabBar/              # Active request tab manager
-│   │   ├── UrlBar/              # URL inputs & request method configurations
-│   │   ├── RequestPane/         # Query params, headers, body, and auth editors
-│   │   ├── ResponsePane/        # JSON/text response viewer & headers
-│   │   ├── Toast/               # Toast notification system
-│   │   └── EnvironmentModal/    # Window-drag compliant settings modal
-│   ├── store/                   # Zustand stores (request, environment, history, projects)
-│   ├── App.tsx                  # Main layout and resizable panels
-│   └── index.css                # Custom theme variables
+│   │   ├── Sidebar/         # Workspace tree, environments, and history
+│   │   ├── TabBar/          # Active request tab manager
+│   │   ├── UrlBar/          # URL inputs & request method configurations
+│   │   ├── RequestPane/     # Query params, headers, body, and auth editors
+│   │   ├── ResponsePane/    # JSON/text response viewer & headers
+│   │   ├── Toast/           # Toast notification system
+│   │   └── EnvironmentModal/# Window-drag compliant settings modal
+│   ├── store/               # Zustand stores (request, environment, history, projects)
+│   ├── App.tsx              # Main layout and resizable panels
+│   └── App.css              # Custom theme variables and fonts
 └── README.md
 ```
 
@@ -154,5 +159,8 @@ Compiled production packages and executables will be generated inside `src-tauri
 | **Toggle Sidebar** | `Cmd + B` | `Ctrl + B` |
 | **Sync Filesystem** | `Cmd + R` | `Ctrl + R` |
 
+---
 
+## Contributing
 
+We welcome contributions from developers across Linux, macOS, and Windows. Please refer to our [Contributing Guide](CONTRIBUTING.md) for detailed onboarding and development instructions.

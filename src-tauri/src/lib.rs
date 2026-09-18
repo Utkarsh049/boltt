@@ -44,20 +44,26 @@ pub fn run() {
                                 .unwrap_or(icon_path)
                         };
 
-                        if final_icon_path.exists() {
-                            let content = format!(
-                                "[Desktop Entry]\n\
-                                 Type=Application\n\
-                                 Name=Boltt\n\
-                                 Exec=\"{}\"\n\
-                                 Icon={}\n\
-                                 Terminal=false\n\
-                                 StartupWMClass=boltt\n",
-                                current_exe.to_string_lossy().replace('"', "\\\""),
-                                final_icon_path.to_string_lossy()
-                            );
-                            let _ = fs::write(desktop_file, content);
-                        }
+                        let no_display = if cfg!(debug_assertions) {
+                            "NoDisplay=true\n"
+                        } else {
+                            ""
+                        };
+
+                        let content = format!(
+                            "[Desktop Entry]\n\
+                             Type=Application\n\
+                             Name=Boltt\n\
+                             Exec=\"{}\"\n\
+                             Icon={}\n\
+                             Terminal=false\n\
+                             StartupWMClass=boltt\n\
+                             {}",
+                            current_exe.to_string_lossy().replace('"', "\\\""),
+                            final_icon_path.to_string_lossy(),
+                            no_display
+                        );
+                        let _ = fs::write(desktop_file, content);
                     }
                 }
             }

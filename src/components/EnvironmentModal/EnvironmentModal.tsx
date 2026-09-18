@@ -414,7 +414,7 @@ export const EnvironmentModal: React.FC = () => {
                               type="checkbox"
                               checked={variable.enabled}
                               onChange={(e) => handleVariableChange(index, "enabled", e.target.checked)}
-                              className="w-3.5 h-3.5 rounded bg-bg-primary border-border-primary text-text-accent focus:ring-0 cursor-pointer"
+                              className="w-3.5 h-3.5"
                             />
                           </div>
                           

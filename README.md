@@ -36,29 +36,34 @@ Built with **Rust, Tauri v2, and React + TypeScript**, Boltt compiles to a self-
 
 ```
 boltt/
+├── scripts/
+│   ├── setup.js             # Cross-platform runner & environment doctor
+│   ├── setup-linux.sh       # Linux (Ubuntu/Debian, Fedora, Arch) setup script
+│   ├── setup-macos.sh       # macOS (Xcode, Homebrew, Rust) setup script
+│   └── setup-windows.ps1    # Windows (winget, Visual Studio C++) setup script
 ├── src-tauri/
 │   ├── src/
-│   │   ├── main.rs              # Tauri bootstrap & window events
-│   │   ├── lib.rs               # Linux launcher setup & setup hooks
-│   │   ├── commands.rs          # IPC bridge definitions
-│   │   ├── http_client.rs       # Reqwest request handler & variable substitutes
-│   │   ├── projects.rs          # Project file filesystem commands
-│   │   ├── environments.rs      # Environment variables I/O
-│   │   ├── history.rs           # Request logs manager
-│   │   └── pdf_export.rs        # Printpdf generator layout engine
+│   │   ├── main.rs          # Tauri bootstrap & window events
+│   │   ├── lib.rs           # Linux launcher setup & setup hooks
+│   │   ├── commands.rs      # IPC bridge definitions
+│   │   ├── http_client.rs   # Reqwest request handler & variable substitutes
+│   │   ├── projects.rs      # Project file filesystem commands
+│   │   ├── environments.rs  # Environment variables I/O
+│   │   ├── history.rs       # Request logs manager
+│   │   └── pdf_export.rs    # Printpdf generator layout engine
 │   └── Cargo.toml
 ├── src/
 │   ├── components/
-│   │   ├── Sidebar/             # Workspace tree, environments, and history
-│   │   ├── TabBar/              # Active request tab manager
-│   │   ├── UrlBar/              # URL inputs & request method configurations
-│   │   ├── RequestPane/         # Query params, headers, body, and auth editors
-│   │   ├── ResponsePane/        # JSON/text response viewer & headers
-│   │   ├── Toast/               # Toast notification system
-│   │   └── EnvironmentModal/    # Window-drag compliant settings modal
-│   ├── store/                   # Zustand stores (request, environment, history, projects)
-│   ├── App.tsx                  # Main layout and resizable panels
-│   └── index.css                # Custom theme variables
+│   │   ├── Sidebar/         # Workspace tree, environments, and history
+│   │   ├── TabBar/          # Active request tab manager
+│   │   ├── UrlBar/          # URL inputs & request method configurations
+│   │   ├── RequestPane/     # Query params, headers, body, and auth editors
+│   │   ├── ResponsePane/    # JSON/text response viewer & headers
+│   │   ├── Toast/           # Toast notification system
+│   │   └── EnvironmentModal/# Window-drag compliant settings modal
+│   ├── store/               # Zustand stores (request, environment, history, projects)
+│   ├── App.tsx              # Main layout and resizable panels
+│   └── App.css              # Custom theme variables and fonts
 └── README.md
 ```
 
@@ -79,39 +84,62 @@ Boltt saves settings and project directories locally inside standard OS configur
 
 ---
 
-## Requirements
+## Getting Started & Development Setup
 
-### Development Prerequisites
-* **Rust**: `stable` (Rustup recommended)
-* **Node.js**: `v18+` and **pnpm**
-* **Tauri Prerequisites**: Setup guides available at [Tauri Prerequisites](https://v2.tauri.app/start/prerequisites/)
+Boltt includes automated setup scripts that inspect your operating system, install missing system C-libraries, configure the Rust toolchain, and set up project dependencies automatically.
 
-#### Linux System Packages (Debian/Ubuntu)
+### Automated Setup (Recommended)
+
+If you already have Node.js and pnpm installed:
 ```bash
-sudo apt install libwebkit2gtk-4.1-dev libgtk-3-dev libayatana-appindicator3-dev librsvg2-dev build-essential
+git clone https://github.com/your-username/boltt.git
+cd boltt
+pnpm setup:dev
+```
+
+### Fresh OS Setup (Zero Prior Dependencies)
+
+If you are setting up a fresh machine and haven't installed Node or Rust yet, run the native setup script for your platform:
+
+#### Linux (Ubuntu / Debian / Fedora / Arch)
+```bash
+bash scripts/setup-linux.sh
+```
+*Installs WebKit2GTK 4.1, GTK 3, build tools, Rustup, Node.js, and pnpm automatically.*
+
+#### macOS
+```bash
+bash scripts/setup-macos.sh
+```
+*Verifies Xcode Command Line Tools, Rustup, Node.js, and pnpm (WebKit is built natively into macOS).*
+
+#### Windows (PowerShell)
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\setup-windows.ps1
+```
+*Uses `winget` to configure Visual Studio C++ Build Tools, Rustup, Node.js, and pnpm.*
+
+---
+
+### Environment Healthcheck
+
+At any time, you can verify your environment's readiness with the built-in diagnostic doctor:
+```bash
+pnpm check:env
+# or
+pnpm run doctor
 ```
 
 ---
 
-## Build & Development Commands
+## Build & Run Commands
 
-### 1. Clone the repository
-```bash
-git clone https://github.com/your-username/boltt.git
-cd boltt
-```
-
-### 2. Install dependencies
-```bash
-pnpm install
-```
-
-### 3. Run development build (with hot reload)
+### 1. Run development build (with hot reload)
 ```bash
 pnpm tauri dev
 ```
 
-### 4. Build production platform bundle
+### 2. Build production platform bundle
 ```bash
 pnpm tauri build
 ```
@@ -131,5 +159,8 @@ Compiled production packages and executables will be generated inside `src-tauri
 | **Toggle Sidebar** | `Cmd + B` | `Ctrl + B` |
 | **Sync Filesystem** | `Cmd + R` | `Ctrl + R` |
 
+---
 
+## Contributing
 
+We welcome contributions from developers across Linux, macOS, and Windows. Please refer to our [Contributing Guide](CONTRIBUTING.md) for detailed onboarding and development instructions.

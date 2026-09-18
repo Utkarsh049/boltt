@@ -125,13 +125,13 @@ export const ResponsePane: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col h-full overflow-hidden">
       {/* Header Metrics */}
-      <div className="flex items-center justify-between border-b border-border-primary pb-2.5 mb-2.5 flex-shrink-0">
+      <div className="flex items-center justify-between border-b border-border-primary pb-2.5 mb-2.5 flex-shrink-0 flex-wrap gap-2">
         <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
           Response View
         </h3>
         
         {response && (
-          <div className="flex items-center space-x-2.5 text-xs font-mono">
+          <div className="flex items-center space-x-2.5 text-xs font-mono flex-wrap gap-y-1">
             {/* Status Code */}
             <span className={`px-2 py-0.5 rounded ${getStatusColor(response.status)}`}>
               {response.status === 0 ? "0 Error" : `${response.status} ${response.status_text}`}

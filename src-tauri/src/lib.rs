@@ -7,6 +7,24 @@ pub mod environments;
 pub mod history;
 pub mod pdf_export;
 
+pub fn get_app_config_dir(app_handle: &tauri::AppHandle) -> Result<std::path::PathBuf, String> {
+    use tauri::Manager;
+    let base_dir = app_handle
+        .path()
+        .app_config_dir()
+        .map_err(|e| format!("Failed to resolve config directory: {}", e))?;
+
+    #[cfg(debug_assertions)]
+    {
+        // Isolate development data to ~/.config/boltt-dev so stable app data is never affected
+        if let Some(parent) = base_dir.parent() {
+            return Ok(parent.join("boltt-dev"));
+        }
+    }
+
+    Ok(base_dir)
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     tauri::Builder::default()
@@ -16,54 +34,50 @@ pub fn run() {
                 if let Some(icon) = app.default_window_icon() {
                     let _ = window.set_icon(icon.clone());
                 }
+                #[cfg(debug_assertions)]
+                {
+                    let _ = window.set_title("Boltt [DEV]");
+                }
             }
 
-            // On Linux, write a local .desktop file to resolve GNOME Shell / Ubuntu dock icon mapping
+            // On Linux, write a local .desktop file only in dev mode when Boltt is NOT already installed on the system
             #[cfg(target_os = "linux")]
             {
                 use std::fs;
                 use std::path::PathBuf;
 
                 if let Some(home_dir) = std::env::var_os("HOME").map(PathBuf::from) {
-                    let desktop_dir = home_dir.join(".local/share/applications");
-                    let _ = fs::create_dir_all(&desktop_dir);
-                    let desktop_file = desktop_dir.join("boltt.desktop");
                     if let Ok(current_exe) = std::env::current_exe() {
-                        let icon_path = app
-                            .path()
-                            .resource_dir()
-                            .ok()
-                            .map(|d| d.join("icons/icon.png"))
-                            .unwrap_or_else(|| PathBuf::from("icons/icon.png"));
+                        let is_system_install = current_exe.starts_with("/usr");
+                        let system_desktop_exists = std::path::Path::new("/usr/share/applications/boltt.desktop").exists();
 
-                        let final_icon_path = if icon_path.exists() {
-                            icon_path
-                        } else {
-                            std::env::current_dir()
-                                .map(|d| d.join("icons/icon.png"))
-                                .unwrap_or(icon_path)
-                        };
+                        // Never overwrite or create ~/.local/share/applications/boltt.desktop if system package is installed
+                        if !is_system_install && !system_desktop_exists {
+                            let desktop_dir = home_dir.join(".local/share/applications");
+                            let _ = fs::create_dir_all(&desktop_dir);
+                            let desktop_file = desktop_dir.join("boltt.desktop");
 
-                        let no_display = if cfg!(debug_assertions) {
-                            "NoDisplay=true\n"
-                        } else {
-                            ""
-                        };
+                            let icon_str = if std::path::Path::new("src-tauri/icons/icon.png").exists() {
+                                std::env::current_dir()
+                                    .map(|d| d.join("src-tauri/icons/icon.png").to_string_lossy().to_string())
+                                    .unwrap_or_else(|_| "boltt".to_string())
+                            } else {
+                                "boltt".to_string()
+                            };
 
-                        let content = format!(
-                            "[Desktop Entry]\n\
-                             Type=Application\n\
-                             Name=Boltt\n\
-                             Exec=\"{}\"\n\
-                             Icon={}\n\
-                             Terminal=false\n\
-                             StartupWMClass=boltt\n\
-                             {}",
-                            current_exe.to_string_lossy().replace('"', "\\\""),
-                            final_icon_path.to_string_lossy(),
-                            no_display
-                        );
-                        let _ = fs::write(desktop_file, content);
+                            let content = format!(
+                                "[Desktop Entry]\n\
+                                 Type=Application\n\
+                                 Name=Boltt\n\
+                                 Exec=\"{}\"\n\
+                                 Icon={}\n\
+                                 Terminal=false\n\
+                                 StartupWMClass=boltt\n",
+                                current_exe.to_string_lossy().replace('"', "\\\""),
+                                icon_str
+                            );
+                            let _ = fs::write(desktop_file, content);
+                        }
                     }
                 }
             }

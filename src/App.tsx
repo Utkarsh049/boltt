@@ -245,10 +245,11 @@ function App() {
 
   // Dynamic window title updates
   useEffect(() => {
+    const prefix = import.meta.env.DEV ? "Boltt [DEV]" : "Boltt";
     if (tabs.length > 0 && activeRequest) {
-      document.title = `Boltt — ${activeRequest.name || activeRequest.url || "New Request"}`;
+      document.title = `${prefix} — ${activeRequest.name || activeRequest.url || "New Request"}`;
     } else {
-      document.title = "Boltt";
+      document.title = prefix;
     }
   }, [tabs.length, activeRequest?.name, activeRequest?.url]);
 
@@ -500,6 +501,11 @@ function App() {
           <span className="font-semibold text-sm tracking-wider text-text-accent">
             Boltt
           </span>
+          {import.meta.env.DEV && (
+            <span className="text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded text-amber-400 border border-amber-500/30">
+              DEV
+            </span>
+          )}
         </div>
         <div className="flex items-center space-x-3 text-xs text-[#c0c7d3]">
           <EnvironmentDropdown />

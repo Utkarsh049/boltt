@@ -1,4 +1,4 @@
-# Boltt — Desktop HTTP Client (v1.0)
+# Boltt — Desktop HTTP Client (v1.0.0)
 
 Boltt is a local-first, native desktop HTTP client designed for speed, simplicity, and privacy. No cloud synchronization, no AI popups, no mandatory accounts — just a streamlined workspace to construct requests, manage environments, analyze responses, and export API collections offline.
 

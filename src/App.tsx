@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { UrlBar } from "./components/UrlBar/UrlBar";
 import { RequestPane } from "./components/RequestPane/RequestPane";
-import { Palette, RefreshCw, Folder as FolderIcon, Globe, Clock, Eye, EyeOff, Plus, Minus, Square, X, Trash2, ShieldCheck } from "lucide-react";
+import { Palette, RefreshCw, Folder as FolderIcon, Globe, Clock, Eye, EyeOff, Plus, Minus, Square, X, Trash2, Download } from "lucide-react";
 import "./App.css";
 import { Group, Panel, Separator, type PanelImperativeHandle } from "react-resizable-panels";
 import { ResponsePane } from "./components/ResponsePane/ResponsePane";
@@ -11,7 +11,8 @@ import { EnvironmentDropdown } from "./components/EnvironmentDropdown/Environmen
 import { EnvironmentModal } from "./components/EnvironmentModal/EnvironmentModal";
 import { ProjectsTree } from "./components/ProjectsTree/ProjectsTree";
 import { SaveRequestModal } from "./components/SaveRequestModal/SaveRequestModal";
-import { UpdateModal } from "./components/UpdateModal/UpdateModal";
+import { UpdateToast } from "./components/UpdateToast/UpdateToast";
+import { ReleaseNotesModal } from "./components/ReleaseNotesModal/ReleaseNotesModal";
 import { TabBar } from "./components/TabBar/TabBar";
 import { useProjectsStore } from "./store/projectsStore";
 import { useHistoryStore } from "./store/historyStore";
@@ -37,7 +38,7 @@ function App() {
   const theme = useRequestStore((state) => state.theme);
   const setTheme = useRequestStore((state) => state.setTheme);
 
-  const setUpdateModalOpen = useUpdateStore((state) => state.setModalOpen);
+  const setToastVisible = useUpdateStore((state) => state.setToastVisible);
   const updateStatus = useUpdateStore((state) => state.status);
   const checkForUpdates = useUpdateStore((state) => state.checkForUpdates);
 
@@ -590,14 +591,14 @@ function App() {
           </button>
           <button
             onClick={() => {
-              setUpdateModalOpen(true);
+              setToastVisible(true);
               checkForUpdates(false);
             }}
             className="relative p-1 hover:bg-bg-hover rounded border border-transparent hover:border-border-primary transition cursor-pointer flex items-center justify-center text-text-secondary hover:text-text-primary"
             title="Check for software updates"
           >
-            <ShieldCheck size={14} />
-            {updateStatus === "available" && (
+            <Download size={14} className={updateStatus === "checking" ? "animate-bounce text-text-accent" : ""} />
+            {(updateStatus === "available" || updateStatus === "ready") && (
               <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-text-accent animate-pulse" />
             )}
           </button>
@@ -892,7 +893,8 @@ function App() {
         </Group>
       </div>
       <SaveRequestModal />
-      <UpdateModal />
+      <UpdateToast />
+      <ReleaseNotesModal />
       <ToastList />
     </div>
   );

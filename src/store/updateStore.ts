@@ -13,8 +13,10 @@ export type UpdateStatus =
   | "error";
 
 interface UpdateStore {
-  isModalOpen: boolean;
-  setModalOpen: (open: boolean) => void;
+  isToastVisible: boolean;
+  setToastVisible: (visible: boolean) => void;
+  isNotesModalOpen: boolean;
+  setNotesModalOpen: (open: boolean) => void;
   status: UpdateStatus;
   updateObj: Update | null;
   currentVersion: string;
@@ -28,11 +30,14 @@ interface UpdateStore {
 
   checkForUpdates: (silent?: boolean) => Promise<void>;
   downloadAndApplyUpdate: () => Promise<void>;
+  relaunchApp: () => Promise<void>;
 }
 
 export const useUpdateStore = create<UpdateStore>((set, get) => ({
-  isModalOpen: false,
-  setModalOpen: (open) => set({ isModalOpen: open }),
+  isToastVisible: false,
+  setToastVisible: (visible) => set({ isToastVisible: visible }),
+  isNotesModalOpen: false,
+  setNotesModalOpen: (open) => set({ isNotesModalOpen: open }),
   status: "idle",
   updateObj: null,
   currentVersion: packageInfo.version,
@@ -45,10 +50,15 @@ export const useUpdateStore = create<UpdateStore>((set, get) => ({
   errorMessage: null,
 
   checkForUpdates: async (silent = false) => {
+    if (!silent) {
+      set({ isToastVisible: true, status: "checking", errorMessage: null });
+    }
+
     if (import.meta.env.DEV) {
       if (!silent) {
         set({
           status: "idle",
+          isToastVisible: true,
           errorMessage: "In-app updates are active in production releases. Auto-updates are disabled during development mode.",
         });
       }
@@ -56,12 +66,16 @@ export const useUpdateStore = create<UpdateStore>((set, get) => ({
     }
 
     try {
-      set({ status: "checking", errorMessage: null });
+      if (silent) {
+        set({ status: "checking", errorMessage: null });
+      }
+
       const update = await check();
 
       if (update && update.available) {
         set({
           status: "available",
+          isToastVisible: true,
           updateObj: update,
           availableVersion: update.version,
           releaseDate: update.date || null,
@@ -70,6 +84,7 @@ export const useUpdateStore = create<UpdateStore>((set, get) => ({
       } else {
         set({
           status: "up-to-date",
+          isToastVisible: !silent,
           updateObj: null,
           availableVersion: null,
           releaseDate: null,
@@ -82,6 +97,7 @@ export const useUpdateStore = create<UpdateStore>((set, get) => ({
       if (!silent) {
         set({
           status: "error",
+          isToastVisible: true,
           errorMessage: msg,
         });
       } else {
@@ -97,6 +113,7 @@ export const useUpdateStore = create<UpdateStore>((set, get) => ({
     try {
       set({
         status: "downloading",
+        isToastVisible: true,
         downloadProgress: 0,
         downloadedBytes: 0,
         totalBytes: 0,
@@ -125,14 +142,28 @@ export const useUpdateStore = create<UpdateStore>((set, get) => ({
         }
       });
 
-      set({ status: "ready" });
-      await relaunch();
+      set({ status: "ready", isToastVisible: true });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       console.error("Failed to download or apply update:", msg);
       set({
         status: "error",
+        isToastVisible: true,
         errorMessage: msg,
+      });
+    }
+  },
+
+  relaunchApp: async () => {
+    try {
+      await relaunch();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      console.error("Failed to relaunch application:", msg);
+      set({
+        status: "error",
+        isToastVisible: true,
+        errorMessage: `Failed to relaunch: ${msg}`,
       });
     }
   },

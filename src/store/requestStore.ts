@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { invoke } from "@tauri-apps/api/core";
 import { useHistoryStore } from "./historyStore";
+import packageInfo from "../../package.json";
 
 export interface KeyValue {
   key: string;
@@ -91,7 +92,7 @@ export const createInitialRequest = (): BoltRequest => ({
   method: "GET",
   url: "https://httpbin.org/get",
   headers: [
-    { key: "User-Agent", value: "BolttClient/1.1.0", enabled: true }
+    { key: "User-Agent", value: `BolttClient/${packageInfo.version}`, enabled: true }
   ],
   params: [],
   body: { type: "None" },

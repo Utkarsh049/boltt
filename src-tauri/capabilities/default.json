@@ -21,7 +21,6 @@
     "core:webview:allow-webview-close",
     "core:webview:allow-set-webview-focus",
     "updater:default",
-    "process:default",
     "process:allow-restart"
   ]
 }

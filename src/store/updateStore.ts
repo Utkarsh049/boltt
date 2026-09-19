@@ -33,6 +33,8 @@ interface UpdateStore {
   relaunchApp: () => Promise<void>;
 }
 
+let activeCheckId = 0;
+
 export const useUpdateStore = create<UpdateStore>((set, get) => ({
   isToastVisible: false,
   setToastVisible: (visible) => set({ isToastVisible: visible }),
@@ -50,15 +52,22 @@ export const useUpdateStore = create<UpdateStore>((set, get) => ({
   errorMessage: null,
 
   checkForUpdates: async (silent = false) => {
+    // If a check is already running and this is a silent check, ignore duplicate
+    if (silent && get().status === "checking") {
+      return;
+    }
+
     if (!silent) {
       set({ isToastVisible: true, status: "checking", errorMessage: null });
     }
+
+    const checkId = ++activeCheckId;
 
     if (import.meta.env.DEV) {
       if (!silent) {
         set({
           status: "idle",
-          isToastVisible: true,
+          isToastVisible: get().isToastVisible,
           errorMessage: "In-app updates are active in production releases. Auto-updates are disabled during development mode.",
         });
       }
@@ -72,6 +81,9 @@ export const useUpdateStore = create<UpdateStore>((set, get) => ({
 
       const update = await check();
 
+      // Discard stale response if a newer check superseded this one
+      if (checkId !== activeCheckId) return;
+
       if (update && update.available) {
         set({
           status: "available",
@@ -82,9 +94,10 @@ export const useUpdateStore = create<UpdateStore>((set, get) => ({
           releaseNotes: update.body || null,
         });
       } else {
+        // If the user dismissed the toast while checking, keep it dismissed unless update is available
         set({
           status: "up-to-date",
-          isToastVisible: !silent,
+          isToastVisible: !silent && get().isToastVisible,
           updateObj: null,
           availableVersion: null,
           releaseDate: null,
@@ -92,23 +105,58 @@ export const useUpdateStore = create<UpdateStore>((set, get) => ({
         });
       }
     } catch (err: unknown) {
+      if (checkId !== activeCheckId) return;
+
       const msg = err instanceof Error ? err.message : String(err);
       console.warn("Update check encountered an issue:", msg);
       if (!silent) {
         set({
           status: "error",
-          isToastVisible: true,
+          isToastVisible: get().isToastVisible,
           errorMessage: msg,
         });
       } else {
-        set({ status: "idle" });
+        // When a silent check fails while the toast is visible, avoid leaving an empty panel
+        if (get().isToastVisible) {
+          set({ status: "idle", isToastVisible: false });
+        } else {
+          set({ status: "idle" });
+        }
       }
     }
   },
 
   downloadAndApplyUpdate: async () => {
     const { updateObj } = get();
-    if (!updateObj) return;
+    if (!updateObj) {
+      if (import.meta.env.DEV) {
+        // Allow exercising download flow in Dev State Simulator
+        set({
+          status: "downloading",
+          isToastVisible: true,
+          downloadProgress: 0,
+          downloadedBytes: 0,
+          totalBytes: 24500000,
+          errorMessage: null,
+        });
+        let downloaded = 0;
+        const total = 24500000;
+        const step = 2450000;
+        const interval = setInterval(() => {
+          downloaded = Math.min(total, downloaded + step);
+          const progress = Math.min(100, Math.round((downloaded / total) * 100));
+          set({
+            downloadedBytes: downloaded,
+            downloadProgress: progress,
+          });
+          if (downloaded >= total) {
+            clearInterval(interval);
+            set({ status: "ready", isToastVisible: true });
+          }
+        }, 150);
+      }
+      return;
+    }
 
     try {
       set({

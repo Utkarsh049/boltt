@@ -24,7 +24,16 @@ import { useUpdateStore } from "./store/updateStore";
 
 type SidebarTab = "workspace" | "environments" | "history";
 
+const getInitialWindowLabel = () => {
+  try {
+    return getCurrentWindow().label;
+  } catch (e) {
+    return "main";
+  }
+};
+
 function App() {
+  const [windowLabel] = useState<string>(getInitialWindowLabel);
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>("workspace");
   const [isResponseCollapsed, setIsResponseCollapsed] = useState(false);
   const responsePanelRef = useRef<PanelImperativeHandle>(null);
@@ -42,15 +51,15 @@ function App() {
   const updateStatus = useUpdateStore((state) => state.status);
   const checkForUpdates = useUpdateStore((state) => state.checkForUpdates);
 
-  // Background update check on startup (delayed by 3s to keep startup instant)
+  // Background update check on startup (delayed by 3s to keep startup instant, main window only)
   useEffect(() => {
-    if (!import.meta.env.DEV) {
+    if (!import.meta.env.DEV && !windowLabel.startsWith("env-")) {
       const timer = setTimeout(() => {
         checkForUpdates(true);
       }, 3000);
       return () => clearTimeout(timer);
     }
-  }, [checkForUpdates]);
+  }, [checkForUpdates, windowLabel]);
 
   // Sync theme class list on mount
   useEffect(() => {
@@ -150,16 +159,6 @@ function App() {
       }, 600);
     }
   };
-
-  const getInitialWindowLabel = () => {
-    try {
-      return getCurrentWindow().label;
-    } catch (e) {
-      return "main";
-    }
-  };
-
-  const [windowLabel] = useState<string>(getInitialWindowLabel);
 
   // Load environments and history from backend on mount
   useEffect(() => {
@@ -283,6 +282,11 @@ function App() {
   // Global Keyboard Shortcut: Ctrl+S / Cmd+S to save request, send, focus, tabs management, and escape modals
   useEffect(() => {
     const handleKeyDown = async (e: KeyboardEvent) => {
+      // Suppress background shortcuts when release notes modal is open
+      if (useUpdateStore.getState().isNotesModalOpen) {
+        return;
+      }
+
       // Send request (Ctrl/Cmd + Enter)
       if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
         e.preventDefault();
@@ -591,11 +595,13 @@ function App() {
           </button>
           <button
             onClick={() => {
+              if (updateStatus === "checking") return;
               setToastVisible(true);
               checkForUpdates(false);
             }}
-            className="relative p-1 hover:bg-bg-hover rounded border border-transparent hover:border-border-primary transition cursor-pointer flex items-center justify-center text-text-secondary hover:text-text-primary"
-            title="Check for software updates"
+            disabled={updateStatus === "checking"}
+            className="relative p-1 hover:bg-bg-hover rounded border border-transparent hover:border-border-primary transition cursor-pointer flex items-center justify-center text-text-secondary hover:text-text-primary disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-1.5 focus-visible:ring-text-accent"
+            title={updateStatus === "checking" ? "Checking for updates..." : "Check for software updates"}
           >
             <Download size={14} className={updateStatus === "checking" ? "animate-bounce text-text-accent" : ""} />
             {(updateStatus === "available" || updateStatus === "ready") && (

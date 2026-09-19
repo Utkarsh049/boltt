@@ -34,8 +34,8 @@ export const UpdateToast: React.FC = () => {
   const formatBytes = (bytes: number): string => {
     if (bytes === 0) return "0 B";
     const k = 1024;
-    const sizes = ["B", "KB", "MB", "GB"];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    const sizes = ["B", "KB", "MB", "GB", "TB"];
+    const i = Math.min(Math.floor(Math.log(bytes) / Math.log(k)), sizes.length - 1);
     return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
   };
 
@@ -56,7 +56,7 @@ export const UpdateToast: React.FC = () => {
         </div>
         <button
           onClick={() => setToastVisible(false)}
-          className="text-text-secondary hover:text-text-primary p-0.5 rounded hover:bg-bg-hover transition cursor-pointer"
+          className="text-text-secondary hover:text-text-primary p-0.5 rounded hover:bg-bg-hover transition cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text-accent"
           title="Dismiss"
         >
           <X size={14} />
@@ -94,14 +94,14 @@ export const UpdateToast: React.FC = () => {
             <div className="flex items-center space-x-2 pt-1">
               <button
                 onClick={() => downloadAndApplyUpdate()}
-                className="flex-1 py-1.5 px-3 rounded bg-text-accent hover:opacity-90 text-[#00325a] font-bold text-xs tracking-wide transition flex items-center justify-center space-x-1.5 cursor-pointer shadow-sm"
+                className="flex-1 py-1.5 px-3 rounded bg-text-accent hover:opacity-90 text-[#00325a] font-bold text-xs tracking-wide transition flex items-center justify-center space-x-1.5 cursor-pointer shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-text-accent"
               >
                 <Download size={13} />
                 <span>Yes, Download</span>
               </button>
               <button
                 onClick={() => setToastVisible(false)}
-                className="py-1.5 px-3 rounded bg-bg-tertiary hover:bg-bg-hover border border-border-primary text-text-secondary hover:text-text-primary text-xs font-medium transition cursor-pointer"
+                className="py-1.5 px-3 rounded bg-bg-tertiary hover:bg-bg-hover border border-border-primary text-text-secondary hover:text-text-primary text-xs font-medium transition cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text-accent"
               >
                 Later
               </button>
@@ -152,7 +152,7 @@ export const UpdateToast: React.FC = () => {
             <div className="flex items-center space-x-2 pt-1">
               <button
                 onClick={() => relaunchApp()}
-                className="flex-1 py-1.5 px-3 rounded bg-[#4ade80] hover:bg-[#22c55e] text-black font-bold text-xs tracking-wide transition flex items-center justify-center space-x-1.5 cursor-pointer shadow-sm"
+                className="flex-1 py-1.5 px-3 rounded bg-[#4ade80] hover:bg-[#22c55e] text-black font-bold text-xs tracking-wide transition flex items-center justify-center space-x-1.5 cursor-pointer shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:ring-[#4ade80]"
               >
                 <RotateCcw size={13} />
                 <span>Restart Now</span>
@@ -160,7 +160,7 @@ export const UpdateToast: React.FC = () => {
               {releaseNotes && (
                 <button
                   onClick={() => setNotesModalOpen(true)}
-                  className="py-1.5 px-3 rounded bg-bg-tertiary hover:bg-bg-hover border border-border-primary text-text-accent hover:text-text-primary text-xs font-semibold transition cursor-pointer flex items-center space-x-1"
+                  className="py-1.5 px-3 rounded bg-bg-tertiary hover:bg-bg-hover border border-border-primary text-text-accent hover:text-text-primary text-xs font-semibold transition cursor-pointer flex items-center space-x-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text-accent"
                   title="View what changed in this version"
                 >
                   <FileText size={13} />
@@ -200,7 +200,7 @@ export const UpdateToast: React.FC = () => {
             </div>
             <button
               onClick={() => checkForUpdates(false)}
-              className="py-1 px-3 rounded bg-bg-tertiary hover:bg-bg-hover border border-border-primary text-text-primary text-xs font-medium transition cursor-pointer self-end"
+              className="py-1 px-3 rounded bg-bg-tertiary hover:bg-bg-hover border border-border-primary text-text-primary text-xs font-medium transition cursor-pointer self-end focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-text-accent"
             >
               Retry
             </button>
@@ -241,6 +241,7 @@ export const UpdateToast: React.FC = () => {
                   useUpdateStore.setState({
                     status: item.s,
                     isToastVisible: true,
+                    updateObj: null,
                     availableVersion: item.s === "available" || item.s === "ready" ? "1.2.0" : null,
                     releaseDate: new Date().toISOString(),
                     releaseNotes:
@@ -251,7 +252,7 @@ export const UpdateToast: React.FC = () => {
                     errorMessage: item.s === "error" ? "Network timeout reaching GitHub Release" : null,
                   });
                 }}
-                className={`px-1.5 py-0.5 text-[9px] rounded border transition cursor-pointer ${
+                className={`px-1.5 py-0.5 text-[9px] rounded border transition cursor-pointer focus-visible:outline-none focus-visible:ring-1.5 focus-visible:ring-text-accent ${
                   status === item.s
                     ? "bg-text-accent text-[#00325a] border-text-accent font-bold"
                     : "bg-bg-primary text-text-secondary border-border-primary hover:text-text-primary"

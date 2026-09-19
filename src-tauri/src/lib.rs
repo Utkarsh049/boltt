@@ -42,30 +42,57 @@ pub fn run() {
                 }
             }
 
-            // On Linux, write a local .desktop file only in dev mode when Boltt is NOT already installed on the system
+            // On Linux:
+            // 1. If a system package exists (/usr/share/applications/boltt.desktop), clean up any stale
+            //    user-level ~/.local/share/applications/boltt.desktop so the system package takes precedence.
+            // 2. Only in dev mode (debug_assertions) and when NO system package exists, write a local .desktop
+            //    file with NoDisplay=true so GNOME Shell matches the window WMClass for the dock icon without
+            //    polluting the application menu.
             #[cfg(target_os = "linux")]
             {
                 use std::fs;
                 use std::path::PathBuf;
 
                 if let Some(home_dir) = std::env::var_os("HOME").map(PathBuf::from) {
-                    if let Ok(current_exe) = std::env::current_exe() {
-                        let is_system_install = current_exe.starts_with("/usr");
-                        let system_desktop_exists = std::path::Path::new("/usr/share/applications/boltt.desktop").exists();
+                    let desktop_dir = home_dir.join(".local/share/applications");
+                    let desktop_file = desktop_dir.join("boltt.desktop");
+                    let system_desktop_exists = std::path::Path::new("/usr/share/applications/boltt.desktop").exists();
 
-                        // Never overwrite or create ~/.local/share/applications/boltt.desktop if system package is installed
-                        if !is_system_install && !system_desktop_exists {
-                            let desktop_dir = home_dir.join(".local/share/applications");
+                    if system_desktop_exists {
+                        // Ensure stale user-level file is cleaned up so system desktop file is never shadowed
+                        if desktop_file.exists() {
+                            let _ = fs::remove_file(&desktop_file);
+                        }
+                    } else if cfg!(debug_assertions) {
+                        if let Ok(current_exe) = std::env::current_exe() {
                             let _ = fs::create_dir_all(&desktop_dir);
-                            let desktop_file = desktop_dir.join("boltt.desktop");
 
-                            let icon_str = if std::path::Path::new("src-tauri/icons/icon.png").exists() {
-                                std::env::current_dir()
-                                    .map(|d| d.join("src-tauri/icons/icon.png").to_string_lossy().to_string())
-                                    .unwrap_or_else(|_| "boltt".to_string())
-                            } else {
-                                "boltt".to_string()
-                            };
+                            // Resolve icon path: check resource dir first, or search relative to current exe
+                            let icon_path = app
+                                .path()
+                                .resource_dir()
+                                .map(|r| r.join("icons/icon.png"))
+                                .ok()
+                                .filter(|p| p.exists())
+                                .or_else(|| {
+                                    let mut dir = current_exe.parent();
+                                    while let Some(d) = dir {
+                                        let candidate = d.join("src-tauri/icons/icon.png");
+                                        if candidate.exists() {
+                                            return Some(candidate);
+                                        }
+                                        let candidate2 = d.join("icons/icon.png");
+                                        if candidate2.exists() {
+                                            return Some(candidate2);
+                                        }
+                                        dir = d.parent();
+                                    }
+                                    None
+                                });
+
+                            let icon_str = icon_path
+                                .map(|p| p.to_string_lossy().to_string())
+                                .unwrap_or_else(|| "boltt".to_string());
 
                             let content = format!(
                                 "[Desktop Entry]\n\
@@ -74,6 +101,7 @@ pub fn run() {
                                  Exec=\"{}\"\n\
                                  Icon={}\n\
                                  Terminal=false\n\
+                                 NoDisplay=true\n\
                                  StartupWMClass=boltt\n",
                                 current_exe.to_string_lossy().replace('"', "\\\""),
                                 icon_str

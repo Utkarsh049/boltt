@@ -87,4 +87,5 @@ jobs:
             All installation packages, checksums, and source code archives are available in the Assets section below.
           releaseDraft: false
           prerelease: false
+          generateReleaseNotes: true
           args: ${{ matrix.args }}

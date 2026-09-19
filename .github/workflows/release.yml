@@ -4,9 +4,11 @@ on:
   push:
     tags:
       - 'v*'
-  release:
-    types: [created, published]
   workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -70,6 +72,8 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
           tagName: v__VERSION__
           releaseName: 'Boltt v__VERSION__'
@@ -85,4 +89,5 @@ jobs:
             All installation packages, checksums, and source code archives are available in the Assets section below.
           releaseDraft: false
           prerelease: false
+          generateReleaseNotes: true
           args: ${{ matrix.args }}

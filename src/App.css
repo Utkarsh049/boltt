@@ -46,21 +46,25 @@
   --color-bg-hover-light: var(--bg-hover-light);
 }
 
-/* Prevent native browser/OS focus outlines and boxes on buttons globally */
+/* Prevent native browser/OS focus outlines on mouse clicks, but retain keyboard focus visibility */
 button,
 button:focus,
-button:active,
+button:active {
+  outline: none;
+  box-shadow: none;
+}
+
 button:focus-visible {
-  outline: none !important;
-  box-shadow: none !important;
+  outline: 2px solid var(--text-accent);
+  outline-offset: 1px;
 }
 
 /* Custom Modern Checkbox Design System */
 input[type="checkbox"] {
   appearance: none;
   -webkit-appearance: none;
-  width: 14px;
-  height: 14px;
+  width: 15px;
+  height: 15px;
   border: 1.5px solid var(--border-primary);
   border-radius: 3px;
   background-color: var(--bg-primary);
@@ -132,6 +136,21 @@ input[type="checkbox"]:focus-visible {
 
 .animate-tab-fade {
   animation: tab-fade-in 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes modal-fade-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: modal-fade-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 html,

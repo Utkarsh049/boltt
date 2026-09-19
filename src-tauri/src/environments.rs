@@ -2,7 +2,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
-use tauri::Manager;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Variable {
@@ -26,10 +25,7 @@ pub struct EnvironmentsFile {
 }
 
 fn get_env_file_path(app_handle: &tauri::AppHandle) -> Result<PathBuf, String> {
-    let config_dir = app_handle
-        .path()
-        .app_config_dir()
-        .map_err(|e| format!("Failed to resolve config directory: {}", e))?;
+    let config_dir = crate::get_app_config_dir(app_handle)?;
     Ok(config_dir.join("environments.json"))
 }
 

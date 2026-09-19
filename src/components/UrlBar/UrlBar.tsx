@@ -221,7 +221,6 @@ export const UrlBar: React.FC = () => {
                     onChange={(e) => {
                       setSslVerify(e.target.checked);
                     }}
-                    className="w-3.5 h-3.5"
                   />
                   <span>Verify SSL certificates</span>
                 </label>

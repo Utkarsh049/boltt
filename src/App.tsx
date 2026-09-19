@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { UrlBar } from "./components/UrlBar/UrlBar";
 import { RequestPane } from "./components/RequestPane/RequestPane";
-import { Palette, RefreshCw, Folder as FolderIcon, Globe, Clock, Eye, EyeOff, Plus, Minus, Square, X, Trash2 } from "lucide-react";
+import { Palette, RefreshCw, Folder as FolderIcon, Globe, Clock, Eye, EyeOff, Plus, Minus, Square, X, Trash2, Download } from "lucide-react";
 import "./App.css";
 import { Group, Panel, Separator, type PanelImperativeHandle } from "react-resizable-panels";
 import { ResponsePane } from "./components/ResponsePane/ResponsePane";
@@ -11,6 +11,8 @@ import { EnvironmentDropdown } from "./components/EnvironmentDropdown/Environmen
 import { EnvironmentModal } from "./components/EnvironmentModal/EnvironmentModal";
 import { ProjectsTree } from "./components/ProjectsTree/ProjectsTree";
 import { SaveRequestModal } from "./components/SaveRequestModal/SaveRequestModal";
+import { UpdateToast } from "./components/UpdateToast/UpdateToast";
+import { ReleaseNotesModal } from "./components/ReleaseNotesModal/ReleaseNotesModal";
 import { TabBar } from "./components/TabBar/TabBar";
 import { useProjectsStore } from "./store/projectsStore";
 import { useHistoryStore } from "./store/historyStore";
@@ -18,10 +20,20 @@ import { HistoryPanel } from "./components/HistoryPanel/HistoryPanel";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { ToastList } from "./components/Toast/Toast";
 import { useToastStore } from "./store/toastStore";
+import { useUpdateStore } from "./store/updateStore";
 
 type SidebarTab = "workspace" | "environments" | "history";
 
+const getInitialWindowLabel = () => {
+  try {
+    return getCurrentWindow().label;
+  } catch (e) {
+    return "main";
+  }
+};
+
 function App() {
+  const [windowLabel] = useState<string>(getInitialWindowLabel);
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>("workspace");
   const [isResponseCollapsed, setIsResponseCollapsed] = useState(false);
   const responsePanelRef = useRef<PanelImperativeHandle>(null);
@@ -34,6 +46,20 @@ function App() {
   const initialThemeRef = useRef<string | null>(null);
   const theme = useRequestStore((state) => state.theme);
   const setTheme = useRequestStore((state) => state.setTheme);
+
+  const setToastVisible = useUpdateStore((state) => state.setToastVisible);
+  const updateStatus = useUpdateStore((state) => state.status);
+  const checkForUpdates = useUpdateStore((state) => state.checkForUpdates);
+
+  // Background update check on startup (delayed by 3s to keep startup instant, main window only)
+  useEffect(() => {
+    if (!import.meta.env.DEV && !windowLabel.startsWith("env-")) {
+      const timer = setTimeout(() => {
+        checkForUpdates(true);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [checkForUpdates, windowLabel]);
 
   // Sync theme class list on mount
   useEffect(() => {
@@ -133,16 +159,6 @@ function App() {
       }, 600);
     }
   };
-
-  const getInitialWindowLabel = () => {
-    try {
-      return getCurrentWindow().label;
-    } catch (e) {
-      return "main";
-    }
-  };
-
-  const [windowLabel] = useState<string>(getInitialWindowLabel);
 
   // Load environments and history from backend on mount
   useEffect(() => {
@@ -245,10 +261,11 @@ function App() {
 
   // Dynamic window title updates
   useEffect(() => {
+    const prefix = import.meta.env.DEV ? "Boltt [DEV]" : "Boltt";
     if (tabs.length > 0 && activeRequest) {
-      document.title = `Boltt — ${activeRequest.name || activeRequest.url || "New Request"}`;
+      document.title = `${prefix} — ${activeRequest.name || activeRequest.url || "New Request"}`;
     } else {
-      document.title = "Boltt";
+      document.title = prefix;
     }
   }, [tabs.length, activeRequest?.name, activeRequest?.url]);
 
@@ -265,6 +282,11 @@ function App() {
   // Global Keyboard Shortcut: Ctrl+S / Cmd+S to save request, send, focus, tabs management, and escape modals
   useEffect(() => {
     const handleKeyDown = async (e: KeyboardEvent) => {
+      // Suppress background shortcuts when release notes modal is open
+      if (useUpdateStore.getState().isNotesModalOpen) {
+        return;
+      }
+
       // Send request (Ctrl/Cmd + Enter)
       if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
         e.preventDefault();
@@ -500,6 +522,11 @@ function App() {
           <span className="font-semibold text-sm tracking-wider text-text-accent">
             Boltt
           </span>
+          {import.meta.env.DEV && (
+            <span className="text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded text-amber-400 border border-amber-500/30">
+              DEV
+            </span>
+          )}
         </div>
         <div className="flex items-center space-x-3 text-xs text-[#c0c7d3]">
           <EnvironmentDropdown />
@@ -565,6 +592,21 @@ function App() {
             title="Sync workspace with filesystem"
           >
             <RefreshCw size={14} className={isRefreshing ? "animate-spin text-text-accent" : ""} />
+          </button>
+          <button
+            onClick={() => {
+              if (updateStatus === "checking") return;
+              setToastVisible(true);
+              checkForUpdates(false);
+            }}
+            disabled={updateStatus === "checking"}
+            className="relative p-1 hover:bg-bg-hover rounded border border-transparent hover:border-border-primary transition cursor-pointer flex items-center justify-center text-text-secondary hover:text-text-primary disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-1.5 focus-visible:ring-text-accent"
+            title={updateStatus === "checking" ? "Checking for updates..." : "Check for software updates"}
+          >
+            <Download size={14} className={updateStatus === "checking" ? "animate-bounce text-text-accent" : ""} />
+            {(updateStatus === "available" || updateStatus === "ready") && (
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-text-accent animate-pulse" />
+            )}
           </button>
           <span className="text-xs select-none flex items-center space-x-1.5" title={isOnline ? "Connected to the internet" : "Disconnected from the internet"}>
             <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? "bg-[#4ade80]" : "bg-[#f87171]"}`} />
@@ -857,6 +899,8 @@ function App() {
         </Group>
       </div>
       <SaveRequestModal />
+      <UpdateToast />
+      <ReleaseNotesModal />
       <ToastList />
     </div>
   );

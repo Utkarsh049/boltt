@@ -18,6 +18,7 @@ import {
   X
 } from "lucide-react";
 import { ExportPDFModal } from "../ExportPDFModal/ExportPDFModal";
+import packageInfo from "../../../package.json";
 
 const countRequestsRecursive = (folder: Folder): number => {
   let count = folder.requests.length;
@@ -348,7 +349,7 @@ export const ProjectsTree: React.FC = () => {
       name: "New Request",
       method: "GET",
       url: "https://httpbin.org/get",
-      headers: [{ key: "User-Agent", value: "BolttClient/1.0.0", enabled: true }],
+      headers: [{ key: "User-Agent", value: `BolttClient/${packageInfo.version}`, enabled: true }],
       params: [],
       body: { type: "None" },
       auth: { type: "None" },

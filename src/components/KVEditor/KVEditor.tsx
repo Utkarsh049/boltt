@@ -83,23 +83,21 @@ export const KVEditor: React.FC<KVEditorProps> = ({
               }`}
             >
               {/* Checkbox Toggle */}
-              <div className="w-8 flex justify-center">
+              <label className="w-8 h-full min-h-[28px] flex items-center justify-center cursor-pointer">
                 {isVirtual ? (
                   <input
                     type="checkbox"
                     disabled
                     checked={false}
-                    className="w-3.5 h-3.5"
                   />
                 ) : (
                   <input
                     type="checkbox"
                     checked={row.enabled}
                     onChange={(e) => handleRowChange(index, "enabled", e.target.checked)}
-                    className="w-3.5 h-3.5"
                   />
                 )}
-              </div>
+              </label>
 
               {/* Key Input */}
               <div className="flex-1 border-r border-border-primary">

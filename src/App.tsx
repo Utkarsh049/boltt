@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { UrlBar } from "./components/UrlBar/UrlBar";
 import { RequestPane } from "./components/RequestPane/RequestPane";
-import { Palette, RefreshCw, Folder as FolderIcon, Globe, Clock, Eye, EyeOff, Plus, Minus, Square, X, Trash2 } from "lucide-react";
+import { Palette, RefreshCw, Folder as FolderIcon, Globe, Clock, Eye, EyeOff, Plus, Minus, Square, X, Trash2, ShieldCheck } from "lucide-react";
 import "./App.css";
 import { Group, Panel, Separator, type PanelImperativeHandle } from "react-resizable-panels";
 import { ResponsePane } from "./components/ResponsePane/ResponsePane";
@@ -11,6 +11,7 @@ import { EnvironmentDropdown } from "./components/EnvironmentDropdown/Environmen
 import { EnvironmentModal } from "./components/EnvironmentModal/EnvironmentModal";
 import { ProjectsTree } from "./components/ProjectsTree/ProjectsTree";
 import { SaveRequestModal } from "./components/SaveRequestModal/SaveRequestModal";
+import { UpdateModal } from "./components/UpdateModal/UpdateModal";
 import { TabBar } from "./components/TabBar/TabBar";
 import { useProjectsStore } from "./store/projectsStore";
 import { useHistoryStore } from "./store/historyStore";
@@ -18,6 +19,7 @@ import { HistoryPanel } from "./components/HistoryPanel/HistoryPanel";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { ToastList } from "./components/Toast/Toast";
 import { useToastStore } from "./store/toastStore";
+import { useUpdateStore } from "./store/updateStore";
 
 type SidebarTab = "workspace" | "environments" | "history";
 
@@ -34,6 +36,20 @@ function App() {
   const initialThemeRef = useRef<string | null>(null);
   const theme = useRequestStore((state) => state.theme);
   const setTheme = useRequestStore((state) => state.setTheme);
+
+  const setUpdateModalOpen = useUpdateStore((state) => state.setModalOpen);
+  const updateStatus = useUpdateStore((state) => state.status);
+  const checkForUpdates = useUpdateStore((state) => state.checkForUpdates);
+
+  // Background update check on startup (delayed by 3s to keep startup instant)
+  useEffect(() => {
+    if (!import.meta.env.DEV) {
+      const timer = setTimeout(() => {
+        checkForUpdates(true);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [checkForUpdates]);
 
   // Sync theme class list on mount
   useEffect(() => {
@@ -572,6 +588,19 @@ function App() {
           >
             <RefreshCw size={14} className={isRefreshing ? "animate-spin text-text-accent" : ""} />
           </button>
+          <button
+            onClick={() => {
+              setUpdateModalOpen(true);
+              checkForUpdates(false);
+            }}
+            className="relative p-1 hover:bg-bg-hover rounded border border-transparent hover:border-border-primary transition cursor-pointer flex items-center justify-center text-text-secondary hover:text-text-primary"
+            title="Check for software updates"
+          >
+            <ShieldCheck size={14} />
+            {updateStatus === "available" && (
+              <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-text-accent animate-pulse" />
+            )}
+          </button>
           <span className="text-xs select-none flex items-center space-x-1.5" title={isOnline ? "Connected to the internet" : "Disconnected from the internet"}>
             <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? "bg-[#4ade80]" : "bg-[#f87171]"}`} />
             <span>Status:</span>
@@ -863,6 +892,7 @@ function App() {
         </Group>
       </div>
       <SaveRequestModal />
+      <UpdateModal />
       <ToastList />
     </div>
   );

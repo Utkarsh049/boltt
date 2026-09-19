@@ -348,7 +348,7 @@ export const ProjectsTree: React.FC = () => {
       name: "New Request",
       method: "GET",
       url: "https://httpbin.org/get",
-      headers: [{ key: "User-Agent", value: "BolttClient/0.1.0", enabled: true }],
+      headers: [{ key: "User-Agent", value: "BolttClient/1.0.0", enabled: true }],
       params: [],
       body: { type: "None" },
       auth: { type: "None" },

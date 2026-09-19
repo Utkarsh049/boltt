@@ -71,9 +71,18 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tagName: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+          tagName: v__VERSION__
           releaseName: 'Boltt v__VERSION__'
-          releaseBody: 'See the assets to download this release and install.'
-          releaseDraft: true
+          releaseBody: |
+            ### Downloads
+
+            | Operating System | Recommended Installer | Alternative Package |
+            | :--- | :--- | :--- |
+            | Windows (x64) | [Setup Installer (.exe)](https://github.com/${{ github.repository }}/releases/download/v__VERSION__/boltt___VERSION___x64-setup.exe) | [MSI Package (.msi)](https://github.com/${{ github.repository }}/releases/download/v__VERSION__/boltt___VERSION___x64_en-US.msi) |
+            | macOS (Apple Silicon) | [Disk Image (.dmg)](https://github.com/${{ github.repository }}/releases/download/v__VERSION__/boltt___VERSION___aarch64.dmg) | [Application Archive (.tar.gz)](https://github.com/${{ github.repository }}/releases/download/v__VERSION__/boltt_aarch64.app.tar.gz) |
+            | Linux (x64) | [AppImage (.AppImage)](https://github.com/${{ github.repository }}/releases/download/v__VERSION__/boltt___VERSION___amd64.AppImage) | [Debian Package (.deb)](https://github.com/${{ github.repository }}/releases/download/v__VERSION__/boltt___VERSION___amd64.deb), [RPM Package (.rpm)](https://github.com/${{ github.repository }}/releases/download/v__VERSION__/boltt-__VERSION__-1.x86_64.rpm) |
+
+            All installation packages, checksums, and source code archives are available in the Assets section below.
+          releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}

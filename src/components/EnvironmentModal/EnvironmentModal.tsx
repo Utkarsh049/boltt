@@ -409,14 +409,13 @@ export const EnvironmentModal: React.FC = () => {
                       return (
                         <div key={index} className="group flex items-center py-1 px-2 hover:bg-bg-tertiary/30">
                           {/* Checkbox */}
-                          <div className="w-8 flex justify-center">
+                          <label className="w-8 h-full min-h-[28px] flex items-center justify-center cursor-pointer">
                             <input
                               type="checkbox"
                               checked={variable.enabled}
                               onChange={(e) => handleVariableChange(index, "enabled", e.target.checked)}
-                              className="w-3.5 h-3.5"
                             />
-                          </div>
+                          </label>
                           
                           {/* Key */}
                           <div className="flex-1 px-2 min-w-0">

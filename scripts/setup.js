@@ -39,7 +39,11 @@ const isDryRun = process.argv.includes("--dry-run");
 // Helper to run command silently and return output
 function exec(command, args = []) {
   try {
-    const res = spawnSync(command, args, { encoding: "utf8", stdio: ["pipe", "pipe", "pipe"] });
+    const res = spawnSync(command, args, {
+      encoding: "utf8",
+      stdio: ["pipe", "pipe", "pipe"],
+      shell: process.platform === "win32",
+    });
     return {
       success: res.status === 0,
       stdout: (res.stdout || "").trim(),
@@ -77,15 +81,37 @@ function runDoctor() {
   }
   checks.push({ category: "System", item: "OS Platform", ok: true, detail: osDetail });
 
-  // Node.js & pnpm
+  // Node.js
   const nodeCheck = exec("node", ["-v"]);
   if (nodeCheck.success) {
-    checks.push({ category: "Toolchain", item: "Node.js", ok: true, detail: nodeCheck.stdout });
+    const rawVer = nodeCheck.stdout;
+    const match = rawVer.match(/^v?(\d+)\.(\d+)/);
+    let nodeSupported = false;
+    if (match) {
+      const major = parseInt(match[1], 10);
+      const minor = parseInt(match[2], 10);
+      if (major > 22) nodeSupported = true;
+      else if (major === 22 && minor >= 12) nodeSupported = true;
+      else if (major === 20 && minor >= 19) nodeSupported = true;
+    }
+
+    if (nodeSupported) {
+      checks.push({ category: "Toolchain", item: "Node.js", ok: true, detail: rawVer });
+    } else {
+      allPassed = false;
+      checks.push({
+        category: "Toolchain",
+        item: "Node.js",
+        ok: false,
+        detail: `${rawVer} (Requires 20.19+ or 22.12+)`,
+      });
+    }
   } else {
     allPassed = false;
     checks.push({ category: "Toolchain", item: "Node.js", ok: false, detail: "Not found in PATH" });
   }
 
+  // pnpm
   const pnpmCheck = exec("pnpm", ["-v"]);
   if (pnpmCheck.success) {
     checks.push({ category: "Toolchain", item: "pnpm", ok: true, detail: `v${pnpmCheck.stdout}` });
@@ -141,7 +167,7 @@ function runDoctor() {
       checks.push({ category: "Libraries", item: "WebKit2GTK 4.1", ok: true, detail: `v${ver.stdout || "installed"}` });
     } else {
       allPassed = false;
-      checks.push({ category: "Libraries", item: "WebKit2GTK 4.1", ok: false, detail: "Missing dev headers (libwebkit2gtk-4.1-dev)" });
+      checks.push({ category: "Libraries", item: "WebKit2GTK 4.1", ok: false, detail: "Missing (libwebkit2gtk-4.1-dev)" });
     }
 
     // Check GTK 3
@@ -151,7 +177,35 @@ function runDoctor() {
       checks.push({ category: "Libraries", item: "GTK+ 3.0", ok: true, detail: `v${ver.stdout || "installed"}` });
     } else {
       allPassed = false;
-      checks.push({ category: "Libraries", item: "GTK+ 3.0", ok: false, detail: "Missing dev headers (libgtk-3-dev)" });
+      checks.push({ category: "Libraries", item: "GTK+ 3.0", ok: false, detail: "Missing (libgtk-3-dev)" });
+    }
+
+    // Check AppIndicator
+    const appIndCheck = exec("pkg-config", ["--exists", "ayatana-appindicator3-0.1"]);
+    const legacyAppIndCheck = exec("pkg-config", ["--exists", "appindicator3-0.1"]);
+    if (appIndCheck.success || legacyAppIndCheck.success) {
+      checks.push({ category: "Libraries", item: "AppIndicator", ok: true, detail: "Installed" });
+    } else {
+      allPassed = false;
+      checks.push({ category: "Libraries", item: "AppIndicator", ok: false, detail: "Missing (libayatana-appindicator3-dev)" });
+    }
+
+    // Check librsvg
+    const rsvgCheck = exec("pkg-config", ["--exists", "librsvg-2.0"]);
+    if (rsvgCheck.success) {
+      checks.push({ category: "Libraries", item: "librsvg", ok: true, detail: "Installed" });
+    } else {
+      allPassed = false;
+      checks.push({ category: "Libraries", item: "librsvg", ok: false, detail: "Missing (librsvg2-dev)" });
+    }
+
+    // Check openssl
+    const sslCheck = exec("pkg-config", ["--exists", "openssl"]);
+    if (sslCheck.success) {
+      checks.push({ category: "Libraries", item: "OpenSSL", ok: true, detail: "Installed" });
+    } else {
+      allPassed = false;
+      checks.push({ category: "Libraries", item: "OpenSSL", ok: false, detail: "Missing (libssl-dev)" });
     }
   } else if (platform === "darwin") {
     // Check Xcode Command Line Tools
@@ -166,15 +220,48 @@ function runDoctor() {
     // macOS includes WebKit directly in the OS
     checks.push({ category: "Libraries", item: "WebKit (macOS)", ok: true, detail: "Integrated native WKWebView" });
   } else if (platform === "win32") {
-    // Check WebView2
-    const regCheck = exec("powershell", [
+    // Check Microsoft C++ Build Tools
+    const programFilesX86 = process.env["ProgramFiles(x86)"] || "C:\\Program Files (x86)";
+    const vswherePath = path.join(programFilesX86, "Microsoft Visual Studio", "Installer", "vswhere.exe");
+    let hasMsvc = false;
+    let msvcPath = "";
+
+    if (fs.existsSync(vswherePath)) {
+      const vswhereRes = exec(vswherePath, [
+        "-latest",
+        "-requires",
+        "Microsoft.VisualStudio.Component.VC.Tools.x86.x64",
+        "-property",
+        "installationPath",
+      ]);
+      if (vswhereRes.success && vswhereRes.stdout.length > 0) {
+        hasMsvc = true;
+        msvcPath = vswhereRes.stdout.split("\n")[0];
+      }
+    }
+
+    if (hasMsvc) {
+      checks.push({ category: "Build Tools", item: "C++ Build Tools", ok: true, detail: msvcPath });
+    } else {
+      allPassed = false;
+      checks.push({ category: "Build Tools", item: "C++ Build Tools", ok: false, detail: "Missing Visual C++ Build Tools" });
+    }
+
+    // Check WebView2 (Check both 64-bit and 32-bit registry hives)
+    const regCheck64 = exec("powershell", [
       "-Command",
       "Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\WOW6432Node\\Microsoft\\EdgeUpdate\\Clients\\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}' -ErrorAction SilentlyContinue",
     ]);
-    if (regCheck.success && regCheck.stdout.length > 0) {
+    const regCheck32 = exec("powershell", [
+      "-Command",
+      "Get-ItemProperty -Path 'HKLM:\\SOFTWARE\\Microsoft\\EdgeUpdate\\Clients\\{F3017226-FE2A-4295-8BDF-00C3A9A7E4C5}' -ErrorAction SilentlyContinue",
+    ]);
+
+    if ((regCheck64.success && regCheck64.stdout.length > 0) || (regCheck32.success && regCheck32.stdout.length > 0)) {
       checks.push({ category: "Libraries", item: "WebView2", ok: true, detail: "Installed" });
     } else {
-      checks.push({ category: "Libraries", item: "WebView2", ok: true, detail: "Standard on Windows 10/11" });
+      allPassed = false;
+      checks.push({ category: "Libraries", item: "WebView2", ok: false, detail: "Missing (Install Edge WebView2 Runtime)" });
     }
   }
 
@@ -227,19 +314,33 @@ function runSetup() {
     const scriptPath = path.join(__dirname, "setup-linux.sh");
     console.log(`${colors.blue}ℹ Dispatching to Linux setup script:${colors.reset} ${scriptPath}`);
     const child = spawn("bash", [scriptPath, ...scriptArgs], { stdio: "inherit" });
-    child.on("exit", (code) => process.exit(code || 0));
+    child.on("error", (err) => {
+      console.error(`${colors.red}Failed to start setup script: ${err.message}${colors.reset}`);
+      process.exit(1);
+    });
+    child.on("exit", (code) => process.exit(code ?? 1));
   } else if (platform === "darwin") {
     const scriptPath = path.join(__dirname, "setup-macos.sh");
     console.log(`${colors.blue}ℹ Dispatching to macOS setup script:${colors.reset} ${scriptPath}`);
     const child = spawn("bash", [scriptPath, ...scriptArgs], { stdio: "inherit" });
-    child.on("exit", (code) => process.exit(code || 0));
+    child.on("error", (err) => {
+      console.error(`${colors.red}Failed to start setup script: ${err.message}${colors.reset}`);
+      process.exit(1);
+    });
+    child.on("exit", (code) => process.exit(code ?? 1));
   } else if (platform === "win32") {
     const scriptPath = path.join(__dirname, "setup-windows.ps1");
     console.log(`${colors.blue}ℹ Dispatching to Windows PowerShell setup script:${colors.reset} ${scriptPath}`);
     const psArgs = ["-ExecutionPolicy", "Bypass", "-File", scriptPath];
     if (isDryRun) psArgs.push("-DryRun");
+    if (process.argv.includes("--help") || process.argv.includes("-h")) psArgs.push("-Help");
+    if (isCheckMode) psArgs.push("-CheckOnly");
     const child = spawn("powershell", psArgs, { stdio: "inherit" });
-    child.on("exit", (code) => process.exit(code || 0));
+    child.on("error", (err) => {
+      console.error(`${colors.red}Failed to start setup script: ${err.message}${colors.reset}`);
+      process.exit(1);
+    });
+    child.on("exit", (code) => process.exit(code ?? 1));
   } else {
     console.error(`${colors.red}Unsupported operating system: ${platform}${colors.reset}`);
     process.exit(1);

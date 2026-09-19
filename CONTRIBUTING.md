@@ -13,7 +13,7 @@ Boltt is built with **Tauri v2, Rust, and React 19 + TypeScript**.
 If you already have Node.js (v18+) and pnpm installed:
 
 ```bash
-git clone https://github.com/your-username/boltt.git
+git clone https://github.com/Utkarsh049/boltt.git
 cd boltt
 pnpm setup:dev
 ```
@@ -95,7 +95,7 @@ Before committing changes:
 ## 4. Architecture Overview
 
 - **Frontend (`src/`)**:
-  - `src/components/`: Modular UI panes (UrlBar, TabBar, RequestPane, ResponsePane, Sidebar).
+  - `src/components/`: Modular UI panes (UrlBar, TabBar, RequestPane, ResponsePane, ProjectsTree, HistoryPanel).
   - `src/store/`: Zustand global stores (`requestStore.ts`, `projectsStore.ts`, `envStore.ts`, `historyStore.ts`, `toastStore.ts`).
   - `src/App.tsx`: Custom frameless window shell, global keyboard shortcuts, and panel layouts (`react-resizable-panels`).
   - `src/App.css`: Theming system and typography.

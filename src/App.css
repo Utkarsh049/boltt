@@ -63,8 +63,8 @@ button:focus-visible {
 input[type="checkbox"] {
   appearance: none;
   -webkit-appearance: none;
-  width: 14px;
-  height: 14px;
+  width: 15px;
+  height: 15px;
   border: 1.5px solid var(--border-primary);
   border-radius: 3px;
   background-color: var(--bg-primary);

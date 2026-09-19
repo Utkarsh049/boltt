@@ -44,10 +44,9 @@ pub fn run() {
 
             // On Linux:
             // 1. If a system package exists (/usr/share/applications/boltt.desktop), clean up any stale
-            //    user-level ~/.local/share/applications/boltt.desktop so the system package takes precedence.
-            // 2. Only in dev mode (debug_assertions) and when NO system package exists, write a local .desktop
-            //    file with NoDisplay=true so GNOME Shell matches the window WMClass for the dock icon without
-            //    polluting the application menu.
+            //    user-level ~/.local/share/applications/boltt.desktop so the release entry is never shadowed.
+            // 2. In debug builds, write to isolated boltt-dev.desktop (never boltt.desktop) with NoDisplay=true
+            //    so dock WMClass matches without polluting or conflicting with the release app.
             #[cfg(target_os = "linux")]
             {
                 use std::fs;
@@ -55,15 +54,16 @@ pub fn run() {
 
                 if let Some(home_dir) = std::env::var_os("HOME").map(PathBuf::from) {
                     let desktop_dir = home_dir.join(".local/share/applications");
-                    let desktop_file = desktop_dir.join("boltt.desktop");
+                    let dev_desktop_file = desktop_dir.join("boltt-dev.desktop");
+                    let shared_desktop_file = desktop_dir.join("boltt.desktop");
                     let system_desktop_exists = std::path::Path::new("/usr/share/applications/boltt.desktop").exists();
 
-                    if system_desktop_exists {
+                    if system_desktop_exists && shared_desktop_file.exists() {
                         // Ensure stale user-level file is cleaned up so system desktop file is never shadowed
-                        if desktop_file.exists() {
-                            let _ = fs::remove_file(&desktop_file);
-                        }
-                    } else if cfg!(debug_assertions) {
+                        let _ = fs::remove_file(&shared_desktop_file);
+                    }
+
+                    if cfg!(debug_assertions) {
                         if let Ok(current_exe) = std::env::current_exe() {
                             let _ = fs::create_dir_all(&desktop_dir);
 
@@ -90,23 +90,23 @@ pub fn run() {
                                     None
                                 });
 
-                            let icon_str = icon_path
-                                .map(|p| p.to_string_lossy().to_string())
-                                .unwrap_or_else(|| "boltt".to_string());
+                            let icon_line = match &icon_path {
+                                Some(path) => format!("Icon={}\n", path.to_string_lossy()),
+                                None => String::new(),
+                            };
 
                             let content = format!(
                                 "[Desktop Entry]\n\
                                  Type=Application\n\
-                                 Name=Boltt\n\
+                                 Name=Boltt (Dev)\n\
                                  Exec=\"{}\"\n\
-                                 Icon={}\n\
-                                 Terminal=false\n\
+                                 {}Terminal=false\n\
                                  NoDisplay=true\n\
                                  StartupWMClass=boltt\n",
                                 current_exe.to_string_lossy().replace('"', "\\\""),
-                                icon_str
+                                icon_line
                             );
-                            let _ = fs::write(desktop_file, content);
+                            let _ = fs::write(dev_desktop_file, content);
                         }
                     }
                 }

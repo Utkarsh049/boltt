@@ -92,7 +92,7 @@ Boltt includes automated setup scripts that inspect your operating system, insta
 
 If you already have Node.js and pnpm installed:
 ```bash
-git clone https://github.com/your-username/boltt.git
+git clone https://github.com/Utkarsh049/boltt.git
 cd boltt
 pnpm setup:dev
 ```
@@ -105,13 +105,13 @@ If you are setting up a fresh machine and haven't installed Node or Rust yet, ru
 ```bash
 bash scripts/setup-linux.sh
 ```
-*Installs WebKit2GTK 4.1, GTK 3, build tools, Rustup, Node.js, and pnpm automatically.*
+*Installs WebKit2GTK 4.1, GTK 3, build tools, Rustup, Node.js, and pnpm.*
 
 #### macOS
 ```bash
 bash scripts/setup-macos.sh
 ```
-*Verifies Xcode Command Line Tools, Rustup, Node.js, and pnpm (WebKit is built natively into macOS).*
+*Configures Xcode Command Line Tools, Rustup, Node.js, and pnpm.*
 
 #### Windows (PowerShell)
 ```powershell

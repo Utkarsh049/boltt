@@ -91,7 +91,7 @@ export const createInitialRequest = (): BoltRequest => ({
   method: "GET",
   url: "https://httpbin.org/get",
   headers: [
-    { key: "User-Agent", value: "BolttClient/0.1.0", enabled: true }
+    { key: "User-Agent", value: "BolttClient/1.0.0", enabled: true }
   ],
   params: [],
   body: { type: "None" },

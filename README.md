@@ -1,8 +1,66 @@
-# Boltt — Desktop HTTP Client (v1.0.0)
+# Boltt — Desktop HTTP Client
 
 Boltt is a local-first, native desktop HTTP client designed for speed, simplicity, and privacy. No cloud synchronization, no AI popups, no mandatory accounts — just a streamlined workspace to construct requests, manage environments, analyze responses, and export API collections offline.
 
 Built with **Rust, Tauri v2, and React + TypeScript**, Boltt compiles to a self-contained, native platform binary under 10 MB with a sub-200ms cold start and an idle RAM footprint of ~30–50 MB.
+
+---
+
+## Installation
+
+You can install Boltt using the **quick one-line terminal installer** (recommended) or by **downloading pre-built packages** from the [Latest Release](https://github.com/Utkarsh049/boltt/releases/latest).
+
+### Option 1: Quick One-Line Install (Recommended)
+
+#### macOS & Linux
+```bash
+curl -fsSL https://raw.githubusercontent.com/Utkarsh049/boltt/main/scripts/install.sh | bash
+```
+* **macOS**: Downloads the Apple Silicon application bundle into `/Applications/Boltt.app` and automatically clears Gatekeeper quarantine flags.
+* **Linux**: Installs the `.deb` package on Debian/Ubuntu, or deploys the standalone `.AppImage` to `~/.local/bin/boltt` with an application drawer shortcut.
+
+#### Windows (PowerShell)
+```powershell
+irm https://raw.githubusercontent.com/Utkarsh049/boltt/main/scripts/install.ps1 | iex
+```
+* Automatically downloads the latest 64-bit installer and runs the setup wizard.
+
+---
+
+### Option 2: Manual Package Download
+
+Download the installer for your platform directly from [GitHub Releases](https://github.com/Utkarsh049/boltt/releases/latest):
+
+| Operating System | Architecture | Recommended Installer | Alternative Package |
+| :--- | :--- | :--- | :--- |
+| **Windows** | x64 | [Setup Installer (.exe)](https://github.com/Utkarsh049/boltt/releases/latest) | [MSI Package (.msi)](https://github.com/Utkarsh049/boltt/releases/latest) |
+| **macOS** | Apple Silicon (M-series) | [Disk Image (.dmg)](https://github.com/Utkarsh049/boltt/releases/latest) | [Application Archive (.tar.gz)](https://github.com/Utkarsh049/boltt/releases/latest) |
+| **Linux** | x64 | [Debian Package (.deb)](https://github.com/Utkarsh049/boltt/releases/latest) | [AppImage](https://github.com/Utkarsh049/boltt/releases/latest), [RPM Package (.rpm)](https://github.com/Utkarsh049/boltt/releases/latest) |
+
+#### Platform Guides for Manual Install:
+
+* **macOS**:
+  1. Open the downloaded `.dmg` and drag **Boltt** into `/Applications`.
+  2. If macOS displays *"damaged and can't be opened"* or blocks unverified applications, run this command once in Terminal:
+     ```bash
+     xattr -cr /Applications/Boltt.app
+     ```
+     Alternatively, right-click `Boltt.app` in Finder, select **Open**, and confirm **Open**.
+
+* **Linux**:
+  * **Debian / Ubuntu**:
+    ```bash
+    sudo dpkg -i boltt_*_amd64.deb
+    ```
+  * **Standalone AppImage**:
+    ```bash
+    chmod +x boltt_*_amd64.AppImage
+    ./boltt_*_amd64.AppImage
+    ```
+
+* **Windows**:
+  1. Double-click the downloaded `boltt_*_x64-setup.exe` to run the installer.
+  2. If Windows SmartScreen appears (*"Windows protected your PC"*), click **More info** and then **Run anyway**.
 
 ---
 
@@ -37,6 +95,8 @@ Built with **Rust, Tauri v2, and React + TypeScript**, Boltt compiles to a self-
 ```
 boltt/
 ├── scripts/
+│   ├── install.sh           # One-line installer for macOS & Linux
+│   ├── install.ps1          # One-line installer for Windows PowerShell
 │   ├── setup.js             # Cross-platform runner & environment doctor
 │   ├── setup-linux.sh       # Linux (Ubuntu/Debian, Fedora, Arch) setup script
 │   ├── setup-macos.sh       # macOS (Xcode, Homebrew, Rust) setup script

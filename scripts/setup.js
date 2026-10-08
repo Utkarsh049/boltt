@@ -37,12 +37,17 @@ const isCheckMode = process.argv.includes("--check") || process.argv.includes("-
 const isDryRun = process.argv.includes("--dry-run");
 
 // Helper to run command silently and return output
-function exec(command, args = []) {
+function exec(command, args = [], options = {}) {
   try {
+    const isWindows = process.platform === "win32";
+    // Avoid cmd shell for absolute executable paths (e.g., vswhere.exe in Program Files (x86))
+    // Shell is only needed on Windows when resolving PATH commands or running .cmd/.bat files
+    const useShell = options.shell !== undefined ? options.shell : (isWindows && !path.isAbsolute(command));
     const res = spawnSync(command, args, {
       encoding: "utf8",
       stdio: ["pipe", "pipe", "pipe"],
-      shell: process.platform === "win32",
+      shell: useShell,
+      ...options,
     });
     return {
       success: res.status === 0,
@@ -334,7 +339,6 @@ function runSetup() {
     const psArgs = ["-ExecutionPolicy", "Bypass", "-File", scriptPath];
     if (isDryRun) psArgs.push("-DryRun");
     if (process.argv.includes("--help") || process.argv.includes("-h")) psArgs.push("-Help");
-    if (isCheckMode) psArgs.push("-CheckOnly");
     const child = spawn("powershell", psArgs, { stdio: "inherit" });
     child.on("error", (err) => {
       console.error(`${colors.red}Failed to start setup script: ${err.message}${colors.reset}`);

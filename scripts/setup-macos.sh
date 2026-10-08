@@ -72,9 +72,13 @@ else
       if [ "$DRY_RUN" = true ]; then
         echo -e "${YELLOW}[DRY RUN] xcode-select --install${RESET}"
       else
-        xcode-select --install || true
-        echo -e "${YELLOW}Follow the on-screen installer, then re-run this script when finished.${RESET}"
-        exit 0
+        if xcode-select --install 2>/dev/null; then
+          echo -e "${YELLOW}Follow the on-screen installer to complete installation, then re-run this script.${RESET}"
+          exit 1
+        else
+          echo -e "${RED}Error: Failed to launch xcode-select --install.${RESET}"
+          MISSING_TOOLS+=("Xcode Command Line Tools")
+        fi
       fi
     else
       echo -e "${RED}Error: Xcode Command Line Tools (clang, make) are required by Tauri.${RESET}"
@@ -233,6 +237,18 @@ if [ ${#MISSING_TOOLS[@]} -gt 0 ]; then
   echo ""
   echo -e "Please install missing prerequisites and re-run: ${CYAN}bash scripts/setup-macos.sh${RESET}"
   exit 1
+fi
+
+if [ "$DRY_RUN" = true ]; then
+  echo ""
+  echo -e "${YELLOW}${BOLD}========================================================${RESET}"
+  echo -e "${YELLOW}${BOLD}           macOS Setup (Dry Run) Complete               ${RESET}"
+  echo -e "${YELLOW}${BOLD}========================================================${RESET}"
+  echo ""
+  echo -e "Dry run preview complete. No system changes were made."
+  echo -e "Run without ${CYAN}--dry-run${RESET} to perform installation."
+  echo ""
+  exit 0
 fi
 
 echo ""

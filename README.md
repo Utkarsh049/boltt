@@ -111,7 +111,7 @@ bash scripts/setup-linux.sh
 ```bash
 bash scripts/setup-macos.sh
 ```
-*Configures Xcode Command Line Tools, Rustup, Node.js, and pnpm.*
+*Verifies Xcode Command Line Tools, Rustup, Node.js, and pnpm (installing Rust and pnpm when missing).*
 
 #### Windows (PowerShell)
 ```powershell

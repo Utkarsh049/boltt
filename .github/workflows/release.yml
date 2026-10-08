@@ -1,6 +1,10 @@
 name: Release
 
 on:
+  # Triggered when pushing version tags (e.g. git push origin v1.1.0).
+  # Note: 'release: [created, published]' is omitted because tauri-action automatically publishes
+  # the GitHub release; having a release trigger causes duplicate/colliding runs on the same tag.
+  # To rebuild an existing release tag, delete and re-push the tag or trigger via workflow_dispatch.
   push:
     tags:
       - 'v*'

@@ -413,6 +413,11 @@ export const EnvironmentModal: React.FC = () => {
                             <input
                               type="checkbox"
                               checked={variable.enabled}
+                              aria-label={
+                                variable.enabled
+                                  ? `Disable variable ${variable.key || `row ${index + 1}`}`
+                                  : `Enable variable ${variable.key || `row ${index + 1}`}`
+                              }
                               onChange={(e) => handleVariableChange(index, "enabled", e.target.checked)}
                             />
                           </label>

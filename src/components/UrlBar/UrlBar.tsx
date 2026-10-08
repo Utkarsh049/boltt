@@ -193,7 +193,7 @@ export const UrlBar: React.FC = () => {
           {/* SSL verification button & indicator */}
           <div className="absolute right-2 flex items-center space-x-1.5" ref={sslDropdownRef}>
             {activeRequest.ssl_verify === false && (
-              <span className="flex items-center space-x-1 px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-[9px] font-bold text-amber-400 font-mono animate-pulse">
+              <span className="flex items-center space-x-1 px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-[9px] font-bold text-amber-400 font-mono">
                 <ShieldAlert size={10} />
                 <span>INSECURE</span>
               </span>
@@ -210,14 +210,15 @@ export const UrlBar: React.FC = () => {
             </button>
             
             {isSslPopoverOpen && (
-              <div className="absolute right-0 top-full mt-1.5 w-56 bg-bg-secondary border border-border-primary rounded shadow-2xl p-3 z-50 flex flex-col space-y-2 font-sans select-none">
+              <div className="absolute right-0 top-full mt-4 w-56 bg-bg-secondary border border-border-primary rounded shadow-2xl p-3 z-50 flex flex-col space-y-2 font-sans select-none">
                 <div className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">
                   SSL Settings
                 </div>
-                <label className="flex items-center space-x-2.5 cursor-pointer text-xs text-text-primary py-1">
+                <label className="flex items-center gap-2 cursor-pointer text-xs text-text-primary py-1">
                   <input
                     type="checkbox"
                     checked={activeRequest.ssl_verify !== false}
+                    aria-label="Verify SSL certificates"
                     onChange={(e) => {
                       setSslVerify(e.target.checked);
                     }}

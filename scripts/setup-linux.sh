@@ -311,11 +311,29 @@ else
     if [ "$DO_NODE_INSTALL" = true ]; then
       if [ "$DRY_RUN" = true ]; then
         echo -e "${YELLOW}[DRY RUN] $INSTALL_CMD ${NODE_PACKAGES[*]}${RESET}"
+        NODE_IS_READY=true
       else
         eval "$INSTALL_CMD ${NODE_PACKAGES[*]}"
         if command -v node >/dev/null 2>&1; then
-          echo -e "${GREEN}✔ Node.js installed.${RESET}"
-          NODE_IS_READY=true
+          NEW_NODE_RAW=$(node -v)
+          NEW_MAJOR=$(echo "$NEW_NODE_RAW" | sed -E 's/^v([0-9]+).*/\1/')
+          NEW_MINOR=$(echo "$NEW_NODE_RAW" | sed -E 's/^v[0-9]+\.([0-9]+).*/\1/')
+          NEW_NODE_OK=false
+          if [ "$NEW_MAJOR" -gt 22 ]; then
+            NEW_NODE_OK=true
+          elif [ "$NEW_MAJOR" -eq 22 ] && [ "$NEW_MINOR" -ge 12 ]; then
+            NEW_NODE_OK=true
+          elif [ "$NEW_MAJOR" -eq 20 ] && [ "$NEW_MINOR" -ge 19 ]; then
+            NEW_NODE_OK=true
+          fi
+
+          if [ "$NEW_NODE_OK" = true ]; then
+            echo -e "${GREEN}✔ Node.js installed:${RESET} $NEW_NODE_RAW"
+            NODE_IS_READY=true
+          else
+            echo -e "${YELLOW}✖ Installed Node.js version $NEW_NODE_RAW is too old. Boltt requires Node 20.19+ or 22.12+.${RESET}"
+            MISSING_TOOLS+=("Node.js (v20.19+ or v22.12+)")
+          fi
         else
           MISSING_TOOLS+=("Node.js (v20.19+ or v22.12+)")
         fi
@@ -396,6 +414,18 @@ if [ ${#MISSING_TOOLS[@]} -gt 0 ]; then
   echo ""
   echo -e "Please install missing prerequisites and re-run: ${CYAN}bash scripts/setup-linux.sh${RESET}"
   exit 1
+fi
+
+if [ "$DRY_RUN" = true ]; then
+  echo ""
+  echo -e "${YELLOW}${BOLD}========================================================${RESET}"
+  echo -e "${YELLOW}${BOLD}           Linux Setup (Dry Run) Complete               ${RESET}"
+  echo -e "${YELLOW}${BOLD}========================================================${RESET}"
+  echo ""
+  echo -e "Dry run preview complete. No system changes were made."
+  echo -e "Run without ${CYAN}--dry-run${RESET} to perform installation."
+  echo ""
+  exit 0
 fi
 
 echo ""

@@ -14,14 +14,14 @@ You can install Boltt using the **quick one-line terminal installer** (recommend
 
 #### macOS & Linux
 ```bash
-curl -fsSL https://raw.githubusercontent.com/Utkarsh049/boltt/main/scripts/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/Utkarsh049/boltt/v1.1.1/scripts/install.sh | bash
 ```
 * **macOS**: Downloads the Apple Silicon application bundle into `/Applications/Boltt.app` and automatically clears Gatekeeper quarantine flags.
 * **Linux**: Installs the `.deb` package on Debian/Ubuntu, or deploys the standalone `.AppImage` to `~/.local/bin/boltt` with an application drawer shortcut.
 
 #### Windows (PowerShell)
 ```powershell
-irm https://raw.githubusercontent.com/Utkarsh049/boltt/main/scripts/install.ps1 | iex
+irm https://raw.githubusercontent.com/Utkarsh049/boltt/v1.1.1/scripts/install.ps1 | iex
 ```
 * Automatically downloads the latest 64-bit installer and runs the setup wizard.
 

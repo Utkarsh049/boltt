@@ -25,7 +25,33 @@ try {
 }
 
 if (-not $downloadUrl) {
-    $downloadUrl = "https://github.com/$repo/releases/latest/download/boltt_1.1.1_x64-setup.exe"
+    try {
+        $req = [System.Net.WebRequest]::Create("https://github.com/$repo/releases/latest")
+        $req.AllowAutoRedirect = $false
+        $resp = $req.GetResponse()
+        $location = $resp.GetResponseHeader("Location")
+        $resp.Close()
+        if ($location -match "/tag/v?([^/]+)$") {
+            $tag = $matches[1]
+            $downloadUrl = "https://github.com/$repo/releases/download/v$tag/boltt_${tag}_x64-setup.exe"
+        }
+    } catch {
+        # Fallback to scraping releases page for x64 setup executable
+        try {
+            $html = (Invoke-WebRequest -Uri "https://github.com/$repo/releases/latest" -UseBasicParsing).Content
+            if ($html -match 'href="([^"]+boltt_[^"]+_x64-setup\.exe)"') {
+                $downloadUrl = "https://github.com" + $matches[1]
+            }
+        } catch {
+            Write-Host "✖ Could not determine latest release download URL." -ForegroundColor Red
+            exit 1
+        }
+    }
+}
+
+if (-not $downloadUrl) {
+    Write-Host "✖ Could not locate Windows installer for latest release." -ForegroundColor Red
+    exit 1
 }
 
 $tempInstaller = Join-Path $env:TEMP "boltt-setup.exe"
@@ -39,12 +65,19 @@ try {
 }
 
 Write-Host "Launching Boltt setup installer..." -ForegroundColor Green
+$exitCode = 0
 try {
-    Start-Process -FilePath $tempInstaller -Wait
+    $proc = Start-Process -FilePath $tempInstaller -Wait -PassThru
+    $exitCode = $proc.ExitCode
 } finally {
     if (Test-Path $tempInstaller) {
         Remove-Item $tempInstaller -Force -ErrorAction SilentlyContinue
     }
+}
+
+if ($exitCode -ne 0) {
+    Write-Host "✖ Boltt installation did not complete successfully (Exit code: $exitCode)." -ForegroundColor Red
+    exit $exitCode
 }
 
 Write-Host ""

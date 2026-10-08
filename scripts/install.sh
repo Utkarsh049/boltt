@@ -19,16 +19,45 @@ echo -e "${BLUE}${BOLD}             Boltt Installer (macOS & Linux)            $
 echo -e "${BLUE}${BOLD}========================================================${RESET}"
 echo ""
 
-# Helper to query GitHub latest release asset
-get_latest_release_info() {
-  local asset_pattern="$1"
-  local api_url="https://api.github.com/repos/${REPO}/releases/latest"
-  local download_url=""
-  
-  if command -v curl >/dev/null 2>&1; then
-    download_url=$(curl -sSL "$api_url" 2>/dev/null | grep -o "https://github.com/${REPO}/releases/download/[^\"]*${asset_pattern}[^\"]*" | head -n 1 || true)
+TMP_DIR=$(mktemp -d)
+cleanup() {
+  rm -rf "$TMP_DIR"
+}
+trap cleanup EXIT
+
+# 1. Fetch release metadata (cached once, with redirect fallback to bypass rate limits)
+RELEASE_JSON="$TMP_DIR/release.json"
+LATEST_TAG=""
+
+if command -v curl >/dev/null 2>&1; then
+  # Try API first
+  curl -sSL "https://api.github.com/repos/${REPO}/releases/latest" -o "$RELEASE_JSON" 2>/dev/null || true
+fi
+
+# If API was rate limited or empty, resolve latest tag from GitHub redirect
+if [ ! -s "$RELEASE_JSON" ] || grep -q "API rate limit exceeded" "$RELEASE_JSON" 2>/dev/null; then
+  EFFECTIVE_URL=$(curl -sIL -o /dev/null -w '%{url_effective}' "https://github.com/${REPO}/releases/latest" 2>/dev/null || true)
+  LATEST_TAG=$(echo "$EFFECTIVE_URL" | sed -E 's#.*/tag/v?##')
+else
+  LATEST_TAG=$(grep -m1 '"tag_name":' "$RELEASE_JSON" | sed -E 's/.*"tag_name": *"v?([^"]+)".*/\1/' || true)
+fi
+
+# Helper to find download URL matching asset extension (excluding .sig files)
+resolve_asset_url() {
+  local asset_suffix="$1"
+  local url=""
+
+  if [ -s "$RELEASE_JSON" ] && ! grep -q "API rate limit exceeded" "$RELEASE_JSON"; then
+    url=$(grep -oE "https://github.com/${REPO}/releases/download/[^\"]+${asset_suffix}" "$RELEASE_JSON" | grep -v '\.sig$' | head -n 1 || true)
   fi
-  echo "$download_url"
+
+  # Fallback to direct latest/download URL if API didn't resolve
+  if [ -z "$url" ] && [ -n "$LATEST_TAG" ]; then
+    url="https://github.com/${REPO}/releases/download/v${LATEST_TAG}/${asset_suffix}"
+  elif [ -z "$url" ]; then
+    url="https://github.com/${REPO}/releases/latest/download/${asset_suffix}"
+  fi
+  echo "$url"
 }
 
 # ------------------------------------------------------------------------------
@@ -36,28 +65,24 @@ get_latest_release_info() {
 # ------------------------------------------------------------------------------
 if [ "$OS" = "Darwin" ]; then
   if [ "$ARCH" != "arm64" ] && [ "$ARCH" != "aarch64" ]; then
-    echo -e "${YELLOW}Warning: Current pre-built releases target Apple Silicon (arm64/M-series).${RESET}"
-    echo -e "${YELLOW}Detected architecture: $ARCH.${RESET}"
+    echo -e "${RED}Error: Pre-built macOS releases currently target Apple Silicon (arm64/M-series).${RESET}"
+    echo -e "${RED}Detected architecture: $ARCH.${RESET}"
+    exit 1
   fi
 
-  echo -e "${BLUE}ℹ Fetching latest macOS release...${RESET}"
-  
-  # Try GitHub API first, fallback to standard naming
-  DOWNLOAD_URL=$(get_latest_release_info "aarch64.app.tar.gz")
-  if [ -z "$DOWNLOAD_URL" ]; then
-    DOWNLOAD_URL="https://github.com/${REPO}/releases/latest/download/boltt_aarch64.app.tar.gz"
-  fi
-
-  TMP_DIR=$(mktemp -d)
-  cleanup() {
-    rm -rf "$TMP_DIR"
-  }
-  trap cleanup EXIT
+  echo -e "${BLUE}ℹ Fetching latest Apple Silicon macOS release...${RESET}"
+  DOWNLOAD_URL=$(resolve_asset_url "boltt_aarch64.app.tar.gz")
 
   ARCHIVE_FILE="$TMP_DIR/boltt.app.tar.gz"
   echo -e "${BLUE}ℹ Downloading Boltt from:${RESET} $DOWNLOAD_URL"
   if ! curl -fL --progress-bar "$DOWNLOAD_URL" -o "$ARCHIVE_FILE"; then
     echo -e "${RED}✖ Failed to download macOS release archive.${RESET}"
+    exit 1
+  fi
+
+  echo -e "${BLUE}ℹ Verifying archive integrity...${RESET}"
+  if ! tar -tzf "$ARCHIVE_FILE" >/dev/null 2>&1; then
+    echo -e "${RED}✖ Downloaded archive is corrupted or invalid.${RESET}"
     exit 1
   fi
 
@@ -72,25 +97,29 @@ if [ "$OS" = "Darwin" ]; then
   fi
 
   if [ -z "$APP_SOURCE" ]; then
-    echo -e "${RED}✖ Could not find Boltt.app inside archive.${RESET}"
+    echo -e "${RED}✖ Could not find application bundle inside archive.${RESET}"
     exit 1
   fi
 
   DEST_DIR="/Applications"
   TARGET_APP="$DEST_DIR/Boltt.app"
+  STAGE_APP="$TMP_DIR/Boltt.app.staged"
+
+  # Stage application before moving to destination (atomic replacement)
+  cp -R "$APP_SOURCE" "$STAGE_APP"
+  xattr -cr "$STAGE_APP" 2>/dev/null || true
 
   echo -e "${BLUE}ℹ Installing to $TARGET_APP...${RESET}"
   if [ -w "$DEST_DIR" ]; then
     rm -rf "$TARGET_APP"
-    cp -R "$APP_SOURCE" "$TARGET_APP"
+    mv "$STAGE_APP" "$TARGET_APP"
   else
     echo -e "${YELLOW}Elevated permissions required to write to /Applications.${RESET}"
     sudo rm -rf "$TARGET_APP"
-    sudo cp -R "$APP_SOURCE" "$TARGET_APP"
+    sudo mv "$STAGE_APP" "$TARGET_APP"
   fi
 
-  # Clear Gatekeeper quarantine flag so macOS launches without security errors
-  echo -e "${BLUE}ℹ Clearing macOS Gatekeeper quarantine flag...${RESET}"
+  # Final quarantine attribute clear on target
   xattr -cr "$TARGET_APP" 2>/dev/null || true
 
   echo ""
@@ -114,18 +143,16 @@ if [ "$OS" = "Linux" ]; then
     exit 1
   fi
 
-  TMP_DIR=$(mktemp -d)
-  cleanup() {
-    rm -rf "$TMP_DIR"
-  }
-  trap cleanup EXIT
-
   # 1. Debian / Ubuntu (.deb package)
   if command -v dpkg >/dev/null 2>&1; then
     echo -e "${BLUE}ℹ Debian/Ubuntu system detected. Fetching latest .deb package...${RESET}"
-    DOWNLOAD_URL=$(get_latest_release_info "amd64.deb")
-    if [ -z "$DOWNLOAD_URL" ]; then
-      DOWNLOAD_URL=$(curl -sSL "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null | grep "browser_download_url" | grep -E "amd64\.deb" | cut -d '"' -f 4 | head -n 1 || true)
+    DEB_PATTERN="amd64.deb"
+    DOWNLOAD_URL=""
+    if [ -s "$RELEASE_JSON" ]; then
+      DOWNLOAD_URL=$(grep -oE "https://github.com/${REPO}/releases/download/[^\"]+${DEB_PATTERN}" "$RELEASE_JSON" | grep -v '\.sig$' | head -n 1 || true)
+    fi
+    if [ -z "$DOWNLOAD_URL" ] && [ -n "$LATEST_TAG" ]; then
+      DOWNLOAD_URL="https://github.com/${REPO}/releases/download/v${LATEST_TAG}/boltt_${LATEST_TAG}_amd64.deb"
     fi
 
     if [ -n "$DOWNLOAD_URL" ]; then
@@ -157,9 +184,13 @@ if [ "$OS" = "Linux" ]; then
 
   # 2. Standalone AppImage for all Linux distributions
   echo -e "${BLUE}ℹ Fetching latest Linux AppImage...${RESET}"
-  DOWNLOAD_URL=$(get_latest_release_info "amd64.AppImage")
-  if [ -z "$DOWNLOAD_URL" ]; then
-    DOWNLOAD_URL=$(curl -sSL "https://api.github.com/repos/${REPO}/releases/latest" 2>/dev/null | grep "browser_download_url" | grep -E "amd64\.AppImage" | cut -d '"' -f 4 | head -n 1 || true)
+  APPIMAGE_PATTERN="amd64.AppImage"
+  DOWNLOAD_URL=""
+  if [ -s "$RELEASE_JSON" ]; then
+    DOWNLOAD_URL=$(grep -oE "https://github.com/${REPO}/releases/download/[^\"]+${APPIMAGE_PATTERN}" "$RELEASE_JSON" | grep -v '\.sig$' | head -n 1 || true)
+  fi
+  if [ -z "$DOWNLOAD_URL" ] && [ -n "$LATEST_TAG" ]; then
+    DOWNLOAD_URL="https://github.com/${REPO}/releases/download/v${LATEST_TAG}/boltt_${LATEST_TAG}_amd64.AppImage"
   fi
 
   if [ -z "$DOWNLOAD_URL" ]; then
@@ -170,19 +201,32 @@ if [ "$OS" = "Linux" ]; then
   INSTALL_DIR="$HOME/.local/bin"
   mkdir -p "$INSTALL_DIR"
   APPIMAGE_PATH="$INSTALL_DIR/boltt"
+  STAGE_FILE="$TMP_DIR/boltt.AppImage"
 
-  echo -e "${BLUE}ℹ Downloading Boltt AppImage to $APPIMAGE_PATH...${RESET}"
-  curl -fL --progress-bar "$DOWNLOAD_URL" -o "$APPIMAGE_PATH"
-  chmod +x "$APPIMAGE_PATH"
+  echo -e "${BLUE}ℹ Downloading Boltt AppImage...${RESET}"
+  curl -fL --progress-bar "$DOWNLOAD_URL" -o "$STAGE_FILE"
+  chmod +x "$STAGE_FILE"
 
-  # Create desktop entry
+  # Verify executable format before replacing
+  if command -v file >/dev/null 2>&1; then
+    if ! file "$STAGE_FILE" | grep -qi "ELF"; then
+      echo -e "${RED}✖ Downloaded AppImage is not a valid ELF executable.${RESET}"
+      exit 1
+    fi
+  fi
+
+  # Atomic replacement
+  mv "$STAGE_FILE" "$APPIMAGE_PATH"
+
+  # Create desktop entry with explicit managed marker
   DESKTOP_DIR="$HOME/.local/share/applications"
   mkdir -p "$DESKTOP_DIR"
   cat > "$DESKTOP_DIR/boltt.desktop" <<EOF
 [Desktop Entry]
+# Managed by Boltt
 Name=Boltt
 Comment=Local-first HTTP Client
-Exec=$APPIMAGE_PATH
+Exec="$APPIMAGE_PATH"
 Terminal=false
 Type=Application
 Categories=Development;Network;

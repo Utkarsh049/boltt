@@ -25,7 +25,7 @@ try {
 }
 
 if (-not $downloadUrl) {
-    $downloadUrl = "https://github.com/$repo/releases/latest/download/boltt_1.1.0_x64-setup.exe"
+    $downloadUrl = "https://github.com/$repo/releases/latest/download/boltt_1.1.1_x64-setup.exe"
 }
 
 $tempInstaller = Join-Path $env:TEMP "boltt-setup.exe"

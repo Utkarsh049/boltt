@@ -270,24 +270,29 @@ else
   fi
 fi
 
+# Helper to validate Node engine compatibility (Node 20.19+ or 22.12+)
+is_node_version_compatible() {
+  local version="$1"
+  local major minor
+  major=$(echo "$version" | sed -E 's/^v([0-9]+).*/\1/')
+  minor=$(echo "$version" | sed -E 's/^v[0-9]+\.([0-9]+).*/\1/')
+  if [ "$major" -gt 22 ]; then
+    return 0
+  elif [ "$major" -eq 22 ] && [ "$minor" -ge 12 ]; then
+    return 0
+  elif [ "$major" -eq 20 ] && [ "$minor" -ge 19 ]; then
+    return 0
+  fi
+  return 1
+}
+
 # 5. Check Node.js and pnpm
 echo ""
 echo -e "${BOLD}Checking Node.js & pnpm...${RESET}"
 NODE_IS_READY=false
 if command -v node >/dev/null 2>&1; then
   NODE_RAW=$(node -v)
-  NODE_MAJOR=$(echo "$NODE_RAW" | sed -E 's/^v([0-9]+).*/\1/')
-  NODE_MINOR=$(echo "$NODE_RAW" | sed -E 's/^v[0-9]+\.([0-9]+).*/\1/')
-  NODE_OK=false
-  if [ "$NODE_MAJOR" -gt 22 ]; then
-    NODE_OK=true
-  elif [ "$NODE_MAJOR" -eq 22 ] && [ "$NODE_MINOR" -ge 12 ]; then
-    NODE_OK=true
-  elif [ "$NODE_MAJOR" -eq 20 ] && [ "$NODE_MINOR" -ge 19 ]; then
-    NODE_OK=true
-  fi
-
-  if [ "$NODE_OK" = true ]; then
+  if is_node_version_compatible "$NODE_RAW"; then
     echo -e "${GREEN}✔ Node.js is installed:${RESET} $NODE_RAW"
     NODE_IS_READY=true
   else
@@ -311,11 +316,18 @@ else
     if [ "$DO_NODE_INSTALL" = true ]; then
       if [ "$DRY_RUN" = true ]; then
         echo -e "${YELLOW}[DRY RUN] $INSTALL_CMD ${NODE_PACKAGES[*]}${RESET}"
+        NODE_IS_READY=true
       else
         eval "$INSTALL_CMD ${NODE_PACKAGES[*]}"
         if command -v node >/dev/null 2>&1; then
-          echo -e "${GREEN}✔ Node.js installed.${RESET}"
-          NODE_IS_READY=true
+          NEW_NODE_RAW=$(node -v)
+          if is_node_version_compatible "$NEW_NODE_RAW"; then
+            echo -e "${GREEN}✔ Node.js installed:${RESET} $NEW_NODE_RAW"
+            NODE_IS_READY=true
+          else
+            echo -e "${YELLOW}✖ Installed Node.js version $NEW_NODE_RAW is too old. Boltt requires Node 20.19+ or 22.12+.${RESET}"
+            MISSING_TOOLS+=("Node.js (v20.19+ or v22.12+)")
+          fi
         else
           MISSING_TOOLS+=("Node.js (v20.19+ or v22.12+)")
         fi
@@ -396,6 +408,18 @@ if [ ${#MISSING_TOOLS[@]} -gt 0 ]; then
   echo ""
   echo -e "Please install missing prerequisites and re-run: ${CYAN}bash scripts/setup-linux.sh${RESET}"
   exit 1
+fi
+
+if [ "$DRY_RUN" = true ]; then
+  echo ""
+  echo -e "${YELLOW}${BOLD}========================================================${RESET}"
+  echo -e "${YELLOW}${BOLD}           Linux Setup (Dry Run) Complete               ${RESET}"
+  echo -e "${YELLOW}${BOLD}========================================================${RESET}"
+  echo ""
+  echo -e "Dry run preview complete. No system changes were made."
+  echo -e "Run without ${CYAN}--dry-run${RESET} to perform installation."
+  echo ""
+  exit 0
 fi
 
 echo ""

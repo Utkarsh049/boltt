@@ -191,44 +191,49 @@ export const UrlBar: React.FC = () => {
           />
           
           {/* SSL verification button & indicator */}
-          <div className="absolute right-2 flex items-center space-x-1.5" ref={sslDropdownRef}>
+          <div className="absolute right-2 flex items-center space-x-1.5">
             {activeRequest.ssl_verify === false && (
-              <span className="flex items-center space-x-1 px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-[9px] font-bold text-amber-400 font-mono animate-pulse">
+              <span className="flex items-center space-x-1 px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-[9px] font-bold text-amber-400 font-mono">
                 <ShieldAlert size={10} />
                 <span>INSECURE</span>
               </span>
             )}
-            <button
-              type="button"
-              onClick={() => setIsSslPopoverOpen(!isSslPopoverOpen)}
-              className={`p-1 hover:bg-bg-hover/80 rounded transition cursor-pointer ${
-                activeRequest.ssl_verify === false ? "text-amber-400" : "text-text-secondary hover:text-text-primary"
-              }`}
-              title="SSL Verification Settings"
-            >
-              {activeRequest.ssl_verify === false ? <ShieldAlert size={14} /> : <ShieldCheck size={14} />}
-            </button>
-            
-            {isSslPopoverOpen && (
-              <div className="absolute right-0 top-full mt-1.5 w-56 bg-bg-secondary border border-border-primary rounded shadow-2xl p-3 z-50 flex flex-col space-y-2 font-sans select-none">
-                <div className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">
-                  SSL Settings
+            <div className="relative flex items-center" ref={sslDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setIsSslPopoverOpen(!isSslPopoverOpen)}
+                aria-label="SSL Verification Settings"
+                aria-expanded={isSslPopoverOpen}
+                className={`p-1 hover:bg-bg-hover/80 rounded transition cursor-pointer ${
+                  activeRequest.ssl_verify === false ? "text-amber-400" : "text-text-secondary hover:text-text-primary"
+                }`}
+                title="SSL Verification Settings"
+              >
+                {activeRequest.ssl_verify === false ? <ShieldAlert size={14} /> : <ShieldCheck size={14} />}
+              </button>
+              
+              {isSslPopoverOpen && (
+                <div className="absolute right-0 top-full mt-4 w-56 bg-bg-secondary border border-border-primary rounded shadow-2xl p-3 z-50 flex flex-col space-y-2 font-sans select-none">
+                  <div className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">
+                    SSL Settings
+                  </div>
+                  <label className="flex items-center gap-2 cursor-pointer text-xs text-text-primary py-1">
+                    <input
+                      type="checkbox"
+                      checked={activeRequest.ssl_verify !== false}
+                      aria-label="Verify SSL certificates"
+                      onChange={(e) => {
+                        setSslVerify(e.target.checked);
+                      }}
+                    />
+                    <span>Verify SSL certificates</span>
+                  </label>
+                  <div className="text-[10px] text-text-secondary leading-normal border-t border-border-primary/40 pt-1.5">
+                    Disabling verification allows self-signed or invalid certificates to be accepted.
+                  </div>
                 </div>
-                <label className="flex items-center space-x-2.5 cursor-pointer text-xs text-text-primary py-1">
-                  <input
-                    type="checkbox"
-                    checked={activeRequest.ssl_verify !== false}
-                    onChange={(e) => {
-                      setSslVerify(e.target.checked);
-                    }}
-                  />
-                  <span>Verify SSL certificates</span>
-                </label>
-                <div className="text-[10px] text-text-secondary leading-normal border-t border-border-primary/40 pt-1.5">
-                  Disabling verification allows self-signed or invalid certificates to be accepted.
-                </div>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
 

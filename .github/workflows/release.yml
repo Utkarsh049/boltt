@@ -1,6 +1,10 @@
 name: Release
 
 on:
+  # Triggered when pushing version tags (e.g. git push origin v1.1.0).
+  # Note: 'release: [created, published]' is omitted because tauri-action automatically publishes
+  # the GitHub release; having a release trigger causes duplicate/colliding runs on the same tag.
+  # To rebuild an existing release tag, delete and re-push the tag or trigger via workflow_dispatch.
   push:
     tags:
       - 'v*'
@@ -85,6 +89,8 @@ jobs:
             | Windows (x64) | [Setup Installer (.exe)](https://github.com/${{ github.repository }}/releases/download/v__VERSION__/boltt___VERSION___x64-setup.exe) | [MSI Package (.msi)](https://github.com/${{ github.repository }}/releases/download/v__VERSION__/boltt___VERSION___x64_en-US.msi) |
             | macOS (Apple Silicon) | [Disk Image (.dmg)](https://github.com/${{ github.repository }}/releases/download/v__VERSION__/boltt___VERSION___aarch64.dmg) | [Application Archive (.tar.gz)](https://github.com/${{ github.repository }}/releases/download/v__VERSION__/boltt_aarch64.app.tar.gz) |
             | Linux (x64) | [AppImage (.AppImage)](https://github.com/${{ github.repository }}/releases/download/v__VERSION__/boltt___VERSION___amd64.AppImage) | [Debian Package (.deb)](https://github.com/${{ github.repository }}/releases/download/v__VERSION__/boltt___VERSION___amd64.deb), [RPM Package (.rpm)](https://github.com/${{ github.repository }}/releases/download/v__VERSION__/boltt-__VERSION__-1.x86_64.rpm) |
+
+            > **macOS Note**: If macOS displays *"damaged and can't be opened"* or blocks unverified applications, run `xattr -cr /Applications/Boltt.app` in Terminal (or right-click Boltt in Applications and select **Open**).
 
             All installation packages, checksums, and source code archives are available in the Assets section below.
           releaseDraft: false

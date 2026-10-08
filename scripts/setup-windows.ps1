@@ -34,11 +34,27 @@ function Test-CommandAvailable {
     return [bool](Get-Command $Cmd -ErrorAction SilentlyContinue)
 }
 
-# Helper to refresh environment PATH from registry
+# Helper to refresh environment PATH from registry while preserving existing session entries
 function Update-EnvironmentPath {
     $machinePath = [System.Environment]::GetEnvironmentVariable("Path", "Machine")
     $userPath = [System.Environment]::GetEnvironmentVariable("Path", "User")
-    $env:Path = "$machinePath;$userPath"
+    $currentPaths = $env:Path -split ';' | Where-Object { $_ -ne "" }
+    $registryPaths = ("$machinePath;$userPath" -split ';') | Where-Object { $_ -ne "" }
+    $allPaths = ($currentPaths + $registryPaths) | Select-Object -Unique
+    $env:Path = $allPaths -join ';'
+}
+
+# Helper to validate Node version is 20.19+ or 22.12+
+function Test-NodeVersionCompatible {
+    param([string]$VersionStr)
+    if ($VersionStr -match "^v?(\d+)\.(\d+)") {
+        $major = [int]$matches[1]
+        $minor = [int]$matches[2]
+        if ($major -gt 22) { return $true }
+        if ($major -eq 22 -and $minor -ge 12) { return $true }
+        if ($major -eq 20 -and $minor -ge 19) { return $true }
+    }
+    return $false
 }
 
 # 1. Check Package Manager (winget)
@@ -163,8 +179,13 @@ Update-EnvironmentPath
 $nodeOk = $false
 if (Test-CommandAvailable "node") {
     $nodeVer = (& node -v)
-    Write-Host "✔ Node.js is installed: $nodeVer" -ForegroundColor Green
-    $nodeOk = $true
+    if (Test-NodeVersionCompatible $nodeVer) {
+        Write-Host "✔ Node.js is installed: $nodeVer" -ForegroundColor Green
+        $nodeOk = $true
+    } else {
+        Write-Host "✖ Node.js version $nodeVer is too old. Boltt requires Node 20.19+ or 22.12+." -ForegroundColor Red
+        $failedPrereqs += "Node.js (v20.19+ or v22.12+)"
+    }
 } else {
     Write-Host "✖ Node.js not detected." -ForegroundColor Red
     if (-not $CheckOnly -and $hasWinget) {
@@ -172,6 +193,7 @@ if (Test-CommandAvailable "node") {
         if ($confirm -eq "" -or $confirm -match "^[Yy]") {
             if ($DryRun) {
                 Write-Host "[DRY RUN] winget install OpenJS.NodeJS.LTS" -ForegroundColor Yellow
+                $nodeOk = $true
             } else {
                 & winget install OpenJS.NodeJS.LTS
                 if ($LASTEXITCODE -ne 0) {
@@ -179,8 +201,19 @@ if (Test-CommandAvailable "node") {
                     $failedPrereqs += "Node.js (v20.19+ or v22.12+)"
                 } else {
                     Update-EnvironmentPath
-                    $nodeOk = Test-CommandAvailable "node"
-                    Write-Host "✔ Node.js installed." -ForegroundColor Green
+                    if (Test-CommandAvailable "node") {
+                        $newNodeVer = (& node -v)
+                        if (Test-NodeVersionCompatible $newNodeVer) {
+                            $nodeOk = $true
+                            Write-Host "✔ Node.js installed: $newNodeVer" -ForegroundColor Green
+                        } else {
+                            Write-Host "✖ Installed Node.js version $newNodeVer does not meet 20.19+ or 22.12+ requirement." -ForegroundColor Red
+                            $failedPrereqs += "Node.js (v20.19+ or v22.12+)"
+                        }
+                    } else {
+                        Write-Host "✖ Node.js was installed but is not available in PATH yet. Restart PowerShell to load PATH." -ForegroundColor Red
+                        $failedPrereqs += "Node.js (v20.19+ or v22.12+)"
+                    }
                 }
             }
         } else {
@@ -197,28 +230,38 @@ if (Test-CommandAvailable "pnpm") {
 } else {
     Write-Host "✖ pnpm not detected." -ForegroundColor Yellow
     if (-not $CheckOnly) {
-        Update-EnvironmentPath
-        if (Test-CommandAvailable "npm") {
-            $confirm = Read-Host "Install pnpm globally via npm? [Y/n]"
-            if ($confirm -eq "" -or $confirm -match "^[Yy]") {
-                if ($DryRun) {
-                    Write-Host "[DRY RUN] npm install -g pnpm" -ForegroundColor Yellow
-                } else {
-                    & npm install -g pnpm
-                    if ($LASTEXITCODE -ne 0) {
-                        Write-Host "✖ npm install -g pnpm failed (Exit code: $LASTEXITCODE)." -ForegroundColor Red
-                        $failedPrereqs += "pnpm"
+        if ($DryRun -and $nodeOk) {
+            Write-Host "[DRY RUN] npm install -g pnpm" -ForegroundColor Yellow
+        } else {
+            Update-EnvironmentPath
+            if (Test-CommandAvailable "npm") {
+                $confirm = Read-Host "Install pnpm globally via npm? [Y/n]"
+                if ($confirm -eq "" -or $confirm -match "^[Yy]") {
+                    if ($DryRun) {
+                        Write-Host "[DRY RUN] npm install -g pnpm" -ForegroundColor Yellow
                     } else {
-                        Update-EnvironmentPath
-                        Write-Host "✔ pnpm installed successfully." -ForegroundColor Green
+                        & npm install -g pnpm
+                        if ($LASTEXITCODE -ne 0) {
+                            Write-Host "✖ npm install -g pnpm failed (Exit code: $LASTEXITCODE)." -ForegroundColor Red
+                            $failedPrereqs += "pnpm"
+                        } else {
+                            Update-EnvironmentPath
+                            if (Test-CommandAvailable "pnpm") {
+                                $newPnpmVer = (& pnpm -v)
+                                Write-Host "✔ pnpm installed successfully: v$newPnpmVer" -ForegroundColor Green
+                            } else {
+                                Write-Host "✖ pnpm was installed but is not available in PATH. Add npm global bin to PATH or restart PowerShell." -ForegroundColor Red
+                                $failedPrereqs += "pnpm"
+                            }
+                        }
                     }
+                } else {
+                    $failedPrereqs += "pnpm"
                 }
             } else {
+                Write-Host "✖ npm is not available in PATH to install pnpm. Please restart PowerShell after installing Node.js." -ForegroundColor Red
                 $failedPrereqs += "pnpm"
             }
-        } else {
-            Write-Host "✖ npm is not available in PATH to install pnpm. Please restart PowerShell after installing Node.js." -ForegroundColor Red
-            $failedPrereqs += "pnpm"
         }
     } else {
         $failedPrereqs += "pnpm"
@@ -226,7 +269,7 @@ if (Test-CommandAvailable "pnpm") {
 }
 
 # 6. Install Project Dependencies
-if (-not $CheckOnly -and (Test-CommandAvailable "pnpm") -and ($failedPrereqs.Count -eq 0)) {
+if (-not $CheckOnly -and ((Test-CommandAvailable "pnpm") -or ($DryRun -and $nodeOk)) -and ($failedPrereqs.Count -eq 0)) {
     Write-Host ""
     Write-Host "Installing Project Dependencies..." -ForegroundColor Yellow
     $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
@@ -262,6 +305,18 @@ if ($failedPrereqs.Count -gt 0) {
     Write-Host ""
     Write-Host "Please resolve the above issues and re-run: .\scripts\setup-windows.ps1" -ForegroundColor Yellow
     exit 1
+}
+
+if ($DryRun) {
+    Write-Host ""
+    Write-Host "========================================================" -ForegroundColor Yellow
+    Write-Host "           Windows Setup (Dry Run) Complete             " -ForegroundColor Yellow
+    Write-Host "========================================================" -ForegroundColor Yellow
+    Write-Host ""
+    Write-Host "Dry run preview complete. No system changes were made."
+    Write-Host "Run without -DryRun to perform installation." -ForegroundColor Cyan
+    Write-Host ""
+    exit 0
 }
 
 Write-Host ""

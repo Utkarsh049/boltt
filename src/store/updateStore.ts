@@ -31,13 +31,38 @@ interface UpdateStore {
   checkForUpdates: (silent?: boolean) => Promise<void>;
   downloadAndApplyUpdate: () => Promise<void>;
   relaunchApp: () => Promise<void>;
+  cancelDevSimulation?: () => void;
 }
 
 let activeCheckId = 0;
+let devSimulationTimer: ReturnType<typeof setInterval> | null = null;
+
+export const cancelActiveDevSimulation = () => {
+  if (devSimulationTimer) {
+    clearInterval(devSimulationTimer);
+    devSimulationTimer = null;
+  }
+};
 
 export const useUpdateStore = create<UpdateStore>((set, get) => ({
   isToastVisible: false,
-  setToastVisible: (visible) => set({ isToastVisible: visible }),
+  setToastVisible: (visible) => {
+    if (!visible && devSimulationTimer) {
+      cancelActiveDevSimulation();
+      if (get().status === "downloading") {
+        set({
+          status: "idle",
+          downloadProgress: 0,
+          downloadedBytes: 0,
+          totalBytes: 0,
+        });
+      }
+    }
+    set({ isToastVisible: visible });
+  },
+  cancelDevSimulation: () => {
+    cancelActiveDevSimulation();
+  },
   isNotesModalOpen: false,
   setNotesModalOpen: (open) => set({ isNotesModalOpen: open }),
   status: "idle",
@@ -130,6 +155,11 @@ export const useUpdateStore = create<UpdateStore>((set, get) => ({
     const { updateObj } = get();
     if (!updateObj) {
       if (import.meta.env.DEV) {
+        if (devSimulationTimer) {
+          clearInterval(devSimulationTimer);
+          devSimulationTimer = null;
+        }
+
         // Allow exercising download flow in Dev State Simulator
         set({
           status: "downloading",
@@ -142,7 +172,22 @@ export const useUpdateStore = create<UpdateStore>((set, get) => ({
         let downloaded = 0;
         const total = 24500000;
         const step = 2450000;
-        const interval = setInterval(() => {
+        devSimulationTimer = setInterval(() => {
+          if (get().status !== "downloading" || !get().isToastVisible) {
+            if (devSimulationTimer) {
+              clearInterval(devSimulationTimer);
+              devSimulationTimer = null;
+            }
+            if (get().status === "idle") {
+              set({
+                downloadProgress: 0,
+                downloadedBytes: 0,
+                totalBytes: 0,
+              });
+            }
+            return;
+          }
+
           downloaded = Math.min(total, downloaded + step);
           const progress = Math.min(100, Math.round((downloaded / total) * 100));
           set({
@@ -150,10 +195,16 @@ export const useUpdateStore = create<UpdateStore>((set, get) => ({
             downloadProgress: progress,
           });
           if (downloaded >= total) {
-            clearInterval(interval);
-            set({ status: "ready", isToastVisible: true });
+            if (devSimulationTimer) {
+              clearInterval(devSimulationTimer);
+              devSimulationTimer = null;
+            }
+            if (get().status === "downloading" && get().isToastVisible) {
+              set({ status: "ready", isToastVisible: true });
+            }
           }
         }, 150);
+        return;
       }
       return;
     }

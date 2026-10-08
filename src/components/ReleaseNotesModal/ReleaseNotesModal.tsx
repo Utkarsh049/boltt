@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import { useUpdateStore } from "../../store/updateStore";
 import { X, RotateCcw, Sparkles } from "lucide-react";
 
@@ -13,24 +13,81 @@ export const ReleaseNotesModal: React.FC = () => {
     relaunchApp,
   } = useUpdateStore();
 
+  const modalRef = useRef<HTMLDivElement>(null);
+  const previouslyFocusedElementRef = useRef<HTMLElement | null>(null);
+
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isNotesModalOpen) {
-        setNotesModalOpen(false);
+    if (isNotesModalOpen) {
+      previouslyFocusedElementRef.current = document.activeElement as HTMLElement | null;
+
+      // Move focus into the modal once rendered
+      if (modalRef.current) {
+        const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
+          'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+        );
+        if (focusableElements.length > 0) {
+          focusableElements[0].focus();
+        } else {
+          modalRef.current.focus();
+        }
       }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === "Escape") {
+          e.preventDefault();
+          setNotesModalOpen(false);
+          return;
+        }
+
+        if (e.key === "Tab" && modalRef.current) {
+          const focusable = Array.from(
+            modalRef.current.querySelectorAll<HTMLElement>(
+              'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+            )
+          ).filter((el) => !el.hasAttribute("disabled") && el.offsetParent !== null);
+
+          if (focusable.length === 0) {
+            e.preventDefault();
+            return;
+          }
+
+          const firstElement = focusable[0];
+          const lastElement = focusable[focusable.length - 1];
+
+          if (e.shiftKey) {
+            if (document.activeElement === firstElement || !modalRef.current.contains(document.activeElement)) {
+              e.preventDefault();
+              lastElement.focus();
+            }
+          } else {
+            if (document.activeElement === lastElement || !modalRef.current.contains(document.activeElement)) {
+              e.preventDefault();
+              firstElement.focus();
+            }
+          }
+        }
+      };
+
+      window.addEventListener("keydown", handleKeyDown);
+      return () => {
+        window.removeEventListener("keydown", handleKeyDown);
+        if (previouslyFocusedElementRef.current) {
+          previouslyFocusedElementRef.current.focus();
+        }
+      };
+    }
   }, [isNotesModalOpen, setNotesModalOpen]);
 
   if (!isNotesModalOpen) return null;
 
   return (
     <div
+      ref={modalRef}
       role="dialog"
       aria-modal="true"
       aria-labelledby="release-notes-modal-title"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in select-none font-sans p-4"
+      tabIndex={-1}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in select-none font-sans p-4 outline-none"
       onClick={() => setNotesModalOpen(false)}
     >
       <div

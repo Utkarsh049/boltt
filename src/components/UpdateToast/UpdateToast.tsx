@@ -238,6 +238,7 @@ export const UpdateToast: React.FC = () => {
               <button
                 key={item.s}
                 onClick={() => {
+                  useUpdateStore.getState().cancelDevSimulation?.();
                   useUpdateStore.setState({
                     status: item.s,
                     isToastVisible: true,

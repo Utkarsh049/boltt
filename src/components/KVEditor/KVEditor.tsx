@@ -93,7 +93,8 @@ export const KVEditor: React.FC<KVEditorProps> = ({
                     type="checkbox"
                     disabled
                     checked={false}
-                    aria-label="Add row (disabled)"
+                    aria-hidden="true"
+                    tabIndex={-1}
                   />
                 ) : (
                   <input

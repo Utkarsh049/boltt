@@ -21,8 +21,7 @@ export const ReleaseNotesModal: React.FC = () => {
       previouslyFocusedElementRef.current = document.activeElement as HTMLElement | null;
 
       // Move focus into the modal once rendered
-      const focusTimer = setTimeout(() => {
-        if (!modalRef.current) return;
+      if (modalRef.current) {
         const focusableElements = modalRef.current.querySelectorAll<HTMLElement>(
           'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
         );
@@ -31,7 +30,7 @@ export const ReleaseNotesModal: React.FC = () => {
         } else {
           modalRef.current.focus();
         }
-      }, 30);
+      }
 
       const handleKeyDown = (e: KeyboardEvent) => {
         if (e.key === "Escape") {
@@ -71,7 +70,6 @@ export const ReleaseNotesModal: React.FC = () => {
 
       window.addEventListener("keydown", handleKeyDown);
       return () => {
-        clearTimeout(focusTimer);
         window.removeEventListener("keydown", handleKeyDown);
         if (previouslyFocusedElementRef.current) {
           previouslyFocusedElementRef.current.focus();

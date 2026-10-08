@@ -31,22 +31,37 @@ interface UpdateStore {
   checkForUpdates: (silent?: boolean) => Promise<void>;
   downloadAndApplyUpdate: () => Promise<void>;
   relaunchApp: () => Promise<void>;
+  cancelDevSimulation?: () => void;
 }
 
 let activeCheckId = 0;
 let devSimulationTimer: ReturnType<typeof setInterval> | null = null;
 
+export const cancelActiveDevSimulation = () => {
+  if (devSimulationTimer) {
+    clearInterval(devSimulationTimer);
+    devSimulationTimer = null;
+  }
+};
+
 export const useUpdateStore = create<UpdateStore>((set, get) => ({
   isToastVisible: false,
   setToastVisible: (visible) => {
     if (!visible && devSimulationTimer) {
-      clearInterval(devSimulationTimer);
-      devSimulationTimer = null;
+      cancelActiveDevSimulation();
       if (get().status === "downloading") {
-        set({ status: "idle" });
+        set({
+          status: "idle",
+          downloadProgress: 0,
+          downloadedBytes: 0,
+          totalBytes: 0,
+        });
       }
     }
     set({ isToastVisible: visible });
+  },
+  cancelDevSimulation: () => {
+    cancelActiveDevSimulation();
   },
   isNotesModalOpen: false,
   setNotesModalOpen: (open) => set({ isNotesModalOpen: open }),
@@ -162,6 +177,13 @@ export const useUpdateStore = create<UpdateStore>((set, get) => ({
             if (devSimulationTimer) {
               clearInterval(devSimulationTimer);
               devSimulationTimer = null;
+            }
+            if (get().status === "idle") {
+              set({
+                downloadProgress: 0,
+                downloadedBytes: 0,
+                totalBytes: 0,
+              });
             }
             return;
           }

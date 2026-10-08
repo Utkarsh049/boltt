@@ -202,6 +202,8 @@ export const UrlBar: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setIsSslPopoverOpen(!isSslPopoverOpen)}
+                aria-label="SSL Verification Settings"
+                aria-expanded={isSslPopoverOpen}
                 className={`p-1 hover:bg-bg-hover/80 rounded transition cursor-pointer ${
                   activeRequest.ssl_verify === false ? "text-amber-400" : "text-text-secondary hover:text-text-primary"
                 }`}

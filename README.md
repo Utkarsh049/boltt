@@ -29,13 +29,7 @@ irm https://raw.githubusercontent.com/Utkarsh049/boltt/v1.1.1/scripts/install.ps
 
 ### Option 2: Manual Package Download
 
-Download the installer for your platform directly from [GitHub Releases](https://github.com/Utkarsh049/boltt/releases/latest):
-
-| Operating System | Architecture | Recommended Installer | Alternative Package |
-| :--- | :--- | :--- | :--- |
-| **Windows** | x64 | [Setup Installer (.exe)](https://github.com/Utkarsh049/boltt/releases/latest) | [MSI Package (.msi)](https://github.com/Utkarsh049/boltt/releases/latest) |
-| **macOS** | Apple Silicon (M-series) | [Disk Image (.dmg)](https://github.com/Utkarsh049/boltt/releases/latest) | [Application Archive (.tar.gz)](https://github.com/Utkarsh049/boltt/releases/latest) |
-| **Linux** | x64 | [Debian Package (.deb)](https://github.com/Utkarsh049/boltt/releases/latest) | [AppImage](https://github.com/Utkarsh049/boltt/releases/latest), [RPM Package (.rpm)](https://github.com/Utkarsh049/boltt/releases/latest) |
+Download the installer for your platform directly from [GitHub Releases](https://github.com/Utkarsh049/boltt/releases/latest).
 
 #### Platform Guides for Manual Install:
 

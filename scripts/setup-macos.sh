@@ -210,7 +210,7 @@ else
 fi
 
 # 5. Install Project Dependencies
-if [ "$CHECK_ONLY" = false ] && command -v pnpm >/dev/null 2>&1 && [ ${#MISSING_TOOLS[@]} -eq 0 ]; then
+if [ "$CHECK_ONLY" = false ] && { command -v pnpm >/dev/null 2>&1 || [ "$DRY_RUN" = true ]; } && [ ${#MISSING_TOOLS[@]} -eq 0 ]; then
   echo ""
   echo -e "${BOLD}Installing Project Dependencies...${RESET}"
   SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

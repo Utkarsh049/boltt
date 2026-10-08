@@ -230,34 +230,38 @@ if (Test-CommandAvailable "pnpm") {
 } else {
     Write-Host "✖ pnpm not detected." -ForegroundColor Yellow
     if (-not $CheckOnly) {
-        Update-EnvironmentPath
-        if (Test-CommandAvailable "npm") {
-            $confirm = Read-Host "Install pnpm globally via npm? [Y/n]"
-            if ($confirm -eq "" -or $confirm -match "^[Yy]") {
-                if ($DryRun) {
-                    Write-Host "[DRY RUN] npm install -g pnpm" -ForegroundColor Yellow
-                } else {
-                    & npm install -g pnpm
-                    if ($LASTEXITCODE -ne 0) {
-                        Write-Host "✖ npm install -g pnpm failed (Exit code: $LASTEXITCODE)." -ForegroundColor Red
-                        $failedPrereqs += "pnpm"
+        if ($DryRun -and $nodeOk) {
+            Write-Host "[DRY RUN] npm install -g pnpm" -ForegroundColor Yellow
+        } else {
+            Update-EnvironmentPath
+            if (Test-CommandAvailable "npm") {
+                $confirm = Read-Host "Install pnpm globally via npm? [Y/n]"
+                if ($confirm -eq "" -or $confirm -match "^[Yy]") {
+                    if ($DryRun) {
+                        Write-Host "[DRY RUN] npm install -g pnpm" -ForegroundColor Yellow
                     } else {
-                        Update-EnvironmentPath
-                        if (Test-CommandAvailable "pnpm") {
-                            $newPnpmVer = (& pnpm -v)
-                            Write-Host "✔ pnpm installed successfully: v$newPnpmVer" -ForegroundColor Green
-                        } else {
-                            Write-Host "✖ pnpm was installed but is not available in PATH. Add npm global bin to PATH or restart PowerShell." -ForegroundColor Red
+                        & npm install -g pnpm
+                        if ($LASTEXITCODE -ne 0) {
+                            Write-Host "✖ npm install -g pnpm failed (Exit code: $LASTEXITCODE)." -ForegroundColor Red
                             $failedPrereqs += "pnpm"
+                        } else {
+                            Update-EnvironmentPath
+                            if (Test-CommandAvailable "pnpm") {
+                                $newPnpmVer = (& pnpm -v)
+                                Write-Host "✔ pnpm installed successfully: v$newPnpmVer" -ForegroundColor Green
+                            } else {
+                                Write-Host "✖ pnpm was installed but is not available in PATH. Add npm global bin to PATH or restart PowerShell." -ForegroundColor Red
+                                $failedPrereqs += "pnpm"
+                            }
                         }
                     }
+                } else {
+                    $failedPrereqs += "pnpm"
                 }
             } else {
+                Write-Host "✖ npm is not available in PATH to install pnpm. Please restart PowerShell after installing Node.js." -ForegroundColor Red
                 $failedPrereqs += "pnpm"
             }
-        } else {
-            Write-Host "✖ npm is not available in PATH to install pnpm. Please restart PowerShell after installing Node.js." -ForegroundColor Red
-            $failedPrereqs += "pnpm"
         }
     } else {
         $failedPrereqs += "pnpm"
@@ -265,7 +269,7 @@ if (Test-CommandAvailable "pnpm") {
 }
 
 # 6. Install Project Dependencies
-if (-not $CheckOnly -and (Test-CommandAvailable "pnpm") -and ($failedPrereqs.Count -eq 0)) {
+if (-not $CheckOnly -and ((Test-CommandAvailable "pnpm") -or ($DryRun -and $nodeOk)) -and ($failedPrereqs.Count -eq 0)) {
     Write-Host ""
     Write-Host "Installing Project Dependencies..." -ForegroundColor Yellow
     $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path

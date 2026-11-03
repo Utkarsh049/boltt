@@ -5,7 +5,7 @@ export const buildCurlCommand = (request: BoltRequest): string => {
 
   // Construct URL with query parameters
   let rawUrl = request.url.trim();
-  if (rawUrl && !rawUrl.includes("://") && !rawUrl.startsWith("{{")) {
+  if (rawUrl && !/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(rawUrl) && !rawUrl.startsWith("{{")) {
     rawUrl = `http://${rawUrl}`;
   }
 
@@ -14,7 +14,18 @@ export const buildCurlCommand = (request: BoltRequest): string => {
     .map((p) => `${p.key}=${encodeURIComponent(p.value)}`)
     .join("&");
   
-  const urlWithParams = query ? `${rawUrl}?${query}` : rawUrl;
+  let urlWithParams = rawUrl;
+  if (query) {
+    const hashIdx = rawUrl.indexOf("#");
+    let baseUrl = rawUrl;
+    let fragment = "";
+    if (hashIdx !== -1) {
+      baseUrl = rawUrl.substring(0, hashIdx);
+      fragment = rawUrl.substring(hashIdx);
+    }
+    const separator = baseUrl.includes("?") ? "&" : "?";
+    urlWithParams = `${baseUrl}${separator}${query}${fragment}`;
+  }
   let curl = `curl -X ${method} "${urlWithParams}"`;
 
   // Append enabled headers

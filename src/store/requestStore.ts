@@ -279,7 +279,7 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
     // Auto-prefix http:// if missing scheme and not a variable template
     let requestToSend = activeRequest;
     const trimmedUrl = activeRequest.url.trim();
-    if (trimmedUrl && !trimmedUrl.includes("://") && !trimmedUrl.startsWith("{{")) {
+    if (trimmedUrl && !/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(trimmedUrl) && !trimmedUrl.startsWith("{{")) {
       const normalizedUrl = `http://${trimmedUrl}`;
       get().setUrl(normalizedUrl);
       requestToSend = { ...activeRequest, url: normalizedUrl };

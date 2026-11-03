@@ -105,13 +105,36 @@ pub fn substitute_variables(input: &str, vars: &HashMap<String, String>) -> Stri
     result
 }
 
+/// Checks if the input string begins with a valid URI scheme (e.g., `http://`, `https://`).
+pub fn has_url_scheme(url: &str) -> bool {
+    if let Some(idx) = url.find("://") {
+        let scheme = &url[..idx];
+        if scheme.is_empty() {
+            return false;
+        }
+        let mut chars = scheme.chars();
+        match chars.next() {
+            Some(first) if first.is_ascii_alphabetic() => {
+                chars.all(|c| c.is_ascii_alphanumeric() || c == '+' || c == '-' || c == '.')
+            }
+            _ => false,
+        }
+    } else {
+        false
+    }
+}
+
 /// Normalizes a URL string by trimming and prepending `http://` if no scheme is specified.
+/// Preserves unresolved template URLs starting with `{{`.
 pub fn normalize_url(raw_url: &str) -> Result<String, String> {
     let trimmed = raw_url.trim();
     if trimmed.is_empty() {
         return Err("URL cannot be empty".to_string());
     }
-    if !trimmed.contains("://") {
+    if trimmed.starts_with("{{") {
+        return Ok(trimmed.to_string());
+    }
+    if !has_url_scheme(trimmed) {
         Ok(format!("http://{}", trimmed))
     } else {
         Ok(trimmed.to_string())
@@ -308,6 +331,11 @@ mod tests {
         assert_eq!(normalize_url("127.0.0.1:8080/api").unwrap(), "http://127.0.0.1:8080/api");
         assert_eq!(normalize_url("https://api.example.com").unwrap(), "https://api.example.com");
         assert_eq!(normalize_url("http://api.example.com").unwrap(), "http://api.example.com");
+        assert_eq!(
+            normalize_url("localhost:3000/callback?next=https://example.com").unwrap(),
+            "http://localhost:3000/callback?next=https://example.com"
+        );
+        assert_eq!(normalize_url("{{baseUrl}}/users").unwrap(), "{{baseUrl}}/users");
         assert!(normalize_url("").is_err());
         assert!(normalize_url("   ").is_err());
     }

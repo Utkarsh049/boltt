@@ -211,12 +211,20 @@ if [ "$OS" = "Linux" ]; then
   chmod +x "$STAGE_FILE"
 
   # Verify executable format before replacing
-  if ! command -v file >/dev/null 2>&1; then
-    echo -e "${RED}✖ 'file' utility is required to verify AppImage format but was not found.${RESET}"
-    exit 1
+  is_elf=false
+  if command -v file >/dev/null 2>&1; then
+    if file "$STAGE_FILE" | grep -qi "ELF"; then
+      is_elf=true
+    fi
+  else
+    # Fallback to direct ELF header magic bytes check (\x7fELF) for minimal systems
+    magic=$(head -c 4 "$STAGE_FILE" 2>/dev/null || true)
+    if [ "$magic" = $'\x7fELF' ]; then
+      is_elf=true
+    fi
   fi
 
-  if ! file "$STAGE_FILE" | grep -qi "ELF"; then
+  if [ "$is_elf" = false ]; then
     echo -e "${RED}✖ Downloaded AppImage is not a valid ELF executable.${RESET}"
     exit 1
   fi

@@ -73,6 +73,12 @@ try {
 }
 
 if ($exitCode -ne 0) {
+    $global:LASTEXITCODE = $exitCode
+    [Environment]::ExitCode = $exitCode
+    Write-Host "✖ Boltt installation did not complete successfully (Exit code: $exitCode)." -ForegroundColor Red
+    if ($MyInvocation.MyCommand.Path) {
+        exit $exitCode
+    }
     throw "Boltt installation did not complete successfully (Exit code: $exitCode)."
 }
 

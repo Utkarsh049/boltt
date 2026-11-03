@@ -100,5 +100,40 @@ describe("buildCurlCommand", () => {
     const cmd = buildCurlCommand(req);
     expect(cmd).toContain("--insecure");
   });
+
+  it("auto-prefixes http:// when URL contains :// in query or path", () => {
+    const req = createBaseRequest({
+      url: "localhost:3000/callback?next=https://example.com",
+    });
+    const cmd = buildCurlCommand(req);
+    expect(cmd).toBe('curl -X GET "http://localhost:3000/callback?next=https://example.com"');
+  });
+
+  it("merges params with & when URL already has query parameters", () => {
+    const req = createBaseRequest({
+      url: "https://api.example.com/items?filter=active",
+      params: [{ key: "limit", value: "20", enabled: true }],
+    });
+    const cmd = buildCurlCommand(req);
+    expect(cmd).toBe('curl -X GET "https://api.example.com/items?filter=active&limit=20"');
+  });
+
+  it("inserts query parameters before hash fragment", () => {
+    const req = createBaseRequest({
+      url: "https://api.example.com/items#section1",
+      params: [{ key: "limit", value: "20", enabled: true }],
+    });
+    const cmd = buildCurlCommand(req);
+    expect(cmd).toBe('curl -X GET "https://api.example.com/items?limit=20#section1"');
+  });
+
+  it("merges query and places before hash fragment when both exist", () => {
+    const req = createBaseRequest({
+      url: "https://api.example.com/items?sort=asc#section1",
+      params: [{ key: "limit", value: "20", enabled: true }],
+    });
+    const cmd = buildCurlCommand(req);
+    expect(cmd).toBe('curl -X GET "https://api.example.com/items?sort=asc&limit=20#section1"');
+  });
 });
 

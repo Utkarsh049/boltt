@@ -112,7 +112,18 @@ pub async fn execute_request(
 ) -> Result<BoltResponse, String> {
     // 1. Substitute variables in URL
     let substituted_url = substitute_variables(&request.url, &env);
-    let mut url = reqwest::Url::parse(&substituted_url).map_err(|e| format!("Invalid URL: {}", e))?;
+    let trimmed_url = substituted_url.trim();
+    if trimmed_url.is_empty() {
+        return Err("URL cannot be empty".to_string());
+    }
+
+    let normalized_url = if !trimmed_url.contains("://") {
+        format!("http://{}", trimmed_url)
+    } else {
+        trimmed_url.to_string()
+    };
+
+    let mut url = reqwest::Url::parse(&normalized_url).map_err(|e| format!("Invalid URL: {}", e))?;
 
     // 2. Append query parameters
     if !request.params.is_empty() {

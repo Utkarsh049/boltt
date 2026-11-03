@@ -276,6 +276,15 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
     const { activeTabId, activeRequest } = get();
     if (!activeTabId) return;
 
+    // Auto-prefix http:// if missing scheme and not a variable template
+    let requestToSend = activeRequest;
+    const trimmedUrl = activeRequest.url.trim();
+    if (trimmedUrl && !trimmedUrl.includes("://") && !trimmedUrl.startsWith("{{")) {
+      const normalizedUrl = `http://${trimmedUrl}`;
+      get().setUrl(normalizedUrl);
+      requestToSend = { ...activeRequest, url: normalizedUrl };
+    }
+
     set((state) => ({
       isLoading: true,
       error: null,
@@ -289,7 +298,7 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
 
     try {
       const res = await invoke<BoltResponse>("send_request", {
-        request: activeRequest,
+        request: requestToSend,
         env,
       });
 

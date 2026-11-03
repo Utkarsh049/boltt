@@ -204,15 +204,21 @@ if [ "$OS" = "Linux" ]; then
   STAGE_FILE="$TMP_DIR/boltt.AppImage"
 
   echo -e "${BLUE}ℹ Downloading Boltt AppImage...${RESET}"
-  curl -fL --progress-bar "$DOWNLOAD_URL" -o "$STAGE_FILE"
+  if ! curl -fL --progress-bar "$DOWNLOAD_URL" -o "$STAGE_FILE"; then
+    echo -e "${RED}✖ Failed to download Linux AppImage.${RESET}"
+    exit 1
+  fi
   chmod +x "$STAGE_FILE"
 
   # Verify executable format before replacing
-  if command -v file >/dev/null 2>&1; then
-    if ! file "$STAGE_FILE" | grep -qi "ELF"; then
-      echo -e "${RED}✖ Downloaded AppImage is not a valid ELF executable.${RESET}"
-      exit 1
-    fi
+  if ! command -v file >/dev/null 2>&1; then
+    echo -e "${RED}✖ 'file' utility is required to verify AppImage format but was not found.${RESET}"
+    exit 1
+  fi
+
+  if ! file "$STAGE_FILE" | grep -qi "ELF"; then
+    echo -e "${RED}✖ Downloaded AppImage is not a valid ELF executable.${RESET}"
+    exit 1
   fi
 
   # Atomic replacement

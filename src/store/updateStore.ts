@@ -47,7 +47,7 @@ export const cancelActiveDevSimulation = () => {
 export const useUpdateStore = create<UpdateStore>((set, get) => ({
   isToastVisible: false,
   setToastVisible: (visible) => {
-    if (!visible && devSimulationTimer) {
+    if (!visible) {
       cancelActiveDevSimulation();
       if (get().status === "downloading") {
         set({

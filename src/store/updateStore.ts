@@ -37,19 +37,21 @@ interface UpdateStore {
 let activeCheckId = 0;
 let devSimulationTimer: ReturnType<typeof setInterval> | null = null;
 
-export const cancelActiveDevSimulation = () => {
+export const cancelActiveDevSimulation = (): boolean => {
   if (devSimulationTimer) {
     clearInterval(devSimulationTimer);
     devSimulationTimer = null;
+    return true;
   }
+  return false;
 };
 
 export const useUpdateStore = create<UpdateStore>((set, get) => ({
   isToastVisible: false,
   setToastVisible: (visible) => {
-    if (!visible && devSimulationTimer) {
-      cancelActiveDevSimulation();
-      if (get().status === "downloading") {
+    if (!visible) {
+      const hadSimulationTimer = cancelActiveDevSimulation();
+      if (hadSimulationTimer && get().status === "downloading") {
         set({
           status: "idle",
           downloadProgress: 0,

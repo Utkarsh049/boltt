@@ -88,3 +88,64 @@ pub fn get_active_variables(
     }
     Ok(vars)
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_get_active_variables_resolves_enabled_only() {
+        let env_file = EnvironmentsFile {
+            active_id: Some("env-1".to_string()),
+            environments: vec![
+                Environment {
+                    id: "env-1".to_string(),
+                    name: "Staging".to_string(),
+                    variables: vec![
+                        Variable {
+                            key: "apiUrl".to_string(),
+                            value: "https://staging.api.com".to_string(),
+                            enabled: true,
+                        },
+                        Variable {
+                            key: "disabledKey".to_string(),
+                            value: "secret".to_string(),
+                            enabled: false,
+                        },
+                        Variable {
+                            key: "".to_string(),
+                            value: "emptyKeyVal".to_string(),
+                            enabled: true,
+                        },
+                    ],
+                },
+                Environment {
+                    id: "env-2".to_string(),
+                    name: "Production".to_string(),
+                    variables: vec![
+                        Variable {
+                            key: "apiUrl".to_string(),
+                            value: "https://api.com".to_string(),
+                            enabled: true,
+                        },
+                    ],
+                },
+            ],
+        };
+
+        let vars = get_active_variables(env_file).unwrap();
+        assert_eq!(vars.len(), 1);
+        assert_eq!(vars.get("apiUrl").unwrap(), "https://staging.api.com");
+        assert!(!vars.contains_key("disabledKey"));
+    }
+
+    #[test]
+    fn test_get_active_variables_none_active() {
+        let env_file = EnvironmentsFile {
+            active_id: None,
+            environments: vec![],
+        };
+        let vars = get_active_variables(env_file).unwrap();
+        assert!(vars.is_empty());
+    }
+}

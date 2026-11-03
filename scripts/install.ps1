@@ -43,15 +43,13 @@ if (-not $downloadUrl) {
                 $downloadUrl = "https://github.com" + $matches[1]
             }
         } catch {
-            Write-Host "✖ Could not determine latest release download URL." -ForegroundColor Red
-            exit 1
+            throw "Could not determine latest release download URL."
         }
     }
 }
 
 if (-not $downloadUrl) {
-    Write-Host "✖ Could not locate Windows installer for latest release." -ForegroundColor Red
-    exit 1
+    throw "Could not locate Windows installer for latest release."
 }
 
 $tempInstaller = Join-Path $env:TEMP "boltt-setup.exe"
@@ -60,8 +58,7 @@ Write-Host "Downloading Boltt from: $downloadUrl" -ForegroundColor Cyan
 try {
     Invoke-WebRequest -Uri $downloadUrl -OutFile $tempInstaller -UseBasicParsing
 } catch {
-    Write-Host "✖ Download failed: $_" -ForegroundColor Red
-    exit 1
+    throw "Download failed: $_"
 }
 
 Write-Host "Launching Boltt setup installer..." -ForegroundColor Green
@@ -76,8 +73,13 @@ try {
 }
 
 if ($exitCode -ne 0) {
+    $global:LASTEXITCODE = $exitCode
+    [Environment]::ExitCode = $exitCode
     Write-Host "✖ Boltt installation did not complete successfully (Exit code: $exitCode)." -ForegroundColor Red
-    exit $exitCode
+    if ($MyInvocation.MyCommand.Path) {
+        exit $exitCode
+    }
+    throw "Boltt installation did not complete successfully (Exit code: $exitCode)."
 }
 
 Write-Host ""

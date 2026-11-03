@@ -153,20 +153,18 @@ if command -v node >/dev/null 2>&1; then
     NODE_OK=true
   elif [ "$NODE_MAJOR" -eq 22 ] && [ "$NODE_MINOR" -ge 12 ]; then
     NODE_OK=true
-  elif [ "$NODE_MAJOR" -eq 20 ] && [ "$NODE_MINOR" -ge 19 ]; then
-    NODE_OK=true
   fi
 
   if [ "$NODE_OK" = true ]; then
     echo -e "${GREEN}✔ Node.js is installed:${RESET} $NODE_RAW"
   else
-    echo -e "${YELLOW}✖ Node.js version $NODE_RAW is too old. Boltt requires Node 20.19+ or 22.12+.${RESET}"
-    MISSING_TOOLS+=("Node.js (v20.19+ or v22.12+)")
+    echo -e "${YELLOW}✖ Node.js version $NODE_RAW is too old. Boltt requires Node 22.12+.${RESET}"
+    MISSING_TOOLS+=("Node.js (v22.12+)")
   fi
 else
   echo -e "${RED}✖ Node.js is not installed.${RESET}"
-  echo "Please install Node.js 20.19+ or 22.12+ (e.g., 'brew install node' or via nvm)."
-  MISSING_TOOLS+=("Node.js (v20.19+ or v22.12+)")
+  echo "Please install Node.js 22.12+ (e.g., 'brew install node' or via nvm)."
+  MISSING_TOOLS+=("Node.js (v22.12+)")
 fi
 
 if command -v pnpm >/dev/null 2>&1; then

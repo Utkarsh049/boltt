@@ -97,7 +97,6 @@ function runDoctor() {
       const minor = parseInt(match[2], 10);
       if (major > 22) nodeSupported = true;
       else if (major === 22 && minor >= 12) nodeSupported = true;
-      else if (major === 20 && minor >= 19) nodeSupported = true;
     }
 
     if (nodeSupported) {
@@ -108,7 +107,7 @@ function runDoctor() {
         category: "Toolchain",
         item: "Node.js",
         ok: false,
-        detail: `${rawVer} (Requires 20.19+ or 22.12+)`,
+        detail: `${rawVer} (Requires Node 22.12+)`,
       });
     }
   } else {

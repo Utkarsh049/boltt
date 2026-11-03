@@ -270,7 +270,7 @@ else
   fi
 fi
 
-# Helper to validate Node engine compatibility (Node 20.19+ or 22.12+)
+# Helper to validate Node engine compatibility (Node 22.12+)
 is_node_version_compatible() {
   local version="$1"
   local major minor
@@ -279,8 +279,6 @@ is_node_version_compatible() {
   if [ "$major" -gt 22 ]; then
     return 0
   elif [ "$major" -eq 22 ] && [ "$minor" -ge 12 ]; then
-    return 0
-  elif [ "$major" -eq 20 ] && [ "$minor" -ge 19 ]; then
     return 0
   fi
   return 1
@@ -296,8 +294,8 @@ if command -v node >/dev/null 2>&1; then
     echo -e "${GREEN}✔ Node.js is installed:${RESET} $NODE_RAW"
     NODE_IS_READY=true
   else
-    echo -e "${YELLOW}✖ Node.js version $NODE_RAW is too old. Boltt requires Node 20.19+ or 22.12+.${RESET}"
-    MISSING_TOOLS+=("Node.js (v20.19+ or v22.12+)")
+    echo -e "${YELLOW}✖ Node.js version $NODE_RAW is too old. Boltt requires Node 22.12+.${RESET}"
+    MISSING_TOOLS+=("Node.js (v22.12+)")
   fi
 else
   echo -e "${RED}✖ Node.js is not installed.${RESET}"
@@ -325,18 +323,18 @@ else
             echo -e "${GREEN}✔ Node.js installed:${RESET} $NEW_NODE_RAW"
             NODE_IS_READY=true
           else
-            echo -e "${YELLOW}✖ Installed Node.js version $NEW_NODE_RAW is too old. Boltt requires Node 20.19+ or 22.12+.${RESET}"
-            MISSING_TOOLS+=("Node.js (v20.19+ or v22.12+)")
+            echo -e "${YELLOW}✖ Installed Node.js version $NEW_NODE_RAW is too old. Boltt requires Node 22.12+.${RESET}"
+            MISSING_TOOLS+=("Node.js (v22.12+)")
           fi
         else
-          MISSING_TOOLS+=("Node.js (v20.19+ or v22.12+)")
+          MISSING_TOOLS+=("Node.js (v22.12+)")
         fi
       fi
     else
-      MISSING_TOOLS+=("Node.js (v20.19+ or v22.12+)")
+      MISSING_TOOLS+=("Node.js (v22.12+)")
     fi
   else
-    MISSING_TOOLS+=("Node.js (v20.19+ or v22.12+)")
+    MISSING_TOOLS+=("Node.js (v22.12+)")
   fi
 fi
 

@@ -44,7 +44,7 @@ function Update-EnvironmentPath {
     $env:Path = $allPaths -join ';'
 }
 
-# Helper to validate Node version is 20.19+ or 22.12+
+# Helper to validate Node version is 22.12+
 function Test-NodeVersionCompatible {
     param([string]$VersionStr)
     if ($VersionStr -match "^v?(\d+)\.(\d+)") {
@@ -52,7 +52,6 @@ function Test-NodeVersionCompatible {
         $minor = [int]$matches[2]
         if ($major -gt 22) { return $true }
         if ($major -eq 22 -and $minor -ge 12) { return $true }
-        if ($major -eq 20 -and $minor -ge 19) { return $true }
     }
     return $false
 }
@@ -183,8 +182,8 @@ if (Test-CommandAvailable "node") {
         Write-Host "✔ Node.js is installed: $nodeVer" -ForegroundColor Green
         $nodeOk = $true
     } else {
-        Write-Host "✖ Node.js version $nodeVer is too old. Boltt requires Node 20.19+ or 22.12+." -ForegroundColor Red
-        $failedPrereqs += "Node.js (v20.19+ or v22.12+)"
+        Write-Host "✖ Node.js version $nodeVer is too old. Boltt requires Node 22.12+." -ForegroundColor Red
+        $failedPrereqs += "Node.js (v22.12+)"
     }
 } else {
     Write-Host "✖ Node.js not detected." -ForegroundColor Red
@@ -198,7 +197,7 @@ if (Test-CommandAvailable "node") {
                 & winget install OpenJS.NodeJS.LTS
                 if ($LASTEXITCODE -ne 0) {
                     Write-Host "✖ winget installation of Node.js failed (Exit code: $LASTEXITCODE)." -ForegroundColor Red
-                    $failedPrereqs += "Node.js (v20.19+ or v22.12+)"
+                    $failedPrereqs += "Node.js (v22.12+)"
                 } else {
                     Update-EnvironmentPath
                     if (Test-CommandAvailable "node") {
@@ -207,20 +206,20 @@ if (Test-CommandAvailable "node") {
                             $nodeOk = $true
                             Write-Host "✔ Node.js installed: $newNodeVer" -ForegroundColor Green
                         } else {
-                            Write-Host "✖ Installed Node.js version $newNodeVer does not meet 20.19+ or 22.12+ requirement." -ForegroundColor Red
-                            $failedPrereqs += "Node.js (v20.19+ or v22.12+)"
+                            Write-Host "✖ Installed Node.js version $newNodeVer does not meet 22.12+ requirement." -ForegroundColor Red
+                            $failedPrereqs += "Node.js (v22.12+)"
                         }
                     } else {
                         Write-Host "✖ Node.js was installed but is not available in PATH yet. Restart PowerShell to load PATH." -ForegroundColor Red
-                        $failedPrereqs += "Node.js (v20.19+ or v22.12+)"
+                        $failedPrereqs += "Node.js (v22.12+)"
                     }
                 }
             }
         } else {
-            $failedPrereqs += "Node.js (v20.19+ or v22.12+)"
+            $failedPrereqs += "Node.js (v22.12+)"
         }
     } else {
-        $failedPrereqs += "Node.js (v20.19+ or v22.12+)"
+        $failedPrereqs += "Node.js (v22.12+)"
     }
 }
 

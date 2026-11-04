@@ -1,19 +1,45 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
-import { useRequestStore, KeyValue, RequestBody } from "../../store/requestStore";
+import { useRequestStore, KeyValue, RequestBody, ResponseExtractor, ExtractorSource } from "../../store/requestStore";
 import { useEnvStore } from "../../store/envStore";
 import { KVEditor } from "../KVEditor/KVEditor";
 import CodeMirror from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
 import { autocompletion } from "@codemirror/autocomplete";
 import { createVariableCompletionSource } from "../../utils/dynamicVariables";
-import { ListFilter, Sliders, Code2, KeyRound, ShieldOff, Key, User, ChevronDown, Check, Sparkles } from "lucide-react";
+import { extractValueFromResponse } from "../../utils/responseExtractor";
+import {
+  ListFilter,
+  Sliders,
+  Code2,
+  KeyRound,
+  ShieldOff,
+  Key,
+  User,
+  ChevronDown,
+  Check,
+  Sparkles,
+  Link2,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { useToastStore } from "../../store/toastStore";
 
-type TabType = "params" | "headers" | "body" | "auth";
+type TabType = "params" | "headers" | "body" | "auth" | "extractors";
 
 export const RequestPane: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>("params");
-  const { activeRequest, setParams, setHeaders, setBody, setAuth, tabs, activeTabId, theme } = useRequestStore();
+  const {
+    activeRequest,
+    setParams,
+    setHeaders,
+    setBody,
+    setAuth,
+    setExtractors,
+    response,
+    tabs,
+    activeTabId,
+    theme,
+  } = useRequestStore();
 
   const [isAuthDropdownOpen, setIsAuthDropdownOpen] = useState(false);
   const authDropdownRef = useRef<HTMLDivElement>(null);
@@ -66,6 +92,28 @@ export const RequestPane: React.FC = () => {
   }
 
   const isAuthActive = activeRequest.auth.type !== "None";
+
+  const extractors = activeRequest.extractors || [];
+  const activeExtractorsCount = extractors.filter((e) => e.enabled && e.targetVariable.trim()).length;
+
+  const handleAddExtractor = () => {
+    const newExtractor: ResponseExtractor = {
+      id: crypto.randomUUID(),
+      source: "body",
+      property: "",
+      targetVariable: "",
+      enabled: true,
+    };
+    setExtractors([...extractors, newExtractor]);
+  };
+
+  const handleUpdateExtractor = (id: string, updates: Partial<ResponseExtractor>) => {
+    setExtractors(extractors.map((ext) => (ext.id === id ? { ...ext, ...updates } : ext)));
+  };
+
+  const handleDeleteExtractor = (id: string) => {
+    setExtractors(extractors.filter((ext) => ext.id !== id));
+  };
 
   // Tab label helper
   const tabClass = (tab: TabType) => {
@@ -181,6 +229,15 @@ export const RequestPane: React.FC = () => {
           <span>Authorization</span>
           {isAuthActive && (
             <span className="w-1.5 h-1.5 bg-text-accent rounded-full"></span>
+          )}
+        </button>
+        <button onClick={() => setActiveTab("extractors")} className={tabClass("extractors")}>
+          <Link2 size={13} />
+          <span>Extractors</span>
+          {activeExtractorsCount > 0 && (
+            <span className="bg-bg-hover text-text-accent text-[10px] px-1.5 rounded-full border border-border-primary font-mono">
+              {activeExtractorsCount}
+            </span>
           )}
         </button>
       </div>
@@ -432,6 +489,180 @@ export const RequestPane: React.FC = () => {
                 <span className="text-text-secondary text-xs">
                   No authorization headers will be injected automatically.
                 </span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Extractors Tab */}
+        {activeTab === "extractors" && (
+          <div className="animate-tab-fade space-y-4">
+            <div className="flex items-center justify-between border-b border-border-primary pb-3">
+              <div>
+                <div className="text-[11px] text-text-primary font-semibold uppercase tracking-wider">
+                  Response Chaining & Extractors
+                </div>
+                <div className="text-[11px] text-text-secondary mt-0.5">
+                  Capture values from successful responses directly into environment variables without scripting.
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleAddExtractor}
+                className="flex items-center space-x-1.5 px-2.5 py-1 text-xs bg-bg-secondary hover:bg-bg-hover text-text-primary border border-border-primary rounded-sm transition cursor-pointer"
+              >
+                <Plus size={12} />
+                <span>Add Extractor</span>
+              </button>
+            </div>
+
+            {extractors.length === 0 ? (
+              <div className="py-12 flex flex-col items-center justify-center text-center border border-dashed border-border-primary rounded-sm bg-bg-secondary/20">
+                <Link2 size={24} className="text-text-secondary/50 mb-2" />
+                <div className="text-xs font-medium text-text-primary mb-1">
+                  No extractors configured
+                </div>
+                <div className="text-[11px] text-text-secondary max-w-sm mb-4">
+                  Extract values like tokens, user IDs, or headers into environment variables automatically upon 2xx responses.
+                </div>
+                <button
+                  type="button"
+                  onClick={handleAddExtractor}
+                  className="flex items-center space-x-1.5 px-3 py-1.5 text-xs bg-bg-secondary hover:bg-bg-hover text-text-primary border border-border-primary rounded-sm transition cursor-pointer"
+                >
+                  <Plus size={12} />
+                  <span>Add First Extractor</span>
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <div className="grid grid-cols-12 gap-2 text-[10px] font-bold text-text-secondary uppercase px-2 py-1 bg-bg-secondary border border-border-primary rounded-sm">
+                  <div className="col-span-1 text-center">Active</div>
+                  <div className="col-span-3">Source</div>
+                  <div className="col-span-4">Property / Path</div>
+                  <div className="col-span-3">Target Variable</div>
+                  <div className="col-span-1 text-center">Action</div>
+                </div>
+
+                <div className="space-y-1.5">
+                  {extractors.map((ext) => {
+                    const previewValue = response
+                      ? extractValueFromResponse(response, ext)
+                      : null;
+
+                    return (
+                      <div
+                        key={ext.id}
+                        className="p-2 bg-bg-secondary/40 border border-border-primary rounded-sm flex flex-col space-y-2 text-xs font-mono"
+                      >
+                        <div className="grid grid-cols-12 gap-2 items-center">
+                          {/* Toggle */}
+                          <div className="col-span-1 flex justify-center">
+                            <input
+                              type="checkbox"
+                              checked={ext.enabled}
+                              onChange={(e) =>
+                                handleUpdateExtractor(ext.id, { enabled: e.target.checked })
+                              }
+                              className="cursor-pointer"
+                              title="Enable / Disable extractor"
+                            />
+                          </div>
+
+                          {/* Source Dropdown */}
+                          <div className="col-span-3">
+                            <select
+                              value={ext.source}
+                              onChange={(e) =>
+                                handleUpdateExtractor(ext.id, {
+                                  source: e.target.value as ExtractorSource,
+                                })
+                              }
+                              className="w-full bg-bg-primary text-text-primary border border-border-primary px-2 py-1 rounded-sm text-xs focus:outline-none focus:border-text-accent"
+                            >
+                              <option value="body">Body (JSONPath)</option>
+                              <option value="header">Response Header</option>
+                              <option value="status">Status Code</option>
+                            </select>
+                          </div>
+
+                          {/* Property Path */}
+                          <div className="col-span-4">
+                            <input
+                              type="text"
+                              value={ext.property}
+                              disabled={ext.source === "status"}
+                              onChange={(e) =>
+                                handleUpdateExtractor(ext.id, { property: e.target.value })
+                              }
+                              placeholder={
+                                ext.source === "body"
+                                  ? "e.g. data.token or token"
+                                  : ext.source === "header"
+                                  ? "e.g. Authorization or Set-Cookie"
+                                  : "HTTP Status Code (e.g. 200)"
+                              }
+                              className={`w-full bg-bg-primary text-text-primary border border-border-primary px-2 py-1 rounded-sm text-xs focus:outline-none focus:border-text-accent placeholder-text-secondary/40 ${
+                                ext.source === "status" ? "opacity-50 cursor-not-allowed" : ""
+                              }`}
+                            />
+                          </div>
+
+                          {/* Target Variable */}
+                          <div className="col-span-3 flex items-center space-x-1">
+                            <span className="text-text-secondary text-xs select-none">{"{{"}</span>
+                            <input
+                              type="text"
+                              value={ext.targetVariable}
+                              onChange={(e) =>
+                                handleUpdateExtractor(ext.id, {
+                                  targetVariable: e.target.value.replace(/[{}]/g, ""),
+                                })
+                              }
+                              placeholder="variableName"
+                              className="w-full bg-bg-primary text-text-primary border border-border-primary px-2 py-1 rounded-sm text-xs focus:outline-none focus:border-text-accent placeholder-text-secondary/40 text-amber-300 font-semibold"
+                            />
+                            <span className="text-text-secondary text-xs select-none">{"}}"}</span>
+                          </div>
+
+                          {/* Delete Action */}
+                          <div className="col-span-1 flex justify-center">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteExtractor(ext.id)}
+                              className="p-1 text-text-secondary hover:text-red-400 transition cursor-pointer"
+                              title="Delete extractor"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Live Resolution Preview */}
+                        <div className="flex items-center space-x-2 pl-9 text-[11px] text-text-secondary">
+                          <span className="text-[10px] uppercase font-bold text-text-secondary/70">
+                            Live Preview:
+                          </span>
+                          {!response ? (
+                            <span className="text-text-secondary/50 italic">
+                              (Send a request to preview extracted value)
+                            </span>
+                          ) : previewValue !== null ? (
+                            <span className="text-green-400 bg-green-950/30 border border-green-800/40 px-1.5 py-0.5 rounded font-mono break-all">
+                              {previewValue.length > 80
+                                ? `${previewValue.substring(0, 80)}...`
+                                : previewValue}
+                            </span>
+                          ) : (
+                            <span className="text-amber-400/80 italic">
+                              (Property not found in current response)
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>

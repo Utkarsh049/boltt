@@ -60,7 +60,33 @@ pub struct BoltResponse {
     pub size_bytes: usize,
 }
 
-/// Substitute `{{variable}}` patterns in a string with their values from the provided map.
+/// Evaluates built-in dynamic variables such as {{$uuid}}, {{$timestamp}}, {{$isoTimestamp}},
+/// {{$randomInt}}, {{$randomEmail}}, {{$randomAlphaNumeric}}.
+/// Returns Some(value) if matched, otherwise None.
+pub fn generate_dynamic_variable(var_name: &str) -> Option<String> {
+    match var_name {
+        "$uuid" | "$guid" => Some(uuid::Uuid::new_v4().to_string()),
+        "$timestamp" => Some(chrono::Utc::now().timestamp().to_string()),
+        "$timestampMs" | "$timestampMillis" => Some(chrono::Utc::now().timestamp_millis().to_string()),
+        "$isoTimestamp" => Some(chrono::Utc::now().to_rfc3339()),
+        "$randomInt" => {
+            let n = (uuid::Uuid::new_v4().as_u128() % 1000) + 1;
+            Some(n.to_string())
+        }
+        "$randomEmail" => {
+            let id = (uuid::Uuid::new_v4().as_u128() % 90000) + 10000;
+            Some(format!("test.user{}@example.com", id))
+        }
+        "$randomAlphaNumeric" => {
+            let hex = uuid::Uuid::new_v4().simple().to_string();
+            Some(hex[..10].to_string())
+        }
+        _ => None,
+    }
+}
+
+/// Substitute `{{variable}}` patterns in a string with their values from the provided map,
+/// or from built-in dynamic generators like `{{$uuid}}` and `{{$timestamp}}`.
 /// Any unmatched patterns are left intact.
 pub fn substitute_variables(input: &str, vars: &HashMap<String, String>) -> String {
     let mut result = String::new();
@@ -89,6 +115,8 @@ pub fn substitute_variables(input: &str, vars: &HashMap<String, String>) -> Stri
                 let trimmed = var_name.trim();
                 if let Some(val) = vars.get(trimmed) {
                     result.push_str(val);
+                } else if let Some(dynamic_val) = generate_dynamic_variable(trimmed) {
+                    result.push_str(&dynamic_val);
                 } else {
                     result.push_str("{{");
                     result.push_str(&var_name);
@@ -323,6 +351,55 @@ mod tests {
         vars.insert("version".to_string(), "v1".to_string());
         let res = substitute_variables("{{protocol}}://{{host}}/{{version}}/status", &vars);
         assert_eq!(res, "https://api.example.com/v1/status");
+    }
+
+    #[test]
+    fn test_substitute_variables_dynamic_uuid() {
+        let vars = HashMap::new();
+        let res1 = substitute_variables("{{$uuid}}", &vars);
+        let res2 = substitute_variables("{{$uuid}}", &vars);
+        assert_eq!(res1.len(), 36);
+        assert_ne!(res1, res2); // Each evaluation produces a unique UUID
+        assert!(uuid::Uuid::parse_str(&res1).is_ok());
+    }
+
+    #[test]
+    fn test_substitute_variables_dynamic_timestamp() {
+        let vars = HashMap::new();
+        let res = substitute_variables("{{$timestamp}}", &vars);
+        let ts: i64 = res.parse().expect("should be valid integer timestamp");
+        assert!(ts > 1_700_000_000);
+    }
+
+    #[test]
+    fn test_substitute_variables_dynamic_iso_timestamp() {
+        let vars = HashMap::new();
+        let res = substitute_variables("{{$isoTimestamp}}", &vars);
+        assert!(chrono::DateTime::parse_from_rfc3339(&res).is_ok());
+    }
+
+    #[test]
+    fn test_substitute_variables_dynamic_random_int() {
+        let vars = HashMap::new();
+        let res = substitute_variables("{{$randomInt}}", &vars);
+        let num: u32 = res.parse().expect("should be valid number");
+        assert!((1..=1000).contains(&num));
+    }
+
+    #[test]
+    fn test_substitute_variables_dynamic_random_email() {
+        let vars = HashMap::new();
+        let res = substitute_variables("{{$randomEmail}}", &vars);
+        assert!(res.starts_with("test.user"));
+        assert!(res.ends_with("@example.com"));
+    }
+
+    #[test]
+    fn test_substitute_variables_user_override_precedence() {
+        let mut vars = HashMap::new();
+        vars.insert("$uuid".to_string(), "custom-override-id".to_string());
+        let res = substitute_variables("{{$uuid}}", &vars);
+        assert_eq!(res, "custom-override-id");
     }
 
     #[test]

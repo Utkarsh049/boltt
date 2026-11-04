@@ -72,6 +72,7 @@ interface EnvStore {
   deleteEnvironment: (id: string) => Promise<void>;
   setModalOpen: (isOpen: boolean) => void;
   getFlatActiveVariables: () => Record<string, string>;
+  setVariableInActiveEnvironment: (key: string, value: string) => Promise<boolean>;
 }
 
 export const useEnvStore = create<EnvStore>((set, get) => ({
@@ -242,6 +243,51 @@ export const useEnvStore = create<EnvStore>((set, get) => ({
       }
     }
     return flatVars;
+  },
+
+  setVariableInActiveEnvironment: async (key: string, value: string): Promise<boolean> => {
+    const { environments, activeId, activeGroup, groupActiveIds, saveEnvironment } = get();
+    if (environments.length === 0) return false;
+
+    // Resolve target environment
+    let targetEnv = environments.find((e) => e.id === activeId);
+    if (!targetEnv) {
+      const groupActiveId = groupActiveIds[activeGroup];
+      targetEnv = environments.find((e) => e.id === groupActiveId);
+    }
+    if (!targetEnv) {
+      targetEnv = environments.find((e) => getGroupFromId(e.id) === activeGroup) || environments[0];
+    }
+    if (!targetEnv) return false;
+
+    const cleanKey = key.trim().replace(/^\{\{|\}\}$/g, "");
+    const existingVarIndex = targetEnv.variables.findIndex(
+      (v) => v.key.trim().toLowerCase() === cleanKey.toLowerCase()
+    );
+
+    const updatedVariables = [...targetEnv.variables];
+    if (existingVarIndex >= 0) {
+      updatedVariables[existingVarIndex] = {
+        ...updatedVariables[existingVarIndex],
+        key: cleanKey,
+        value,
+        enabled: true,
+      };
+    } else {
+      updatedVariables.push({
+        key: cleanKey,
+        value,
+        enabled: true,
+      });
+    }
+
+    const updatedEnv: Environment = {
+      ...targetEnv,
+      variables: updatedVariables,
+    };
+
+    await saveEnvironment(updatedEnv);
+    return true;
   },
 }));
 

@@ -38,6 +38,15 @@ pub enum AuthConfig {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ResponseExtractor {
+    pub id: String,
+    pub source: String,
+    pub property: String,
+    pub target_variable: String,
+    pub enabled: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BoltRequest {
     pub id: Option<String>,
     pub name: String,
@@ -48,6 +57,8 @@ pub struct BoltRequest {
     pub body: RequestBody,
     pub auth: AuthConfig,
     pub ssl_verify: Option<bool>,
+    #[serde(default)]
+    pub extractors: Option<Vec<ResponseExtractor>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

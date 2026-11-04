@@ -1,4 +1,4 @@
-use crate::http_client::{HttpMethod, KeyValue, RequestBody, AuthConfig};
+use crate::http_client::{HttpMethod, KeyValue, RequestBody, AuthConfig, ResponseExtractor};
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::path::PathBuf;
@@ -13,6 +13,10 @@ pub struct SavedRequest {
     pub params: Vec<KeyValue>,
     pub body: RequestBody,
     pub auth: AuthConfig,
+    #[serde(default)]
+    pub ssl_verify: Option<bool>,
+    #[serde(default)]
+    pub extractors: Option<Vec<ResponseExtractor>>,
     pub created_at: Option<u64>,
 }
 

@@ -2,9 +2,12 @@ import { create } from "zustand";
 import { invoke } from "@tauri-apps/api/core";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useHistoryStore } from "./historyStore";
+import { useEnvStore } from "./envStore";
+import { useToastStore } from "./toastStore";
 import packageInfo from "../../package.json";
 import { loadSession, saveSession, clearSession } from "../utils/session";
 import { parseCurlCommand } from "../utils/curl";
+import { runResponseExtractors } from "../utils/responseExtractor";
 
 export interface KeyValue {
   key: string;
@@ -25,6 +28,16 @@ export type AuthConfig =
   | { type: "Bearer"; config: { token: string } }
   | { type: "Basic"; config: { username: string; password: string } };
 
+export type ExtractorSource = "body" | "header" | "status";
+
+export interface ResponseExtractor {
+  id: string;
+  source: ExtractorSource;
+  property: string;
+  targetVariable: string;
+  enabled: boolean;
+}
+
 export interface BoltRequest {
   id?: string;
   name: string;
@@ -35,6 +48,7 @@ export interface BoltRequest {
   body: RequestBody;
   auth: AuthConfig;
   ssl_verify?: boolean;
+  extractors?: ResponseExtractor[];
 }
 
 export interface BoltResponse {
@@ -76,6 +90,7 @@ interface RequestStore {
   setBody: (body: RequestBody) => void;
   setAuth: (auth: AuthConfig) => void;
   setSslVerify: (sslVerify: boolean) => void;
+  setExtractors: (extractors: ResponseExtractor[]) => void;
   sendRequest: (env?: Record<string, string>) => Promise<void>;
   clearResponse: () => void;
   loadRequest: (request: BoltRequest) => void;
@@ -104,6 +119,7 @@ export const createInitialRequest = (): BoltRequest => ({
   body: { type: "None" },
   auth: { type: "None" },
   ssl_verify: true,
+  extractors: [],
 });
 
 export const isMainWindow = (): boolean => {
@@ -296,6 +312,20 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
       };
     }),
 
+  setExtractors: (extractors) =>
+    set((state) => {
+      const updatedActiveRequest = { ...state.activeRequest, extractors };
+      const updatedTabs = state.tabs.map((tab) =>
+        tab.id === state.activeTabId
+          ? { ...tab, request: updatedActiveRequest, isDirty: true }
+          : tab
+      );
+      return {
+        activeRequest: updatedActiveRequest,
+        tabs: updatedTabs,
+      };
+    }),
+
   sendRequest: async (env = {}) => {
     const { activeTabId, activeRequest } = get();
     if (!activeTabId) return;
@@ -342,6 +372,25 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
 
       // Refresh recent requests history
       useHistoryStore.getState().loadHistory();
+
+      // Execute response extractors on 2xx responses
+      if (
+        res.status >= 200 &&
+        res.status < 300 &&
+        requestToSend.extractors &&
+        requestToSend.extractors.length > 0
+      ) {
+        const extractedItems = runResponseExtractors(res, requestToSend.extractors);
+        if (extractedItems.length > 0) {
+          for (const item of extractedItems) {
+            await useEnvStore
+              .getState()
+              .setVariableInActiveEnvironment(item.targetVariable, item.value);
+          }
+          const summary = extractedItems.map((e) => `{{${e.targetVariable}}}`).join(", ");
+          useToastStore.getState().showToast(`Captured ${summary} to active environment`, "success");
+        }
+      }
     } catch (err) {
       console.error("send_request failed:", err);
       const errResponse: BoltResponse = {

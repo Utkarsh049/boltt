@@ -93,6 +93,7 @@ export const loadSession = (): RestoredSession | null => {
           params: Array.isArray(pt.request.params) ? pt.request.params : [],
           auth: pt.request.auth || { type: "None" },
           ssl_verify: pt.request.ssl_verify ?? true,
+          extractors: Array.isArray(pt.request.extractors) ? pt.request.extractors : [],
         };
 
         return {

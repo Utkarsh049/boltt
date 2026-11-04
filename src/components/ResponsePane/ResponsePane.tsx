@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { useRequestStore } from "../../store/requestStore";
+import { useRequestStore, ExtractorSource } from "../../store/requestStore";
 import CodeMirror from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
 import {
@@ -10,9 +10,11 @@ import {
   Inbox,
   ChevronDown,
   ChevronRight,
+  Sparkles,
 } from "lucide-react";
 import { buildCurlCommand } from "../../utils/curl";
 import { useToastStore } from "../../store/toastStore";
+import { CaptureVariableModal } from "../CaptureVariableModal/CaptureVariableModal";
 
 export const ResponsePane: React.FC = () => {
   const { response, isLoading, activeRequest, theme } = useRequestStore();
@@ -20,6 +22,18 @@ export const ResponsePane: React.FC = () => {
 
   const [headersExpanded, setHeadersExpanded] = useState(true);
   const [bodyExpanded, setBodyExpanded] = useState(true);
+
+  const [captureModalConfig, setCaptureModalConfig] = useState<{
+    isOpen: boolean;
+    source: ExtractorSource;
+    property: string;
+    targetVariable: string;
+  }>({
+    isOpen: false,
+    source: "body",
+    property: "",
+    targetVariable: "",
+  });
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [headersHeight, setHeadersHeight] = useState(120);
@@ -75,6 +89,33 @@ export const ResponsePane: React.FC = () => {
     const curl = buildCurlCommand(activeRequest);
     navigator.clipboard.writeText(curl);
     showToast("cURL command copied to clipboard", "success");
+  };
+
+  const handleOpenCaptureFromBody = () => {
+    let initialProp = "";
+    const selection = window.getSelection()?.toString().trim();
+    if (selection) {
+      const cleanSelection = selection.replace(/^["']|["']$/g, "").trim();
+      if (/^[a-zA-Z0-9_$.[\]]+$/.test(cleanSelection)) {
+        initialProp = cleanSelection;
+      }
+    }
+
+    setCaptureModalConfig({
+      isOpen: true,
+      source: "body",
+      property: initialProp,
+      targetVariable: initialProp ? initialProp.replace(/[^a-zA-Z0-9_]/g, "_").toLowerCase() : "",
+    });
+  };
+
+  const handleCaptureHeader = (headerKey: string) => {
+    setCaptureModalConfig({
+      isOpen: true,
+      source: "header",
+      property: headerKey,
+      targetVariable: headerKey.replace(/[^a-zA-Z0-9_]/g, "_").toLowerCase(),
+    });
   };
 
   // Status color mapper
@@ -176,6 +217,14 @@ export const ResponsePane: React.FC = () => {
           {/* Quick Actions Panel */}
           <div className="flex items-center justify-end space-x-1.5 border border-border-primary bg-bg-tertiary py-1 px-2 flex-shrink-0 rounded-t-sm border-b-0">
             <button
+              onClick={handleOpenCaptureFromBody}
+              className="p-1 hover:bg-bg-hover text-text-accent hover:text-text-primary border border-transparent hover:border-border-primary rounded-sm transition flex items-center space-x-1 text-[11px] cursor-pointer"
+              title="Capture response value into environment variable"
+            >
+              <Sparkles size={11} />
+              <span>Capture Variable</span>
+            </button>
+            <button
               onClick={handleCopyCurl}
               className="p-1 hover:bg-bg-hover text-text-secondary hover:text-text-primary border border-transparent hover:border-border-primary rounded-sm transition flex items-center space-x-1 text-[11px] cursor-pointer"
               title="Copy request as cURL command"
@@ -231,9 +280,25 @@ export const ResponsePane: React.FC = () => {
                 {headersExpanded && (
                   <div className="flex-1 bg-bg-secondary/20 rounded border border-border-primary font-mono text-[11px] overflow-y-auto min-h-0 divide-y divide-bg-tertiary">
                     {response.headers.map((h, i) => (
-                      <div key={i} className="flex justify-between py-1 px-2 hover:bg-bg-tertiary/30">
+                      <div
+                        key={i}
+                        className="group flex items-center justify-between py-1 px-2 hover:bg-bg-tertiary/40 transition"
+                      >
                         <span className="text-text-secondary font-semibold select-none">{h.key}</span>
-                        <span className="text-text-primary text-right break-all pl-6 select-all">{h.value}</span>
+                        <div className="flex items-center space-x-2 pl-4 min-w-0">
+                          <span className="text-text-primary text-right break-all select-all">{h.value}</span>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCaptureHeader(h.key);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-bg-hover text-text-secondary hover:text-text-accent rounded cursor-pointer flex-shrink-0"
+                            title={`Capture "${h.key}" as variable`}
+                          >
+                            <Sparkles size={11} />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -260,14 +325,27 @@ export const ResponsePane: React.FC = () => {
               }
               className="flex flex-col min-h-0 overflow-hidden"
             >
-              <h4
-                onClick={() => setBodyExpanded(!bodyExpanded)}
-                className="text-[10px] font-bold text-text-secondary uppercase mb-1.5 flex items-center space-x-1.5 flex-shrink-0 cursor-pointer hover:text-text-primary transition select-none"
-              >
-                {bodyExpanded ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
-                <FileText size={11} />
-                <span>Response Body</span>
-              </h4>
+              <div className="flex items-center justify-between mb-1.5 flex-shrink-0 select-none">
+                <h4
+                  onClick={() => setBodyExpanded(!bodyExpanded)}
+                  className="text-[10px] font-bold text-text-secondary uppercase flex items-center space-x-1.5 cursor-pointer hover:text-text-primary transition"
+                >
+                  {bodyExpanded ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+                  <FileText size={11} />
+                  <span>Response Body</span>
+                </h4>
+                {bodyExpanded && (
+                  <button
+                    type="button"
+                    onClick={handleOpenCaptureFromBody}
+                    className="text-[10px] text-text-secondary hover:text-text-accent flex items-center space-x-1 px-1.5 py-0.5 rounded hover:bg-bg-hover transition cursor-pointer"
+                    title="Capture variable from response body or current selection"
+                  >
+                    <Sparkles size={10} />
+                    <span>Capture Variable</span>
+                  </button>
+                )}
+              </div>
               {bodyExpanded && (
                 <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
                   {isJson(response.body) ? (
@@ -296,6 +374,15 @@ export const ResponsePane: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Capture Variable Modal */}
+      <CaptureVariableModal
+        isOpen={captureModalConfig.isOpen}
+        onClose={() => setCaptureModalConfig((prev) => ({ ...prev, isOpen: false }))}
+        initialSource={captureModalConfig.source}
+        initialProperty={captureModalConfig.property}
+        initialTargetVariable={captureModalConfig.targetVariable}
+      />
     </div>
   );
 };

@@ -247,7 +247,20 @@ export const useEnvStore = create<EnvStore>((set, get) => ({
 
   setVariableInActiveEnvironment: async (key: string, value: string): Promise<boolean> => {
     const { environments, activeId, activeGroup, groupActiveIds, saveEnvironment } = get();
-    if (environments.length === 0) return false;
+    const cleanKey = key.trim().replace(/^\{\{|\}\}$/g, "");
+    if (!cleanKey) return false;
+
+    if (environments.length === 0) {
+      const defaultId = activeGroup === "production" ? "default" : `${activeGroup}:default`;
+      const newEnv: Environment = {
+        id: defaultId,
+        name: "Default",
+        variables: [{ key: cleanKey, value, enabled: true }],
+      };
+      await saveEnvironment(newEnv);
+      await get().setActiveIdForGroup(activeGroup, newEnv.id);
+      return true;
+    }
 
     // Resolve target environment
     let targetEnv = environments.find((e) => e.id === activeId);
@@ -260,7 +273,6 @@ export const useEnvStore = create<EnvStore>((set, get) => ({
     }
     if (!targetEnv) return false;
 
-    const cleanKey = key.trim().replace(/^\{\{|\}\}$/g, "");
     const existingVarIndex = targetEnv.variables.findIndex(
       (v) => v.key.trim().toLowerCase() === cleanKey.toLowerCase()
     );

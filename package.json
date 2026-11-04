@@ -14,6 +14,7 @@
     "check:env": "node scripts/setup.js --check"
   },
   "dependencies": {
+    "@codemirror/autocomplete": "^6.20.4",
     "@codemirror/lang-json": "^6.0.2",
     "@tailwindcss/vite": "^4.3.0",
     "@tauri-apps/api": "^2",

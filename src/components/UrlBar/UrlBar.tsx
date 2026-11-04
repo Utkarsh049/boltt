@@ -199,6 +199,7 @@ export const UrlBar: React.FC = () => {
           <input
             ref={inputRef}
             type="text"
+            list="boltt-dynamic-vars"
             value={activeRequest.url}
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -211,6 +212,14 @@ export const UrlBar: React.FC = () => {
                 : "border-border-primary"
             }`}
           />
+          <datalist id="boltt-dynamic-vars">
+            <option value="{{$uuid}}">Cryptographically random UUID v4</option>
+            <option value="{{$timestamp}}">Current Unix epoch in seconds</option>
+            <option value="{{$isoTimestamp}}">Current ISO-8601 UTC timestamp</option>
+            <option value="{{$randomInt}}">Random integer (1 - 1000)</option>
+            <option value="{{$randomEmail}}">Random test email address</option>
+            <option value="{{$randomAlphaNumeric}}">Random 10-char alphanumeric string</option>
+          </datalist>
           
           {/* SSL verification button & indicator */}
           <div className="absolute right-2 flex items-center space-x-1.5">

@@ -131,6 +131,7 @@ export const KVEditor: React.FC<KVEditorProps> = ({
               <div className="flex-1">
                 <input
                   type="text"
+                  list="boltt-dynamic-vars"
                   value={row.value}
                   placeholder={isVirtual ? `Add ${valuePlaceholder.toLowerCase()}` : valuePlaceholder}
                   onChange={(e) =>

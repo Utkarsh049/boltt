@@ -1,8 +1,11 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useRequestStore, KeyValue, RequestBody } from "../../store/requestStore";
+import { useEnvStore } from "../../store/envStore";
 import { KVEditor } from "../KVEditor/KVEditor";
 import CodeMirror from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
+import { autocompletion } from "@codemirror/autocomplete";
+import { createVariableCompletionSource } from "../../utils/dynamicVariables";
 import { ListFilter, Sliders, Code2, KeyRound, ShieldOff, Key, User, ChevronDown, Check, Sparkles } from "lucide-react";
 import { useToastStore } from "../../store/toastStore";
 
@@ -17,6 +20,15 @@ export const RequestPane: React.FC = () => {
 
   const activeTabObj = tabs.find((t) => t.id === activeTabId);
   const bodyCache = activeTabObj?.bodyCache;
+
+  const completionExtension = useMemo(() => {
+    return autocompletion({
+      override: [
+        createVariableCompletionSource(() => useEnvStore.getState().getFlatActiveVariables()),
+      ],
+      defaultKeymap: true,
+    });
+  }, []);
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -253,7 +265,7 @@ export const RequestPane: React.FC = () => {
                     value={activeRequest.body.content || ""}
                     height="100%"
                     minHeight="200px"
-                    extensions={[json()]}
+                    extensions={[json(), completionExtension]}
                     onChange={handleBodyContentChange}
                     theme={theme === "light" ? "light" : "dark"}
                     className="font-mono h-full"
@@ -266,12 +278,17 @@ export const RequestPane: React.FC = () => {
             {activeRequest.body.type === "Raw" && (
               <div className="flex-1 flex flex-col min-h-[220px]">
                 <div className="text-[10px] text-text-secondary mb-1 font-mono">Plain Text Body Content:</div>
-                <textarea
-                  value={activeRequest.body.content || ""}
-                  onChange={(e) => handleBodyContentChange(e.target.value)}
-                  className="flex-1 bg-bg-primary text-text-primary border border-border-primary p-3 rounded-sm font-mono text-xs focus:outline-none focus:border-text-accent placeholder-text-secondary/40 min-h-[180px]"
-                  placeholder="Enter raw request body..."
-                />
+                <div className="flex-1 border border-border-primary rounded-sm overflow-hidden text-xs">
+                  <CodeMirror
+                    value={activeRequest.body.content || ""}
+                    height="100%"
+                    minHeight="180px"
+                    extensions={[completionExtension]}
+                    onChange={handleBodyContentChange}
+                    theme={theme === "light" ? "light" : "dark"}
+                    className="font-mono h-full"
+                  />
+                </div>
               </div>
             )}
 

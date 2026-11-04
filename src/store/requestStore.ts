@@ -1,7 +1,9 @@
 import { create } from "zustand";
 import { invoke } from "@tauri-apps/api/core";
+import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useHistoryStore } from "./historyStore";
 import packageInfo from "../../package.json";
+import { loadSession, saveSession, clearSession } from "../utils/session";
 
 export interface KeyValue {
   key: string;
@@ -84,6 +86,8 @@ interface RequestStore {
   reorderTabs: (startIndex: number, endIndex: number) => void;
   updateRequestName: (requestId: string, newName: string) => void;
   setTheme: (theme: string, options?: { persist?: boolean }) => void;
+  restoreSession: () => boolean;
+  clearSavedSession: () => void;
 }
 
 export const createInitialRequest = (): BoltRequest => ({
@@ -100,43 +104,61 @@ export const createInitialRequest = (): BoltRequest => ({
   ssl_verify: true,
 });
 
-const initialRequest = createInitialRequest();
-const initialTabId = crypto.randomUUID();
-const initialTab: Tab = {
-  id: initialTabId,
-  request: initialRequest,
+export const isMainWindow = (): boolean => {
+  if (typeof window === "undefined") return false;
+  try {
+    return getCurrentWindow().label === "main";
+  } catch {
+    return true;
+  }
+};
+
+const restoredSession = typeof window !== "undefined" && isMainWindow() ? loadSession() : null;
+
+const defaultRequest = createInitialRequest();
+const defaultTabId = crypto.randomUUID();
+const defaultTab: Tab = {
+  id: defaultTabId,
+  request: defaultRequest,
   response: null,
   isLoading: false,
   error: null,
   isDirty: false,
   bodyCache: {
-    Json: initialRequest.body.type === "Json" ? initialRequest.body.content : "{}",
-    Raw: initialRequest.body.type === "Raw" ? initialRequest.body.content : "",
-    FormData: initialRequest.body.type === "FormData" ? initialRequest.body.content : [],
+    Json: defaultRequest.body.type === "Json" ? defaultRequest.body.content : "{}",
+    Raw: defaultRequest.body.type === "Raw" ? defaultRequest.body.content : "",
+    FormData: defaultRequest.body.type === "FormData" ? defaultRequest.body.content : [],
   },
 };
+
+const initialRequest = restoredSession?.activeRequest || defaultRequest;
+const initialTabs: Tab[] =
+  restoredSession?.tabs && restoredSession.tabs.length > 0 ? restoredSession.tabs : [defaultTab];
+const initialTabId = restoredSession?.activeTabId || defaultTabId;
 
 export const useRequestStore = create<RequestStore>((set, get) => ({
   activeRequest: initialRequest,
   response: null,
   isLoading: false,
   error: null,
-  tabs: [initialTab],
+  tabs: initialTabs,
   activeTabId: initialTabId,
-  theme: localStorage.getItem("boltt-theme") || "dark",
+  theme: (typeof localStorage !== "undefined" ? localStorage.getItem("boltt-theme") : null) || "dark",
 
   setTheme: (theme, options = { persist: true }) => {
     const validThemes = ["dark", "light", "nord", "dracula", "space", "glass"];
     if (!validThemes.includes(theme)) return;
 
-    if (options.persist) {
+    if (options.persist && typeof localStorage !== "undefined") {
       localStorage.setItem("boltt-theme", theme);
     }
     // Sync class list
-    const root = document.documentElement;
-    root.className = "";
-    if (theme !== "dark") {
-      root.classList.add(`theme-${theme}`);
+    if (typeof document !== "undefined") {
+      const root = document.documentElement;
+      root.className = "";
+      if (theme !== "dark") {
+        root.classList.add(`theme-${theme}`);
+      }
     }
     set({ theme });
     
@@ -576,4 +598,66 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
         activeRequest: updatedActiveRequest,
       };
     }),
+
+  restoreSession: () => {
+    const session = loadSession();
+    if (!session || session.tabs.length === 0) return false;
+    set({
+      tabs: session.tabs,
+      activeTabId: session.activeTabId,
+      activeRequest: session.activeRequest,
+      response: null,
+      isLoading: false,
+      error: null,
+    });
+    return true;
+  },
+
+  clearSavedSession: () => {
+    clearSession();
+  },
 }));
+
+let saveTimeout: ReturnType<typeof setTimeout> | null = null;
+
+export const flushSessionSave = () => {
+  if (saveTimeout) {
+    clearTimeout(saveTimeout);
+    saveTimeout = null;
+  }
+  if (!isMainWindow()) return;
+  const { tabs, activeTabId } = useRequestStore.getState();
+  saveSession(tabs, activeTabId);
+};
+
+export const scheduleSessionSave = () => {
+  if (!isMainWindow()) return;
+  if (saveTimeout) {
+    clearTimeout(saveTimeout);
+  }
+  saveTimeout = setTimeout(() => {
+    saveTimeout = null;
+    flushSessionSave();
+  }, 250);
+};
+
+if (typeof window !== "undefined") {
+  useRequestStore.subscribe((state, prevState) => {
+    if (
+      state.tabs !== prevState.tabs ||
+      state.activeTabId !== prevState.activeTabId ||
+      state.activeRequest !== prevState.activeRequest
+    ) {
+      scheduleSessionSave();
+    }
+  });
+
+  if (typeof window.addEventListener === "function") {
+    window.addEventListener("beforeunload", () => {
+      flushSessionSave();
+    });
+    window.addEventListener("pagehide", () => {
+      flushSessionSave();
+    });
+  }
+}

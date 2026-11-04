@@ -26,6 +26,68 @@ import { useToastStore } from "../../store/toastStore";
 
 type TabType = "params" | "headers" | "body" | "auth" | "extractors";
 
+const ExtractorSourceDropdown: React.FC<{
+  source: ExtractorSource;
+  onChange: (s: ExtractorSource) => void;
+}> = ({ source, onChange }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const options: { value: ExtractorSource; label: string }[] = [
+    { value: "body", label: "Body (JSONPath)" },
+    { value: "header", label: "Response Header" },
+    { value: "status", label: "Status Code" },
+  ];
+
+  const currentLabel = options.find((o) => o.value === source)?.label || "Body (JSONPath)";
+
+  return (
+    <div className="relative font-sans" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full bg-bg-primary text-text-primary border border-border-primary hover:border-text-secondary/50 px-2 py-1 rounded-sm text-xs flex items-center justify-between transition cursor-pointer select-none"
+      >
+        <span className="truncate">{currentLabel}</span>
+        <ChevronDown size={11} className="text-text-secondary ml-1 flex-shrink-0" />
+      </button>
+
+      {isOpen && (
+        <div className="absolute left-0 mt-1 w-full min-w-[145px] bg-bg-secondary border border-border-primary rounded shadow-2xl z-50 py-1 overflow-hidden font-sans">
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => {
+                onChange(opt.value);
+                setIsOpen(false);
+              }}
+              className={`w-full text-left px-2.5 py-1.5 text-xs flex items-center justify-between transition cursor-pointer ${
+                source === opt.value
+                  ? "bg-bg-tertiary text-text-accent font-semibold"
+                  : "text-text-secondary hover:text-text-primary hover:bg-bg-tertiary/60"
+              }`}
+            >
+              <span>{opt.label}</span>
+              {source === opt.value && <Check size={11} className="text-text-accent" />}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const RequestPane: React.FC = () => {
   const [activeTab, setActiveTab] = useState<TabType>("params");
   const {
@@ -571,19 +633,12 @@ export const RequestPane: React.FC = () => {
 
                           {/* Source Dropdown */}
                           <div className="col-span-3">
-                            <select
-                              value={ext.source}
-                              onChange={(e) =>
-                                handleUpdateExtractor(ext.id, {
-                                  source: e.target.value as ExtractorSource,
-                                })
+                            <ExtractorSourceDropdown
+                              source={ext.source}
+                              onChange={(newSource) =>
+                                handleUpdateExtractor(ext.id, { source: newSource })
                               }
-                              className="w-full bg-bg-primary text-text-primary border border-border-primary px-2 py-1 rounded-sm text-xs focus:outline-none focus:border-text-accent"
-                            >
-                              <option value="body">Body (JSONPath)</option>
-                              <option value="header">Response Header</option>
-                              <option value="status">Status Code</option>
-                            </select>
+                            />
                           </div>
 
                           {/* Property Path */}

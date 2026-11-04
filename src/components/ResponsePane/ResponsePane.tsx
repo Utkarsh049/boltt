@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useRequestStore, ExtractorSource } from "../../store/requestStore";
+import { useEnvStore } from "../../store/envStore";
 import CodeMirror from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
 import {
@@ -11,13 +12,17 @@ import {
   ChevronDown,
   ChevronRight,
   Sparkles,
+  AlertTriangle,
+  AlertCircle,
+  WifiOff,
+  RefreshCw,
 } from "lucide-react";
 import { buildCurlCommand } from "../../utils/curl";
 import { useToastStore } from "../../store/toastStore";
 import { CaptureVariableModal } from "../CaptureVariableModal/CaptureVariableModal";
 
 export const ResponsePane: React.FC = () => {
-  const { response, isLoading, activeRequest, theme } = useRequestStore();
+  const { response, isLoading, activeRequest, theme, sendRequest } = useRequestStore();
   const { showToast } = useToastStore();
 
   const [headersExpanded, setHeadersExpanded] = useState(true);
@@ -91,6 +96,17 @@ export const ResponsePane: React.FC = () => {
     showToast("cURL command copied to clipboard", "success");
   };
 
+  const handleCopyError = () => {
+    if (!response?.body) return;
+    navigator.clipboard.writeText(response.body);
+    showToast("Error details copied to clipboard", "success");
+  };
+
+  const handleRetry = () => {
+    const flatVars = useEnvStore.getState().getFlatActiveVariables();
+    sendRequest(flatVars);
+  };
+
   const handleOpenCaptureFromBody = () => {
     let initialProp = "";
     const selection = window.getSelection()?.toString().trim();
@@ -120,10 +136,11 @@ export const ResponsePane: React.FC = () => {
 
   // Status color mapper
   const getStatusColor = (status: number) => {
-    if (status >= 200 && status < 300) return "text-green-400 border-green-800/40";
-    if (status >= 300 && status < 400) return "text-blue-400 border-blue-800/40";
-    if (status >= 400) return "text-red-400 border-red-800/40";
-    return "bg-bg-hover text-text-primary border-border-primary"; // Status 0
+    if (status >= 200 && status < 300) return "text-green-400 bg-green-500/10 border-green-800/40";
+    if (status >= 300 && status < 400) return "text-blue-400 bg-blue-500/10 border-blue-800/40";
+    if (status >= 400 && status < 500) return "text-amber-400 bg-amber-500/10 border-amber-800/40";
+    if (status >= 500) return "text-red-400 bg-red-500/10 border-red-800/40";
+    return "text-red-400 bg-red-500/10 border-red-500/30"; // Status 0
   };
 
   // Drag resizing handler
@@ -174,8 +191,19 @@ export const ResponsePane: React.FC = () => {
         {response && (
           <div className="flex items-center space-x-2.5 text-xs font-mono flex-wrap gap-y-1">
             {/* Status Code */}
-            <span className={`px-2 py-0.5 rounded ${getStatusColor(response.status)}`}>
-              {response.status === 0 ? "0 Error" : `${response.status} ${response.status_text}`}
+            <span
+              className={`px-2 py-0.5 rounded border text-xs font-mono font-semibold flex items-center space-x-1 ${getStatusColor(
+                response.status
+              )}`}
+            >
+              {response.status === 0 ? (
+                <>
+                  <AlertTriangle size={11} className="text-red-400" />
+                  <span>0 {response.status_text || "Network Error"}</span>
+                </>
+              ) : (
+                <span>{`${response.status} ${response.status_text}`}</span>
+              )}
             </span>
             
             {response.status !== 0 && (
@@ -210,8 +238,80 @@ export const ResponsePane: React.FC = () => {
         </div>
       )}
 
-      {/* Realized Response view split (Vertical Resizing) */}
-      {!isLoading && response && (
+      {/* Dedicated Network Error State (Status 0) */}
+      {!isLoading && response && response.status === 0 && (
+        <div className="flex-1 flex flex-col p-6 items-center justify-center text-center bg-bg-primary border border-border-primary rounded-sm min-h-0 overflow-y-auto">
+          <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-3 text-red-400 flex-shrink-0">
+            <WifiOff size={22} />
+          </div>
+          <h4 className="text-sm font-semibold text-text-primary tracking-wide mb-1">
+            Could Not Send Request
+          </h4>
+          <p className="text-xs text-text-secondary max-w-sm leading-relaxed mb-4">
+            Boltt was unable to establish a connection to the server. Check your connection or the URL and try again.
+          </p>
+
+          {/* Error Details Box */}
+          <div className="w-full max-w-md bg-bg-secondary border border-red-500/20 rounded p-3 mb-4 text-left shadow-inner">
+            <div className="flex items-center justify-between text-[10px] uppercase font-bold text-red-400/90 tracking-wider mb-1.5">
+              <span className="flex items-center space-x-1">
+                <AlertCircle size={11} />
+                <span>Error Details</span>
+              </span>
+              <button
+                type="button"
+                onClick={handleCopyError}
+                className="text-text-secondary hover:text-text-primary flex items-center space-x-1 text-[10px] transition cursor-pointer"
+                title="Copy error details"
+              >
+                <Copy size={10} />
+                <span>Copy</span>
+              </button>
+            </div>
+            <pre className="font-mono text-xs text-red-300 whitespace-pre-wrap break-all max-h-32 overflow-y-auto select-all leading-relaxed">
+              {response.body.replace(/^send_request failed:\s*/i, "") || "Unknown network failure"}
+            </pre>
+          </div>
+
+          {/* Troubleshooting Checklist */}
+          <div className="w-full max-w-md bg-bg-tertiary/40 border border-border-primary rounded p-3 text-left mb-5">
+            <div className="text-[10px] uppercase font-bold text-text-secondary tracking-wider mb-2">
+              Troubleshooting Suggestions
+            </div>
+            <ul className="text-[11px] text-text-secondary space-y-1.5 list-disc list-inside leading-relaxed">
+              <li>Ensure the server is running and reachable at the target URL.</li>
+              <li>
+                If using local or self-signed HTTPS, verify or disable{" "}
+                <strong className="text-text-primary">SSL Verification</strong> in the URL bar.
+              </li>
+              <li>Check for typos in URL protocol (<code className="text-text-accent">http://</code> vs <code className="text-text-accent">https://</code>) or port number.</li>
+            </ul>
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex items-center space-x-2">
+            <button
+              type="button"
+              onClick={handleRetry}
+              className="px-3.5 py-1.5 rounded text-xs font-semibold bg-text-accent text-bg-primary hover:opacity-90 transition flex items-center space-x-1.5 cursor-pointer shadow-sm"
+            >
+              <RefreshCw size={12} />
+              <span>Retry Request</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleCopyCurl}
+              className="px-3.5 py-1.5 rounded text-xs text-text-secondary hover:text-text-primary hover:bg-bg-hover border border-border-primary transition flex items-center space-x-1.5 cursor-pointer"
+            >
+              <Terminal size={12} />
+              <span>Copy as cURL</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Realized Response view split (Status != 0) */}
+      {!isLoading && response && response.status !== 0 && (
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
           
           {/* Quick Actions Panel */}
@@ -361,7 +461,7 @@ export const ResponsePane: React.FC = () => {
                       />
                     </div>
                   ) : (
-                    <pre className="flex-1 w-full bg-bg-primary text-green-300 p-3 rounded border border-border-primary font-mono text-xs overflow-y-auto whitespace-pre-wrap min-h-0">
+                    <pre className="flex-1 w-full bg-bg-primary text-text-primary p-3 rounded border border-border-primary font-mono text-xs overflow-y-auto whitespace-pre-wrap min-h-0">
                       {response.body || "(No response body returned)"}
                     </pre>
                   )}

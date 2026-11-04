@@ -13,6 +13,7 @@ import {
   Check,
   AlertCircle,
   Globe,
+  ChevronDown,
 } from "lucide-react";
 
 export interface CaptureVariableModalProps {
@@ -42,6 +43,8 @@ export const CaptureVariableModal: React.FC<CaptureVariableModalProps> = ({
 
   const modalRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const headerDropdownRef = useRef<HTMLDivElement>(null);
+  const [isHeaderMenuOpen, setIsHeaderMenuOpen] = useState<boolean>(false);
 
   // Sync state whenever modal opens or props change
   useEffect(() => {
@@ -53,6 +56,7 @@ export const CaptureVariableModal: React.FC<CaptureVariableModalProps> = ({
           (initialProperty ? initialProperty.replace(/[^a-zA-Z0-9_]/g, "_").toLowerCase() : "")
       );
       setAddToExtractors(true);
+      setIsHeaderMenuOpen(false);
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [isOpen, initialSource, initialProperty, initialTargetVariable]);
@@ -66,6 +70,9 @@ export const CaptureVariableModal: React.FC<CaptureVariableModalProps> = ({
     };
 
     const handleClickOutside = (e: MouseEvent) => {
+      if (headerDropdownRef.current && !headerDropdownRef.current.contains(e.target as Node)) {
+        setIsHeaderMenuOpen(false);
+      }
       if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
         onClose();
       }
@@ -260,26 +267,63 @@ export const CaptureVariableModal: React.FC<CaptureVariableModalProps> = ({
                   className="w-full bg-bg-primary border border-border-primary rounded px-3 py-1.5 font-mono text-text-primary focus:outline-none focus:border-text-accent"
                 />
               ) : (
-                <>
-                  <input
-                    type="text"
-                    list="capture-header-options"
-                    value={property}
-                    onChange={(e) => {
-                      setProperty(e.target.value);
-                      if (!targetVariable) {
-                        setTargetVariable(e.target.value.replace(/[^a-zA-Z0-9_]/g, "_").toLowerCase());
-                      }
-                    }}
-                    placeholder="Authorization, x-request-id, etc."
-                    className="w-full bg-bg-primary border border-border-primary rounded px-3 py-1.5 font-mono text-text-primary focus:outline-none focus:border-text-accent"
-                  />
-                  <datalist id="capture-header-options">
-                    {availableHeaders.map((hdr) => (
-                      <option key={hdr} value={hdr} />
-                    ))}
-                  </datalist>
-                </>
+                <div className="relative" ref={headerDropdownRef}>
+                  <div className="relative flex items-center">
+                    <input
+                      type="text"
+                      value={property}
+                      onFocus={() => setIsHeaderMenuOpen(true)}
+                      onChange={(e) => {
+                        setProperty(e.target.value);
+                        setIsHeaderMenuOpen(true);
+                        if (!targetVariable) {
+                          setTargetVariable(e.target.value.replace(/[^a-zA-Z0-9_]/g, "_").toLowerCase());
+                        }
+                      }}
+                      placeholder="Authorization, x-request-id, etc."
+                      className="w-full bg-bg-primary border border-border-primary rounded px-3 pr-7 py-1.5 font-mono text-text-primary focus:outline-none focus:border-text-accent"
+                    />
+                    {availableHeaders.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setIsHeaderMenuOpen(!isHeaderMenuOpen)}
+                        className="absolute right-2 text-text-secondary hover:text-text-primary cursor-pointer p-0.5"
+                      >
+                        <ChevronDown size={12} />
+                      </button>
+                    )}
+                  </div>
+
+                  {isHeaderMenuOpen && availableHeaders.length > 0 && (
+                    <div className="absolute left-0 mt-1 w-full bg-bg-secondary border border-border-primary rounded shadow-2xl z-50 py-1 max-h-40 overflow-y-auto">
+                      {availableHeaders
+                        .filter((h) => !property || h.toLowerCase().includes(property.toLowerCase()))
+                        .map((hdr) => (
+                          <button
+                            key={hdr}
+                            type="button"
+                            onClick={() => {
+                              setProperty(hdr);
+                              if (!targetVariable) {
+                                setTargetVariable(hdr.replace(/[^a-zA-Z0-9_]/g, "_").toLowerCase());
+                              }
+                              setIsHeaderMenuOpen(false);
+                            }}
+                            className={`w-full text-left px-3 py-1.5 text-xs font-mono flex items-center justify-between transition cursor-pointer ${
+                              property.toLowerCase() === hdr.toLowerCase()
+                                ? "bg-bg-tertiary text-text-accent font-semibold"
+                                : "text-text-secondary hover:text-text-primary hover:bg-bg-tertiary/60"
+                            }`}
+                          >
+                            <span>{hdr}</span>
+                            {property.toLowerCase() === hdr.toLowerCase() && (
+                              <Check size={11} className="text-text-accent" />
+                            )}
+                          </button>
+                        ))}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           )}

@@ -3,6 +3,7 @@ import { useRequestStore, HttpMethod } from "../../store/requestStore";
 import { useEnvStore } from "../../store/envStore";
 import { useProjectsStore } from "../../store/projectsStore";
 import { useToastStore } from "../../store/toastStore";
+import { isCurlCommand } from "../../utils/curl";
 import { Save, Send, ChevronDown, Check, ShieldAlert, ShieldCheck } from "lucide-react";
 
 const getMethodColors = (method: string) => {
@@ -60,7 +61,16 @@ const getMethodColors = (method: string) => {
 };
 
 export const UrlBar: React.FC = () => {
-  const { activeRequest, setMethod, setUrl, sendRequest, isLoading, markTabClean, setSslVerify } = useRequestStore();
+  const {
+    activeRequest,
+    setMethod,
+    setUrl,
+    sendRequest,
+    isLoading,
+    markTabClean,
+    setSslVerify,
+    importCurl,
+  } = useRequestStore();
   const getFlatActiveVariables = useEnvStore((state) => state.getFlatActiveVariables);
   const { saveRequestDirectly, setSaveModalOpen } = useProjectsStore();
 
@@ -108,6 +118,17 @@ export const UrlBar: React.FC = () => {
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === "Enter") {
       handleSend();
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    const text = e.clipboardData.getData("text");
+    if (isCurlCommand(text)) {
+      e.preventDefault();
+      const success = importCurl(text, { inPlace: true });
+      if (success) {
+        useToastStore.getState().showToast("Imported request from cURL", "success");
+      }
     }
   };
 
@@ -181,8 +202,9 @@ export const UrlBar: React.FC = () => {
             value={activeRequest.url}
             onChange={(e) => setUrl(e.target.value)}
             onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
             disabled={isLoading}
-            placeholder="Enter request URL (e.g. https://httpbin.org/get)"
+            placeholder="Enter request URL (e.g. https://httpbin.org/get) or paste cURL"
             className={`w-full bg-bg-primary text-text-primary border px-3 pr-24 h-9 rounded-sm text-xs font-mono focus:outline-none focus:border-text-accent placeholder-text-secondary/60 transition-colors ${
               activeRequest.ssl_verify === false
                 ? "border-amber-500/60 focus:border-amber-500"

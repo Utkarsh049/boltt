@@ -4,6 +4,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { useHistoryStore } from "./historyStore";
 import packageInfo from "../../package.json";
 import { loadSession, saveSession, clearSession } from "../utils/session";
+import { parseCurlCommand } from "../utils/curl";
 
 export interface KeyValue {
   key: string;
@@ -88,6 +89,7 @@ interface RequestStore {
   setTheme: (theme: string, options?: { persist?: boolean }) => void;
   restoreSession: () => boolean;
   clearSavedSession: () => void;
+  importCurl: (curlStr: string, options?: { inPlace?: boolean }) => boolean;
 }
 
 export const createInitialRequest = (): BoltRequest => ({
@@ -615,6 +617,92 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
 
   clearSavedSession: () => {
     clearSession();
+  },
+
+  importCurl: (curlStr, options = { inPlace: false }) => {
+    const parsed = parseCurlCommand(curlStr);
+    if (!parsed) return false;
+
+    const { tabs, activeTabId } = get();
+    const activeTab = tabs.find((t) => t.id === activeTabId);
+
+    const isCleanDefault =
+      activeTab &&
+      !activeTab.isDirty &&
+      activeTab.request.name === "New Request" &&
+      activeTab.request.url === "https://httpbin.org/get" &&
+      activeTab.response === null;
+
+    const shouldReplaceInPlace = options.inPlace || isCleanDefault;
+    const targetTabId = shouldReplaceInPlace && activeTabId ? activeTabId : null;
+
+    const newRequest: BoltRequest = {
+      id: targetTabId && activeTab ? activeTab.request.id || crypto.randomUUID() : crypto.randomUUID(),
+      name:
+        activeTab && activeTab.request.name !== "New Request" && options.inPlace
+          ? activeTab.request.name
+          : parsed.name || "cURL Request",
+      method: parsed.method,
+      url: parsed.url,
+      headers: parsed.headers,
+      params: parsed.params,
+      body: parsed.body,
+      auth: parsed.auth,
+      ssl_verify: parsed.ssl_verify,
+    };
+
+    const initialCache = {
+      Json: newRequest.body.type === "Json" ? newRequest.body.content : "{}",
+      Raw: newRequest.body.type === "Raw" ? newRequest.body.content : "",
+      FormData: newRequest.body.type === "FormData" ? newRequest.body.content : [],
+    };
+
+    if (targetTabId) {
+      set((state) => {
+        const updatedTabs = state.tabs.map((tab) =>
+          tab.id === targetTabId
+            ? {
+                ...tab,
+                request: newRequest,
+                isDirty: true,
+                bodyCache: initialCache,
+                response: null,
+                isLoading: false,
+                error: null,
+              }
+            : tab
+        );
+        return {
+          tabs: updatedTabs,
+          activeRequest: newRequest,
+          response: null,
+          isLoading: false,
+          error: null,
+        };
+      });
+      return true;
+    } else {
+      const newTabId = crypto.randomUUID();
+      const newTab: Tab = {
+        id: newTabId,
+        request: newRequest,
+        response: null,
+        isLoading: false,
+        error: null,
+        isDirty: true,
+        bodyCache: initialCache,
+      };
+
+      set((state) => ({
+        tabs: [...state.tabs, newTab],
+        activeTabId: newTabId,
+        activeRequest: newRequest,
+        response: null,
+        isLoading: false,
+        error: null,
+      }));
+      return true;
+    }
   },
 }));
 

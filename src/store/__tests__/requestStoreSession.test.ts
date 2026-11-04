@@ -61,6 +61,7 @@ import {
   flushSessionSave,
   scheduleSessionSave,
   isMainWindow,
+  createInitialRequest,
 } from "../requestStore";
 
 describe("useRequestStore session persistence", () => {
@@ -68,6 +69,26 @@ describe("useRequestStore session persistence", () => {
     vi.useFakeTimers();
     mockWindowLabel = "main";
     mockStorage.clear();
+
+    const initialReq = createInitialRequest();
+    const initialId = crypto.randomUUID();
+    useRequestStore.setState({
+      tabs: [
+        {
+          id: initialId,
+          request: initialReq,
+          response: null,
+          isLoading: false,
+          error: null,
+          isDirty: false,
+        },
+      ],
+      activeTabId: initialId,
+      activeRequest: initialReq,
+      response: null,
+      isLoading: false,
+      error: null,
+    });
   });
 
   afterEach(() => {
@@ -181,5 +202,35 @@ describe("useRequestStore session persistence", () => {
 
     useRequestStore.getState().clearSavedSession();
     expect(mockStorage.getItem(SESSION_STORAGE_KEY)).toBeNull();
+  });
+
+  it("imports cURL command inPlace into active tab", () => {
+    mockWindowLabel = "main";
+    const curl = `curl -X POST https://api.boltt.dev/orders?ref=quick \\\n  -H "Authorization: Bearer my-api-token" \\\n  -d '{"item":"bolt","qty":5}'`;
+    const success = useRequestStore.getState().importCurl(curl, { inPlace: true });
+
+    expect(success).toBe(true);
+
+    const state = useRequestStore.getState();
+    expect(state.activeRequest.method).toBe("POST");
+    expect(state.activeRequest.url).toBe("https://api.boltt.dev/orders");
+    expect(state.activeRequest.params).toEqual([{ key: "ref", value: "quick", enabled: true }]);
+    expect(state.activeRequest.auth).toEqual({
+      type: "Bearer",
+      config: { token: "my-api-token" },
+    });
+    expect(state.activeRequest.body.type).toBe("Json");
+
+    const currentTab = state.tabs.find((t) => t.id === state.activeTabId);
+    expect(currentTab?.isDirty).toBe(true);
+    expect(currentTab?.request.name).toBe("orders");
+  });
+
+  it("returns false and does not alter store on invalid curl input", () => {
+    const prevUrl = useRequestStore.getState().activeRequest.url;
+    const success = useRequestStore.getState().importCurl("not a curl command");
+
+    expect(success).toBe(false);
+    expect(useRequestStore.getState().activeRequest.url).toBe(prevUrl);
   });
 });

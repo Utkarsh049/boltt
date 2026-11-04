@@ -21,6 +21,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { ToastList } from "./components/Toast/Toast";
 import { useToastStore } from "./store/toastStore";
 import { useUpdateStore } from "./store/updateStore";
+import { isCurlCommand } from "./utils/curl";
 
 type SidebarTab = "workspace" | "environments" | "history";
 
@@ -363,8 +364,34 @@ function App() {
       }
     };
 
+    const handleGlobalPaste = (e: ClipboardEvent) => {
+      const activeEl = document.activeElement;
+      if (
+        activeEl &&
+        (activeEl.tagName === "INPUT" ||
+          activeEl.tagName === "TEXTAREA" ||
+          (activeEl as HTMLElement).isContentEditable ||
+          activeEl.classList.contains("cm-content"))
+      ) {
+        return;
+      }
+
+      const text = e.clipboardData?.getData("text");
+      if (text && isCurlCommand(text)) {
+        e.preventDefault();
+        const success = useRequestStore.getState().importCurl(text);
+        if (success) {
+          useToastStore.getState().showToast("Imported request from cURL", "success");
+        }
+      }
+    };
+
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    window.addEventListener("paste", handleGlobalPaste);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("paste", handleGlobalPaste);
+    };
   }, []);
 
   // Auto-expand response pane when response is loaded

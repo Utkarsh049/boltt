@@ -134,6 +134,35 @@ describe("session storage persistence", () => {
     expect(loadSession()).toBeNull();
   });
 
+  it("safely fills default structures when tab data in session has missing fields", () => {
+    const rawSession = {
+      version: 1,
+      savedAt: Date.now(),
+      activeTabId: "tab-malformed",
+      tabs: [
+        {
+          id: "tab-malformed",
+          request: {
+            id: "req-malformed",
+            name: "Partial Request",
+            method: "GET",
+            url: "https://example.com/api",
+            // missing body, headers, params, auth
+          },
+        },
+      ],
+    };
+    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(rawSession));
+
+    const restored = loadSession();
+    expect(restored).not.toBeNull();
+    expect(restored!.tabs[0].request.body).toEqual({ type: "None" });
+    expect(restored!.tabs[0].request.headers).toEqual([]);
+    expect(restored!.tabs[0].request.params).toEqual([]);
+    expect(restored!.tabs[0].request.ssl_verify).toBe(true);
+    expect(restored!.tabs[0].bodyCache).toEqual({ Json: "{}", Raw: "", FormData: [] });
+  });
+
   it("clears persisted session cleanly", () => {
     const tab = createMockTab("tab-1", "Test", "https://api.example.com");
     saveSession([tab], "tab-1");

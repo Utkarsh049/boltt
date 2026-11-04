@@ -84,19 +84,31 @@ export const loadSession = (): RestoredSession | null => {
     // Reconstruct full Tab instances with runtime fields reset
     const reconstructedTabs: Tab[] = data.tabs
       .filter((pt) => pt && pt.id && pt.request && pt.request.url !== undefined)
-      .map((pt) => ({
-        id: pt.id,
-        request: pt.request,
-        response: null,
-        isLoading: false,
-        error: null,
-        isDirty: !!pt.isDirty,
-        bodyCache: pt.bodyCache || {
-          Json: pt.request.body.type === "Json" ? pt.request.body.content : "{}",
-          Raw: pt.request.body.type === "Raw" ? pt.request.body.content : "",
-          FormData: pt.request.body.type === "FormData" ? pt.request.body.content : [],
-        },
-      }));
+      .map((pt) => {
+        const reqBody = pt.request.body || { type: "None" };
+        const safeRequest: BoltRequest = {
+          ...pt.request,
+          body: reqBody,
+          headers: Array.isArray(pt.request.headers) ? pt.request.headers : [],
+          params: Array.isArray(pt.request.params) ? pt.request.params : [],
+          auth: pt.request.auth || { type: "None" },
+          ssl_verify: pt.request.ssl_verify ?? true,
+        };
+
+        return {
+          id: pt.id,
+          request: safeRequest,
+          response: null,
+          isLoading: false,
+          error: null,
+          isDirty: !!pt.isDirty,
+          bodyCache: pt.bodyCache || {
+            Json: reqBody.type === "Json" ? reqBody.content : "{}",
+            Raw: reqBody.type === "Raw" ? reqBody.content : "",
+            FormData: reqBody.type === "FormData" ? reqBody.content : [],
+          },
+        };
+      });
 
     if (reconstructedTabs.length === 0) {
       return null;

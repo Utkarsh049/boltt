@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef, useMemo } from "react";
 import { useProjectsStore, SavedRequest } from "../../store/projectsStore";
-import { useEnvStore, getGroupFromId, openEnvironmentWindow } from "../../store/envStore";
+import { useEnvStore, openEnvironmentWindow } from "../../store/envStore";
 import { useRequestStore, BoltRequest } from "../../store/requestStore";
 import { useHistoryStore } from "../../store/historyStore";
 import { useToastStore } from "../../store/toastStore";
+import { usePaletteStore } from "../../store/paletteStore";
 import { buildCurlCommand, isCurlCommand } from "../../utils/curl";
 import {
   CommandCategory,
@@ -31,20 +32,28 @@ import {
 } from "lucide-react";
 
 export interface CommandPaletteProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  onClose?: () => void;
   onNavigateSidebar?: (tab: "workspace" | "environments" | "history") => void;
   onOpenDiff?: () => void;
 }
 
 export const CommandPalette: React.FC<CommandPaletteProps> = ({
-  isOpen,
-  onClose,
+  isOpen: propIsOpen,
+  onClose: propOnClose,
   onNavigateSidebar,
   onOpenDiff,
 }) => {
+  const storeIsOpen = usePaletteStore((state) => state.isOpen);
+  const storeClose = usePaletteStore((state) => state.close);
+  const isOpen = propIsOpen !== undefined ? propIsOpen : storeIsOpen;
+  const onClose = propOnClose || storeClose;
+
   const { projects, setSaveModalOpen } = useProjectsStore();
-  const { environments, activeId, setActiveId, getFlatActiveVariables } = useEnvStore();
+  const environments = useEnvStore((state) => state.environments);
+  const activeId = useEnvStore((state) => state.activeId);
+  const setActiveId = useEnvStore((state) => state.setActiveId);
+  const getFlatActiveVariables = useEnvStore((state) => state.getFlatActiveVariables);
   const {
     theme,
     setTheme,
@@ -241,8 +250,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             break;
 
           case "manage_environments": {
-            const activeGroup = activeId ? getGroupFromId(activeId) : "production";
-            openEnvironmentWindow(activeGroup);
+            const currentGroup = useEnvStore.getState().activeGroup;
+            openEnvironmentWindow(currentGroup);
             break;
           }
         }
@@ -253,6 +262,18 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   // Keyboard navigation handler inside the palette
   const handleKeyDown = (e: React.KeyboardEvent) => {
+    const isCtrlOrMeta = e.ctrlKey || e.metaKey;
+    const isKeyK =
+      e.code === "KeyK" ||
+      e.keyCode === 75 ||
+      e.which === 75 ||
+      (typeof e.key === "string" && e.key.toLowerCase() === "k");
+    if (isCtrlOrMeta && isKeyK && !e.altKey) {
+      e.preventDefault();
+      onClose();
+      return;
+    }
+
     if (e.key === "ArrowDown") {
       e.preventDefault();
       if (searchResults.length > 0) {
@@ -307,7 +328,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/65 backdrop-blur-sm flex items-start justify-center pt-[10vh] p-4 select-none font-sans"
+      className="fixed inset-0 z-[70] bg-black/65 backdrop-blur-sm flex items-start justify-center pt-[10vh] p-4 select-none font-sans"
       onClick={(e) => {
         if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
           onClose();

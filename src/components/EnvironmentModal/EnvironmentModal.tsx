@@ -4,16 +4,33 @@ import { X, Plus, Trash2, Eye, EyeOff, Save, Key, Minus, Square, Lock, Unlock, S
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
 export const EnvironmentModal: React.FC = () => {
-  const {
-    environments,
-    isModalOpen,
-    setModalOpen,
-    saveEnvironment,
-    deleteEnvironment,
-    setActiveIdForGroup,
-    activeGroup,
-    groupActiveIds,
-  } = useEnvStore();
+  const environments = useEnvStore((state) => state.environments);
+  const isModalOpen = useEnvStore((state) => state.isModalOpen);
+  const setModalOpen = useEnvStore((state) => state.setModalOpen);
+  const saveEnvironment = useEnvStore((state) => state.saveEnvironment);
+  const deleteEnvironment = useEnvStore((state) => state.deleteEnvironment);
+  const setActiveIdForGroup = useEnvStore((state) => state.setActiveIdForGroup);
+  const activeGroup = useEnvStore((state) => state.activeGroup);
+  const setActiveGroup = useEnvStore((state) => state.setActiveGroup);
+  const groupActiveIds = useEnvStore((state) => state.groupActiveIds);
+  const loadEnvironments = useEnvStore((state) => state.loadEnvironments);
+
+  // Load environments on mount and listen for backend/cross-window updates
+  useEffect(() => {
+    loadEnvironments();
+    let unlisten: (() => void) | undefined;
+    import("@tauri-apps/api/event").then(({ listen }) => {
+      listen("environments-updated", () => {
+        loadEnvironments();
+      }).then((fn) => {
+        unlisten = fn;
+      });
+    }).catch(() => {});
+
+    return () => {
+      if (unlisten) unlisten();
+    };
+  }, [loadEnvironments]);
 
   const getInitialWindowLabel = () => {
     try {
@@ -26,9 +43,19 @@ export const EnvironmentModal: React.FC = () => {
   const [windowLabel] = useState<string>(getInitialWindowLabel);
 
   const isEnvWindow = windowLabel.startsWith("env-");
-  const targetGroup = isEnvWindow
+  const initialGroup = isEnvWindow
     ? (windowLabel.split("-")[1] as "production" | "staging" | "local")
     : activeGroup;
+
+  const [selectedGroup, setSelectedGroup] = useState<"production" | "staging" | "local">(initialGroup || "production");
+
+  useEffect(() => {
+    if (!isEnvWindow) {
+      setSelectedGroup(activeGroup);
+    }
+  }, [isEnvWindow, activeGroup]);
+
+  const targetGroup = selectedGroup;
 
   // Local state for buffering changes before clicking Save
   const [localEnvs, setLocalEnvs] = useState<Environment[]>([]);
@@ -46,8 +73,8 @@ export const EnvironmentModal: React.FC = () => {
       
       // For each environment, make sure there is at least one blank row if the last row is not empty
       clonedEnvs.forEach((env) => {
-        if (env.variables.length === 0) {
-          env.variables.push({ key: "", value: "", enabled: true, is_secret: false });
+        if (!env.variables || !Array.isArray(env.variables) || env.variables.length === 0) {
+          env.variables = [{ key: "", value: "", enabled: true, is_secret: false }];
         } else {
           const last = env.variables[env.variables.length - 1];
           if (last.key || last.value) {
@@ -260,8 +287,13 @@ export const EnvironmentModal: React.FC = () => {
     }
 
     // 2. Adjust active environment for the target group
-    if (selectedEnvId && localEnvs.some((e) => e.id === selectedEnvId)) {
+    const currentGroupActiveId = groupActiveIds[targetGroup];
+    if (currentGroupActiveId && localEnvs.some((e) => e.id === currentGroupActiveId)) {
+      await setActiveIdForGroup(targetGroup, currentGroupActiveId);
+    } else if (selectedEnvId && localEnvs.some((e) => e.id === selectedEnvId)) {
       await setActiveIdForGroup(targetGroup, selectedEnvId);
+    } else if (localEnvs.length > 0) {
+      await setActiveIdForGroup(targetGroup, localEnvs[0].id);
     } else {
       await setActiveIdForGroup(targetGroup, null);
     }
@@ -281,11 +313,41 @@ export const EnvironmentModal: React.FC = () => {
         onDoubleClick={handleHeaderDoubleClick}
         className="h-12 border-b border-border-primary bg-bg-tertiary flex items-center justify-between px-4 flex-shrink-0 select-none cursor-default"
       >
-        <div className="flex items-center space-x-2">
-          <Key size={16} className="text-text-accent" />
-          <span className="font-semibold text-sm text-text-primary capitalize">
-            Manage {targetGroup} Environments
-          </span>
+        <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-2">
+            <Key size={16} className="text-text-accent" />
+            <span className="font-semibold text-sm text-text-primary">
+              Manage Environments
+            </span>
+          </div>
+          <div
+            onMouseDown={(e) => e.stopPropagation()}
+            onDoubleClick={(e) => e.stopPropagation()}
+            className="flex items-center bg-bg-primary/80 p-0.5 rounded border border-border-primary text-xs"
+          >
+            {(["production", "staging", "local"] as const).map((group) => {
+              const isSelected = targetGroup === group;
+              return (
+                <button
+                  type="button"
+                  key={group}
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSelectedGroup(group);
+                    setActiveGroup(group);
+                  }}
+                  className={`px-2.5 py-0.5 rounded-sm capitalize text-[11px] font-medium transition cursor-pointer ${
+                    isSelected
+                      ? "bg-text-accent text-[#00325a] font-bold shadow-sm"
+                      : "text-text-secondary hover:text-text-primary hover:bg-bg-hover"
+                  }`}
+                >
+                  {group}
+                </button>
+              );
+            })}
+          </div>
         </div>
         {isEnvWindow ? (
           <div className="flex items-center space-x-1 pl-2 border-l border-border-primary h-6">
@@ -512,8 +574,19 @@ export const EnvironmentModal: React.FC = () => {
             </div>
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center text-center p-6 text-text-secondary">
-              <Key size={24} className="opacity-20 mb-2" />
-              <span className="text-xs">Create or select an environment to manage its variables.</span>
+              <Key size={28} className="opacity-30 mb-3 text-text-accent" />
+              <p className="text-xs font-semibold text-text-primary mb-1 capitalize">No {targetGroup} Environments</p>
+              <p className="text-[11px] text-text-secondary mb-4 max-w-xs">
+                Create an environment to define variables like base URLs, tokens, and secrets for your {targetGroup} workspace.
+              </p>
+              <button
+                type="button"
+                onClick={handleAddEnvironment}
+                className="px-3.5 py-1.5 bg-text-accent hover:bg-blue-300 text-[#00325a] rounded text-xs font-bold transition cursor-pointer flex items-center space-x-1.5"
+              >
+                <Plus size={13} />
+                <span>Add {targetGroup} Environment</span>
+              </button>
             </div>
           )}
         </div>
@@ -544,7 +617,14 @@ export const EnvironmentModal: React.FC = () => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4">
+    <div
+      onClick={(e) => {
+        if (e.target === e.currentTarget) {
+          handleClose();
+        }
+      }}
+      className="fixed inset-0 bg-black/65 backdrop-blur-sm flex items-center justify-center z-[60] animate-fade-in p-4"
+    >
       {content}
     </div>
   );

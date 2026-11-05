@@ -3,7 +3,10 @@ import { useEnvStore, getGroupFromId, openEnvironmentWindow } from "../../store/
 import { Globe, Settings, Check, ChevronDown } from "lucide-react";
 
 export const EnvironmentDropdown: React.FC = () => {
-  const { environments, activeGroup, groupActiveIds, setActiveIdForGroup } = useEnvStore();
+  const environments = useEnvStore((state) => state.environments);
+  const activeGroup = useEnvStore((state) => state.activeGroup);
+  const groupActiveIds = useEnvStore((state) => state.groupActiveIds);
+  const setActiveIdForGroup = useEnvStore((state) => state.setActiveIdForGroup);
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 

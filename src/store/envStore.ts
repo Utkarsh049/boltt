@@ -26,6 +26,32 @@ export const getGroupFromId = (id: string): "production" | "staging" | "local" =
   return "production";
 };
 
+const safeGetStorage = (key: string): string | null => {
+  try {
+    if (typeof window !== "undefined" && window.localStorage) {
+      return window.localStorage.getItem(key);
+    }
+    if (typeof localStorage !== "undefined") {
+      return localStorage.getItem(key);
+    }
+  } catch {
+    // ignore
+  }
+  return null;
+};
+
+const safeSetStorage = (key: string, value: string): void => {
+  try {
+    if (typeof window !== "undefined" && window.localStorage) {
+      window.localStorage.setItem(key, value);
+    } else if (typeof localStorage !== "undefined") {
+      localStorage.setItem(key, value);
+    }
+  } catch {
+    // ignore
+  }
+};
+
 const triggerSync = async () => {
   try {
     await emit("environments-updated");
@@ -34,16 +60,19 @@ const triggerSync = async () => {
   }
 };
 
-export const openEnvironmentWindow = async (group: "production" | "staging" | "local") => {
+export const openEnvironmentWindow = async (group: "production" | "staging" | "local" = "production") => {
+  useEnvStore.getState().setActiveGroup(group);
+
   try {
     const { WebviewWindow } = await import("@tauri-apps/api/webviewWindow");
     const label = `env-${group}`;
     const existing = await WebviewWindow.getByLabel(label);
     if (existing) {
+      await existing.show();
       await existing.setFocus();
       return;
     }
-    new WebviewWindow(label, {
+    const win = new WebviewWindow(label, {
       url: "index.html",
       title: `Manage Environments — ${group.charAt(0).toUpperCase() + group.slice(1)}`,
       width: 800,
@@ -54,8 +83,14 @@ export const openEnvironmentWindow = async (group: "production" | "staging" | "l
       decorations: false,
       transparent: true,
     });
+
+    win.once("tauri://error", (e) => {
+      console.warn("Failed to create standalone window, falling back to modal:", e);
+      useEnvStore.getState().setModalOpen(true);
+    });
   } catch (e) {
-    console.error("Failed to open environment window:", e);
+    console.warn("Tauri WebviewWindow unavailable, falling back to modal:", e);
+    useEnvStore.getState().setModalOpen(true);
   }
 };
 
@@ -92,7 +127,7 @@ export const useEnvStore = create<EnvStore>((set, get) => ({
     try {
       const data = await invoke<EnvironmentsFile>("load_environments");
       
-      const savedGroup = (localStorage.getItem("boltt_active_group") as "production" | "staging" | "local") || "local";
+      const savedGroup = (safeGetStorage("boltt_active_group") as "production" | "staging" | "local") || "local";
       let savedGroupActiveIds: Record<string, string | null> = {
         production: null,
         staging: null,
@@ -100,7 +135,7 @@ export const useEnvStore = create<EnvStore>((set, get) => ({
       };
 
       try {
-        const stored = localStorage.getItem("boltt_group_active_ids");
+        const stored = safeGetStorage("boltt_group_active_ids");
         if (stored) {
           savedGroupActiveIds = JSON.parse(stored);
         }
@@ -133,7 +168,7 @@ export const useEnvStore = create<EnvStore>((set, get) => ({
   },
 
   setActiveGroup: (group: "production" | "staging" | "local") => {
-    localStorage.setItem("boltt_active_group", group);
+    safeSetStorage("boltt_active_group", group);
     const { groupActiveIds } = get();
     set({
       activeGroup: group,
@@ -152,7 +187,7 @@ export const useEnvStore = create<EnvStore>((set, get) => ({
       ...groupActiveIds,
       [group]: id,
     };
-    localStorage.setItem("boltt_group_active_ids", JSON.stringify(updatedActiveIds));
+    safeSetStorage("boltt_group_active_ids", JSON.stringify(updatedActiveIds));
 
     const { activeGroup } = get();
     const isCurrentGroup = group === activeGroup;
@@ -209,7 +244,7 @@ export const useEnvStore = create<EnvStore>((set, get) => ({
     }
 
     if (activeIdsChanged) {
-      localStorage.setItem("boltt_group_active_ids", JSON.stringify(updatedActiveIds));
+      safeSetStorage("boltt_group_active_ids", JSON.stringify(updatedActiveIds));
     }
 
     const newActiveId = updatedActiveIds[activeGroup];

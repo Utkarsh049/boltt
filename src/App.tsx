@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import { UrlBar } from "./components/UrlBar/UrlBar";
 import { RequestPane } from "./components/RequestPane/RequestPane";
-import { Palette, RefreshCw, Folder as FolderIcon, Globe, Clock, Eye, EyeOff, Plus, Minus, Square, X, Trash2, Download, Search } from "lucide-react";
+import { Palette, RefreshCw, Folder as FolderIcon, Globe, Clock, Eye, EyeOff, Plus, Minus, Square, X, Trash2, Download, Search, Settings } from "lucide-react";
 import "./App.css";
 import { Group, Panel, Separator, type PanelImperativeHandle } from "react-resizable-panels";
 import { ResponsePane } from "./components/ResponsePane/ResponsePane";
 import { useRequestStore } from "./store/requestStore";
-import { useEnvStore } from "./store/envStore";
+import { useEnvStore, openEnvironmentWindow } from "./store/envStore";
 import { EnvironmentDropdown } from "./components/EnvironmentDropdown/EnvironmentDropdown";
 import { EnvironmentModal } from "./components/EnvironmentModal/EnvironmentModal";
 import { ProjectsTree } from "./components/ProjectsTree/ProjectsTree";
@@ -15,6 +15,7 @@ import { UpdateToast } from "./components/UpdateToast/UpdateToast";
 import { ReleaseNotesModal } from "./components/ReleaseNotesModal/ReleaseNotesModal";
 import { TabBar } from "./components/TabBar/TabBar";
 import { CommandPalette } from "./components/CommandPalette/CommandPalette";
+import { usePaletteStore } from "./store/paletteStore";
 import { useProjectsStore } from "./store/projectsStore";
 import { useHistoryStore } from "./store/historyStore";
 import { HistoryPanel } from "./components/HistoryPanel/HistoryPanel";
@@ -42,7 +43,6 @@ function App() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isAppLoading, setIsAppLoading] = useState(true);
-  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 
   const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
   const themeDropdownRef = useRef<HTMLDivElement>(null);
@@ -290,8 +290,38 @@ function App() {
         return;
       }
 
+      // Deduplicate if event reaches both window and document capture
+      if ((e as any).__bolttKeyHandled) return;
+
+      const isCtrlOrMeta = e.ctrlKey || e.metaKey;
+      const isKeyK =
+        e.code === "KeyK" ||
+        e.keyCode === 75 ||
+        e.which === 75 ||
+        (typeof e.key === "string" && e.key.toLowerCase() === "k");
+
+      // Open / Toggle Command Palette (Ctrl/Cmd + K)
+      if (isCtrlOrMeta && isKeyK && !e.altKey) {
+        (e as any).__bolttKeyHandled = true;
+        e.preventDefault();
+        e.stopPropagation();
+        usePaletteStore.getState().toggle();
+        return;
+      }
+
+      // Close open modals (Escape)
+      if (e.key === "Escape") {
+        (e as any).__bolttKeyHandled = true;
+        usePaletteStore.getState().close();
+        useEnvStore.getState().setModalOpen(false);
+        useProjectsStore.getState().setSaveModalOpen(false);
+        window.dispatchEvent(new CustomEvent("close-all-modals"));
+        return;
+      }
+
       // Send request (Ctrl/Cmd + Enter)
       if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        (e as any).__bolttKeyHandled = true;
         e.preventDefault();
         const { tabs } = useRequestStore.getState();
         if (tabs.length > 0) {
@@ -302,24 +332,9 @@ function App() {
 
       // Focus URL input (Ctrl/Cmd + L)
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "l") {
+        (e as any).__bolttKeyHandled = true;
         e.preventDefault();
         window.dispatchEvent(new CustomEvent("focus-url-bar"));
-        return;
-      }
-
-      // Open Command Palette (Ctrl/Cmd + K)
-      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        setIsCommandPaletteOpen((prev) => !prev);
-        return;
-      }
-
-      // Close open modals (Escape)
-      if (e.key === "Escape") {
-        setIsCommandPaletteOpen(false);
-        useEnvStore.getState().setModalOpen(false);
-        useProjectsStore.getState().setSaveModalOpen(false);
-        window.dispatchEvent(new CustomEvent("close-all-modals"));
         return;
       }
 
@@ -396,11 +411,18 @@ function App() {
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
+    const handleOpenPalette = () => usePaletteStore.getState().open();
+
+    window.addEventListener("keydown", handleKeyDown, { capture: true });
+    document.addEventListener("keydown", handleKeyDown, { capture: true });
     window.addEventListener("paste", handleGlobalPaste);
+    window.addEventListener("open-command-palette", handleOpenPalette);
+
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keydown", handleKeyDown, { capture: true });
+      document.removeEventListener("keydown", handleKeyDown, { capture: true });
       window.removeEventListener("paste", handleGlobalPaste);
+      window.removeEventListener("open-command-palette", handleOpenPalette);
     };
   }, []);
 
@@ -472,6 +494,10 @@ function App() {
     handleToggleMaximize();
   };
 
+  if (windowLabel.startsWith("env-")) {
+    return <EnvironmentModal />;
+  }
+
   if (isAppLoading) {
     return (
       <div className="h-screen w-screen bg-bg-primary text-text-primary flex flex-col font-sans overflow-hidden select-none animate-pulse">
@@ -542,10 +568,6 @@ function App() {
     );
   }
 
-  if (windowLabel.startsWith("env-")) {
-    return <EnvironmentModal />;
-  }
-
   return (
     <div className="h-screen w-screen bg-bg-primary text-text-primary flex flex-col font-sans overflow-hidden select-none">
       {/* Header bar */}
@@ -568,7 +590,7 @@ function App() {
         <div className="flex items-center space-x-3 text-xs text-[#c0c7d3]">
           <button
             type="button"
-            onClick={() => setIsCommandPaletteOpen(true)}
+            onClick={() => usePaletteStore.getState().open()}
             className="flex items-center space-x-2 px-2.5 py-1 bg-bg-secondary hover:bg-bg-hover text-text-secondary hover:text-text-primary rounded border border-border-primary text-xs transition cursor-pointer"
             title="Open Command Palette (Ctrl+K or Cmd+K)"
           >
@@ -761,6 +783,15 @@ function App() {
                     <span className="text-[12px] font-bold text-[#8b919d] uppercase tracking-wider">
                       Environments
                     </span>
+                    <button
+                      type="button"
+                      onClick={() => openEnvironmentWindow(activeGroup)}
+                      className="text-[11px] text-text-accent hover:underline flex items-center space-x-1 cursor-pointer font-medium"
+                      title="Manage Environments"
+                    >
+                      <Settings size={12} />
+                      <span>Manage</span>
+                    </button>
                   </div>
                   <div className="space-y-1.5 font-mono text-xs">
                     {(["production", "staging", "local"] as const).map((group) => {
@@ -948,14 +979,11 @@ function App() {
         </Group>
       </div>
       <SaveRequestModal />
+      <EnvironmentModal />
       <UpdateToast />
       <ReleaseNotesModal />
       <ToastList />
-      <CommandPalette
-        isOpen={isCommandPaletteOpen}
-        onClose={() => setIsCommandPaletteOpen(false)}
-        onNavigateSidebar={(tab) => setSidebarTab(tab)}
-      />
+      <CommandPalette onNavigateSidebar={(tab) => setSidebarTab(tab)} />
     </div>
   );
 }

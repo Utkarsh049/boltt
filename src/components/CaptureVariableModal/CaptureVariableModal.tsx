@@ -32,7 +32,10 @@ export const CaptureVariableModal: React.FC<CaptureVariableModalProps> = ({
   initialTargetVariable = "",
 }) => {
   const { response, activeRequest, setExtractors } = useRequestStore();
-  const { environments, activeGroup, groupActiveIds, setVariableInActiveEnvironment } = useEnvStore();
+  const environments = useEnvStore((state) => state.environments);
+  const activeGroup = useEnvStore((state) => state.activeGroup);
+  const groupActiveIds = useEnvStore((state) => state.groupActiveIds);
+  const setVariableInActiveEnvironment = useEnvStore((state) => state.setVariableInActiveEnvironment);
   const { showToast } = useToastStore();
 
   const [source, setSource] = useState<ExtractorSource>(initialSource);

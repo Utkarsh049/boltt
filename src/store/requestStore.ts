@@ -76,6 +76,7 @@ export interface Tab {
   id: string;
   request: BoltRequest;
   response: BoltResponse | null;
+  previousResponse?: BoltResponse | null;
   isLoading: boolean;
   error: string | null;
   isDirty: boolean;
@@ -89,6 +90,7 @@ export interface Tab {
 interface RequestStore {
   activeRequest: BoltRequest;
   response: BoltResponse | null;
+  previousResponse?: BoltResponse | null;
   isLoading: boolean;
   error: string | null;
   tabs: Tab[];
@@ -151,6 +153,7 @@ const defaultTab: Tab = {
   id: defaultTabId,
   request: defaultRequest,
   response: null,
+  previousResponse: null,
   isLoading: false,
   error: null,
   isDirty: false,
@@ -169,6 +172,7 @@ const initialTabId = restoredSession?.activeTabId || defaultTabId;
 export const useRequestStore = create<RequestStore>((set, get) => ({
   activeRequest: initialRequest,
   response: null,
+  previousResponse: null,
   isLoading: false,
   error: null,
   tabs: initialTabs,
@@ -351,13 +355,23 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
       requestToSend = { ...activeRequest, url: normalizedUrl };
     }
 
+    const currentTab = get().tabs.find((tab) => tab.id === activeTabId);
+    const existingResponse = currentTab?.response || get().response;
+
     set((state) => ({
       isLoading: true,
       error: null,
       response: null,
+      previousResponse: existingResponse ?? state.previousResponse ?? null,
       tabs: state.tabs.map((tab) =>
         tab.id === activeTabId
-          ? { ...tab, isLoading: true, error: null, response: null }
+          ? {
+              ...tab,
+              isLoading: true,
+              error: null,
+              response: null,
+              previousResponse: existingResponse ?? tab.previousResponse ?? null,
+            }
           : tab
       ),
     }));
@@ -523,6 +537,7 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
         id: newTabId,
         request,
         response: null,
+        previousResponse: null,
         isLoading: false,
         error: null,
         isDirty: false,
@@ -533,6 +548,7 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
         activeTabId: newTabId,
         activeRequest: request,
         response: null,
+        previousResponse: null,
         isLoading: false,
         error: null,
       }));
@@ -620,6 +636,7 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
           ssl_verify: true,
         },
         response: null,
+        previousResponse: null,
         isLoading: false,
         error: null,
       });
@@ -644,6 +661,7 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
       activeTabId: id,
       activeRequest: tab.request,
       response: tab.response,
+      previousResponse: tab.previousResponse ?? null,
       isLoading: tab.isLoading,
       error: tab.error,
     });
@@ -770,6 +788,7 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
         id: newTabId,
         request: newRequest,
         response: null,
+        previousResponse: null,
         isLoading: false,
         error: null,
         isDirty: true,
@@ -781,6 +800,7 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
         activeTabId: newTabId,
         activeRequest: newRequest,
         response: null,
+        previousResponse: null,
         isLoading: false,
         error: null,
       }));

@@ -26,6 +26,10 @@ pub struct Folder {
     pub name: String,
     pub requests: Vec<SavedRequest>,
     pub subfolders: Vec<Folder>,
+    #[serde(default)]
+    pub auth: Option<AuthConfig>,
+    #[serde(default)]
+    pub headers: Option<Vec<KeyValue>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

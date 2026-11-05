@@ -79,6 +79,8 @@ pub async fn export_folder_pdf(
             name: project.name.clone(),
             requests: Vec::new(),
             subfolders: project.folders.clone(),
+            auth: None,
+            headers: None,
         }
     } else {
         // Find the folder recursively

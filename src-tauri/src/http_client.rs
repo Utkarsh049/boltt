@@ -29,10 +29,11 @@ pub enum RequestBody {
     None,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(tag = "type", content = "config")]
 pub enum AuthConfig {
     None,
+    Inherit,
     Bearer { token: String },
     Basic { username: String, password: String },
 }
@@ -236,7 +237,7 @@ pub async fn execute_request(
             let substituted_password = substitute_variables(password, &env);
             req_builder = req_builder.basic_auth(substituted_username, Some(substituted_password));
         }
-        AuthConfig::None => {}
+        AuthConfig::None | AuthConfig::Inherit => {}
     }
 
     // 6. Set custom headers (these will override auth helpers if names conflict)

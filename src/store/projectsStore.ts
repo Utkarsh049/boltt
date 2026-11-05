@@ -19,6 +19,8 @@ export interface Folder {
   name: string;
   requests: SavedRequest[];
   subfolders: Folder[];
+  auth?: AuthConfig;
+  headers?: KeyValue[];
 }
 
 export interface Project {
@@ -47,6 +49,12 @@ interface ProjectsStore {
   createFolder: (projectId: string, parentFolderId: string | null, name: string) => Promise<void>;
   renameFolder: (projectId: string, folderId: string, newName: string) => Promise<void>;
   deleteFolder: (projectId: string, folderId: string) => Promise<void>;
+  updateFolderSettings: (
+    projectId: string,
+    folderId: string,
+    auth?: AuthConfig,
+    headers?: KeyValue[]
+  ) => Promise<void>;
   
   saveRequest: (projectId: string, folderId: string, request: SavedRequest) => Promise<void>;
   deleteRequest: (projectId: string, requestId: string) => Promise<void>;
@@ -97,6 +105,25 @@ const deleteFolderRecursive = (folders: Folder[], folderId: string): boolean => 
   }
   for (const folder of folders) {
     if (deleteFolderRecursive(folder.subfolders, folderId)) {
+      return true;
+    }
+  }
+  return false;
+};
+
+const updateFolderSettingsRecursive = (
+  folders: Folder[],
+  folderId: string,
+  auth?: AuthConfig,
+  headers?: KeyValue[]
+): boolean => {
+  for (const folder of folders) {
+    if (folder.id === folderId) {
+      folder.auth = auth;
+      folder.headers = headers;
+      return true;
+    }
+    if (updateFolderSettingsRecursive(folder.subfolders, folderId, auth, headers)) {
       return true;
     }
   }
@@ -264,6 +291,22 @@ export const useProjectsStore = create<ProjectsStore>((set, get) => ({
 
     const updatedProject: Project = JSON.parse(JSON.stringify(project));
     if (deleteFolderRecursive(updatedProject.folders, folderId)) {
+      await get().saveProject(updatedProject);
+    }
+  },
+
+  updateFolderSettings: async (
+    projectId: string,
+    folderId: string,
+    auth?: AuthConfig,
+    headers?: KeyValue[]
+  ) => {
+    const { projects } = get();
+    const project = projects.find((p) => p.id === projectId);
+    if (!project) return;
+
+    const updatedProject: Project = JSON.parse(JSON.stringify(project));
+    if (updateFolderSettingsRecursive(updatedProject.folders, folderId, auth, headers)) {
       await get().saveProject(updatedProject);
     }
   },

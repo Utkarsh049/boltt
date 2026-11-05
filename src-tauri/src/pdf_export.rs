@@ -79,7 +79,7 @@ fn collect_variables_from_request(req: &SavedRequest, variables: &mut HashSet<St
             extract_variables_from_str(username, variables);
             extract_variables_from_str(password, variables);
         }
-        crate::http_client::AuthConfig::None => {}
+        crate::http_client::AuthConfig::None | crate::http_client::AuthConfig::Inherit => {}
     }
 }
 
@@ -691,7 +691,7 @@ pub fn generate_pdf_document(
                     ctx.write_line("Basic Password: [Masked / Hidden]", 8.5, false, 4.0);
                     ctx.y -= 2.0;
                 }
-                crate::http_client::AuthConfig::None => {}
+                crate::http_client::AuthConfig::None | crate::http_client::AuthConfig::Inherit => {}
             }
 
             // Body

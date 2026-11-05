@@ -8,6 +8,7 @@ import packageInfo from "../../package.json";
 import { loadSession, saveSession, clearSession } from "../utils/session";
 import { parseCurlCommand } from "../utils/curl";
 import { runResponseExtractors } from "../utils/responseExtractor";
+import { resolveRequestInheritance } from "../utils/inheritance";
 
 export interface KeyValue {
   key: string;
@@ -25,6 +26,7 @@ export type RequestBody =
 
 export type AuthConfig =
   | { type: "None"; config?: never }
+  | { type: "Inherit"; config?: never }
   | { type: "Bearer"; config: { token: string } }
   | { type: "Basic"; config: { username: string; password: string } };
 
@@ -350,9 +352,31 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
       ),
     }));
 
+    // Resolve inherited auth and cascading headers from folder hierarchy
+    let finalRequestToSend = requestToSend;
+    try {
+      const { useProjectsStore } = await import("./projectsStore");
+      const projects = useProjectsStore.getState().projects;
+      const activeTab = get().tabs.find((t) => t.id === activeTabId);
+      const requestId = activeRequest.id || activeTab?.id || null;
+      const { effectiveAuth, effectiveHeaders } = resolveRequestInheritance(
+        projects,
+        requestId,
+        requestToSend
+      );
+
+      finalRequestToSend = {
+        ...requestToSend,
+        auth: effectiveAuth,
+        headers: effectiveHeaders,
+      };
+    } catch (e) {
+      console.warn("Could not resolve inheritance, sending request as-is:", e);
+    }
+
     try {
       const res = await invoke<BoltResponse>("send_request", {
-        request: requestToSend,
+        request: finalRequestToSend,
         env,
       });
 

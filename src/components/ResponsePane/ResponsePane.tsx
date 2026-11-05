@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useRequestStore, ExtractorSource } from "../../store/requestStore";
 import { useEnvStore } from "../../store/envStore";
 import CodeMirror from "@uiw/react-codemirror";
@@ -16,10 +16,15 @@ import {
   AlertCircle,
   WifiOff,
   RefreshCw,
+  Activity,
+  Filter,
+  X,
 } from "lucide-react";
 import { buildCurlCommand } from "../../utils/curl";
 import { useToastStore } from "../../store/toastStore";
 import { CaptureVariableModal } from "../CaptureVariableModal/CaptureVariableModal";
+import { TimingWaterfallPopover } from "../TimingWaterfall/TimingWaterfallPopover";
+import { evaluateJsonPath } from "../../utils/jsonPath";
 
 export const ResponsePane: React.FC = () => {
   const { response, isLoading, activeRequest, theme, sendRequest } = useRequestStore();
@@ -44,6 +49,9 @@ export const ResponsePane: React.FC = () => {
   const [headersHeight, setHeadersHeight] = useState(120);
   const [isResizing, setIsResizing] = useState(false);
 
+  const [jsonPathQuery, setJsonPathQuery] = useState("");
+  const [isWaterfallOpen, setIsWaterfallOpen] = useState(false);
+
   // Bytes formatting helper
   const formatBytes = (bytes: number): string => {
     if (bytes === 0) return "0 B";
@@ -64,20 +72,43 @@ export const ResponsePane: React.FC = () => {
     }
   };
 
-  const isJson = (body: string): boolean => {
+  const parsedJson = useMemo(() => {
+    if (!response?.body) return null;
     try {
-      JSON.parse(body);
-      return true;
+      return JSON.parse(response.body);
     } catch {
-      return false;
+      return null;
     }
-  };
+  }, [response?.body]);
+
+  const isResponseJson = parsedJson !== null;
+
+  const filterResult = useMemo(() => {
+    if (!isResponseJson || !jsonPathQuery.trim()) return null;
+    return evaluateJsonPath(parsedJson, jsonPathQuery);
+  }, [parsedJson, isResponseJson, jsonPathQuery]);
+
+  const displayedBody = useMemo(() => {
+    if (!response) return "";
+    if (filterResult) {
+      if (filterResult.success) {
+        return filterResult.formatted || "[]";
+      }
+      return `// JSONPath syntax error: ${filterResult.error}\n\n${renderResponseBody(response.body)}`;
+    }
+    return renderResponseBody(response.body);
+  }, [response, filterResult]);
 
   // Clipboard actions
   const handleCopyBody = () => {
     if (!response) return;
-    navigator.clipboard.writeText(response.body);
-    showToast("Response body copied to clipboard", "success");
+    if (filterResult && filterResult.success && filterResult.formatted) {
+      navigator.clipboard.writeText(filterResult.formatted);
+      showToast("Filtered JSON copied to clipboard", "success");
+    } else {
+      navigator.clipboard.writeText(response.body);
+      showToast("Response body copied to clipboard", "success");
+    }
   };
 
   const handleCopyHeaders = () => {
@@ -115,6 +146,8 @@ export const ResponsePane: React.FC = () => {
       if (/^[a-zA-Z0-9_$.[\]]+$/.test(cleanSelection)) {
         initialProp = cleanSelection;
       }
+    } else if (jsonPathQuery.trim() && filterResult?.success) {
+      initialProp = jsonPathQuery.trim();
     }
 
     setCaptureModalConfig({
@@ -208,9 +241,30 @@ export const ResponsePane: React.FC = () => {
             
             {response.status !== 0 && (
               <>
-                <span className="text-text-secondary">
-                  Time: <strong className="text-text-primary">{response.time_ms} ms</strong>
-                </span>
+                {response.timing ? (
+                  <div className="relative inline-block">
+                    <button
+                      type="button"
+                      onClick={() => setIsWaterfallOpen(!isWaterfallOpen)}
+                      className="text-text-secondary hover:text-text-primary px-1.5 py-0.5 rounded hover:bg-bg-hover transition cursor-pointer flex items-center space-x-1"
+                      title="Click to view detailed network timing waterfall"
+                    >
+                      <Activity size={11} className="text-text-accent" />
+                      <span>
+                        Time: <strong className="text-text-primary">{response.time_ms} ms</strong>
+                      </span>
+                    </button>
+                    <TimingWaterfallPopover
+                      timing={response.timing}
+                      isOpen={isWaterfallOpen}
+                      onClose={() => setIsWaterfallOpen(false)}
+                    />
+                  </div>
+                ) : (
+                  <span className="text-text-secondary">
+                    Time: <strong className="text-text-primary">{response.time_ms} ms</strong>
+                  </span>
+                )}
                 <span className="text-text-secondary">
                   Size: <strong className="text-text-primary">{formatBytes(response.size_bytes)}</strong>
                 </span>
@@ -447,11 +501,50 @@ export const ResponsePane: React.FC = () => {
                 )}
               </div>
               {bodyExpanded && (
-                <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
-                  {isJson(response.body) ? (
-                    <div className="border border-border-primary rounded-sm overflow-hidden text-xs font-mono flex-1 flex flex-col min-h-0">
+                <div className="flex-1 min-h-0 overflow-hidden flex flex-col border border-border-primary rounded-sm bg-bg-secondary/20">
+                  {isResponseJson && (
+                    <div className="flex items-center space-x-2 px-2.5 py-1.5 bg-bg-secondary border-b border-border-primary text-xs flex-shrink-0">
+                      <div className="relative flex-1 flex items-center">
+                        <Filter size={11} className="absolute left-2.5 text-text-secondary pointer-events-none" />
+                        <input
+                          type="text"
+                          value={jsonPathQuery}
+                          onChange={(e) => setJsonPathQuery(e.target.value)}
+                          placeholder="Filter JSON with JSONPath (e.g. $.items[*].id or $.data)"
+                          className="w-full bg-bg-primary text-text-primary border border-border-primary hover:border-text-secondary/40 focus:border-text-accent pl-7 pr-7 py-1 rounded text-xs font-mono focus:outline-none placeholder-text-secondary/40"
+                        />
+                        {jsonPathQuery && (
+                          <button
+                            type="button"
+                            onClick={() => setJsonPathQuery("")}
+                            className="absolute right-2 text-text-secondary hover:text-text-primary p-0.5 cursor-pointer"
+                            title="Clear filter"
+                          >
+                            <X size={11} />
+                          </button>
+                        )}
+                      </div>
+
+                      {jsonPathQuery && filterResult && (
+                        <div className="flex-shrink-0">
+                          {filterResult.success ? (
+                            <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-bg-hover text-text-accent border border-border-primary">
+                              {filterResult.count} {filterResult.count === 1 ? "match" : "matches"}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-red-500/10 text-red-400 border border-red-500/30">
+                              Invalid syntax
+                            </span>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {isResponseJson ? (
+                    <div className="overflow-hidden text-xs font-mono flex-1 flex flex-col min-h-0">
                       <CodeMirror
-                        value={renderResponseBody(response.body)}
+                        value={displayedBody}
                         height="100%"
                         extensions={[json()]}
                         theme={theme === "light" ? "light" : "dark"}
@@ -461,7 +554,7 @@ export const ResponsePane: React.FC = () => {
                       />
                     </div>
                   ) : (
-                    <pre className="flex-1 w-full bg-bg-primary text-text-primary p-3 rounded border border-border-primary font-mono text-xs overflow-y-auto whitespace-pre-wrap min-h-0">
+                    <pre className="flex-1 w-full bg-bg-primary text-text-primary p-3 rounded font-mono text-xs overflow-y-auto whitespace-pre-wrap min-h-0">
                       {response.body || "(No response body returned)"}
                     </pre>
                   )}

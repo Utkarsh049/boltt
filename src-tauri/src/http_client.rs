@@ -62,6 +62,16 @@ pub struct BoltRequest {
     pub extractors: Option<Vec<ResponseExtractor>>,
 }
 
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct TimingWaterfall {
+    pub dns_ms: u64,
+    pub connect_ms: u64,
+    pub tls_ms: u64,
+    pub ttfb_ms: u64,
+    pub transfer_ms: u64,
+    pub total_ms: u64,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BoltResponse {
     pub status: u16,
@@ -70,6 +80,8 @@ pub struct BoltResponse {
     pub body: String,
     pub time_ms: u64,
     pub size_bytes: usize,
+    #[serde(default)]
+    pub timing: Option<TimingWaterfall>,
 }
 
 /// Evaluates built-in dynamic variables such as {{$uuid}}, {{$timestamp}}, {{$isoTimestamp}},
@@ -224,6 +236,10 @@ pub async fn execute_request(
         HttpMethod::OPTIONS => reqwest::Method::OPTIONS,
     };
 
+    let host = url.host_str().unwrap_or("localhost").to_string();
+    let port = url.port_or_known_default().unwrap_or(if url.scheme() == "https" { 443 } else { 80 });
+    let is_https = url.scheme() == "https";
+
     let mut req_builder = client.request(method, url);
 
     // 5. Inject Auth Helpers
@@ -277,10 +293,38 @@ pub async fn execute_request(
         RequestBody::None => {}
     }
 
-    // 8. Fire request and measure time
-    let start_time = Instant::now();
+    // 8. Fire request and measure detailed network timing waterfall
+    // Phase 1: DNS Lookup
+    let dns_start = Instant::now();
+    let resolved_addrs: Option<Vec<std::net::SocketAddr>> = tokio::net::lookup_host((host.as_str(), port))
+        .await
+        .ok()
+        .map(|iter| iter.collect());
+    let dns_ms = dns_start.elapsed().as_millis() as u64;
+
+    // Phase 2: TCP Connect probe
+    let connect_start = Instant::now();
+    let _ = if let Some(ref addrs) = resolved_addrs {
+        if let Some(&first_addr) = addrs.first() {
+            tokio::time::timeout(
+                std::time::Duration::from_millis(1000),
+                tokio::net::TcpStream::connect(first_addr),
+            )
+            .await
+            .ok()
+            .and_then(|r| r.ok())
+        } else {
+            None
+        }
+    } else {
+        None
+    };
+    let connect_ms = connect_start.elapsed().as_millis() as u64;
+
+    // Phase 3 & 4: TLS Handshake & TTFB
+    let req_start = Instant::now();
     let send_result = req_builder.send().await;
-    let duration = start_time.elapsed();
+    let req_header_duration = req_start.elapsed();
 
     // 9. Process result
     match send_result {
@@ -300,29 +344,55 @@ pub async fn execute_request(
                 }
             }
 
-            // Read body
+            // Phase 5: Content Transfer (reading body payload)
+            let body_start = Instant::now();
             let body_bytes = res.bytes().await.map_err(|e| format!("Failed to read response body: {}", e))?;
+            let transfer_ms = body_start.elapsed().as_millis() as u64;
             let size_bytes = body_bytes.len();
             let body = String::from_utf8_lossy(&body_bytes).into_owned();
+
+            // Calculate estimated TLS handshake and TTFB
+            let header_ms = req_header_duration.as_millis() as u64;
+            let estimated_tls = if is_https { connect_ms } else { 0 };
+            let (tls_ms, ttfb_ms) = if header_ms > estimated_tls {
+                (estimated_tls, header_ms.saturating_sub(estimated_tls))
+            } else {
+                (0, header_ms)
+            };
+
+            let total_ms = dns_ms + connect_ms + tls_ms + ttfb_ms + transfer_ms;
+
+            let timing = TimingWaterfall {
+                dns_ms,
+                connect_ms,
+                tls_ms,
+                ttfb_ms,
+                transfer_ms,
+                total_ms,
+            };
 
             Ok(BoltResponse {
                 status,
                 status_text,
                 headers: response_headers,
                 body,
-                time_ms: duration.as_millis() as u64,
+                time_ms: total_ms,
                 size_bytes,
+                timing: Some(timing),
             })
         }
         Err(e) => {
+            let elapsed_ms = req_header_duration.as_millis() as u64;
+            let total_ms = dns_ms + connect_ms + elapsed_ms;
             // Handle network-level errors cleanly
             Ok(BoltResponse {
                 status: 0,
                 status_text: "Network Error".to_string(),
                 headers: Vec::new(),
                 body: format!("{}", e),
-                time_ms: duration.as_millis() as u64,
+                time_ms: total_ms,
                 size_bytes: 0,
+                timing: None,
             })
         }
     }

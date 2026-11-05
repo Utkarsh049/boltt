@@ -53,6 +53,15 @@ export interface BoltRequest {
   extractors?: ResponseExtractor[];
 }
 
+export interface TimingWaterfall {
+  dns_ms: number;
+  connect_ms: number;
+  tls_ms: number;
+  ttfb_ms: number;
+  transfer_ms: number;
+  total_ms: number;
+}
+
 export interface BoltResponse {
   status: number;
   status_text: string;
@@ -60,6 +69,7 @@ export interface BoltResponse {
   body: string;
   time_ms: number;
   size_bytes: number;
+  timing?: TimingWaterfall;
 }
 
 export interface Tab {

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { UrlBar } from "./components/UrlBar/UrlBar";
 import { RequestPane } from "./components/RequestPane/RequestPane";
-import { Palette, RefreshCw, Folder as FolderIcon, Globe, Clock, Eye, EyeOff, Plus, Minus, Square, X, Trash2, Download } from "lucide-react";
+import { Palette, RefreshCw, Folder as FolderIcon, Globe, Clock, Eye, EyeOff, Plus, Minus, Square, X, Trash2, Download, Search } from "lucide-react";
 import "./App.css";
 import { Group, Panel, Separator, type PanelImperativeHandle } from "react-resizable-panels";
 import { ResponsePane } from "./components/ResponsePane/ResponsePane";
@@ -14,6 +14,7 @@ import { SaveRequestModal } from "./components/SaveRequestModal/SaveRequestModal
 import { UpdateToast } from "./components/UpdateToast/UpdateToast";
 import { ReleaseNotesModal } from "./components/ReleaseNotesModal/ReleaseNotesModal";
 import { TabBar } from "./components/TabBar/TabBar";
+import { CommandPalette } from "./components/CommandPalette/CommandPalette";
 import { useProjectsStore } from "./store/projectsStore";
 import { useHistoryStore } from "./store/historyStore";
 import { HistoryPanel } from "./components/HistoryPanel/HistoryPanel";
@@ -41,6 +42,7 @@ function App() {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isAppLoading, setIsAppLoading] = useState(true);
+  const [isCommandPaletteOpen, setIsCommandPaletteOpen] = useState(false);
 
   const [isThemeDropdownOpen, setIsThemeDropdownOpen] = useState(false);
   const themeDropdownRef = useRef<HTMLDivElement>(null);
@@ -305,8 +307,16 @@ function App() {
         return;
       }
 
+      // Open Command Palette (Ctrl/Cmd + K)
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setIsCommandPaletteOpen((prev) => !prev);
+        return;
+      }
+
       // Close open modals (Escape)
       if (e.key === "Escape") {
+        setIsCommandPaletteOpen(false);
         useEnvStore.getState().setModalOpen(false);
         useProjectsStore.getState().setSaveModalOpen(false);
         window.dispatchEvent(new CustomEvent("close-all-modals"));
@@ -556,6 +566,18 @@ function App() {
           )}
         </div>
         <div className="flex items-center space-x-3 text-xs text-[#c0c7d3]">
+          <button
+            type="button"
+            onClick={() => setIsCommandPaletteOpen(true)}
+            className="flex items-center space-x-2 px-2.5 py-1 bg-bg-secondary hover:bg-bg-hover text-text-secondary hover:text-text-primary rounded border border-border-primary text-xs transition cursor-pointer"
+            title="Open Command Palette (Ctrl+K or Cmd+K)"
+          >
+            <Search size={13} className="text-text-accent" />
+            <span className="hidden sm:inline text-[11px]">Command Palette</span>
+            <kbd className="font-mono text-[10px] px-1 py-0.2 rounded bg-bg-tertiary border border-border-primary text-text-tertiary">
+              Ctrl+K
+            </kbd>
+          </button>
           <EnvironmentDropdown />
           <div className="relative" ref={themeDropdownRef}>
             <button
@@ -929,6 +951,11 @@ function App() {
       <UpdateToast />
       <ReleaseNotesModal />
       <ToastList />
+      <CommandPalette
+        isOpen={isCommandPaletteOpen}
+        onClose={() => setIsCommandPaletteOpen(false)}
+        onNavigateSidebar={(tab) => setSidebarTab(tab)}
+      />
     </div>
   );
 }

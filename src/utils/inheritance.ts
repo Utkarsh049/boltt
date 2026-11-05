@@ -60,6 +60,29 @@ export const findFolderAncestry = (
 };
 
 /**
+ * Finds the chain of parent folders leading up to a specific folder ID (excluding the target folder itself).
+ */
+export const findFolderParentChain = (
+  project: Project,
+  targetFolderId: string
+): Folder[] => {
+  const searchInFolders = (folders: Folder[], currentChain: Folder[]): Folder[] | null => {
+    for (const folder of folders) {
+      if (folder.id === targetFolderId) {
+        return currentChain;
+      }
+      if (folder.subfolders && folder.subfolders.length > 0) {
+        const found = searchInFolders(folder.subfolders, [...currentChain, folder]);
+        if (found) return found;
+      }
+    }
+    return null;
+  };
+
+  return searchInFolders(project.folders, []) || [];
+};
+
+/**
  * Traverses upward through ancestor folders (nearest parent up to root)
  * to resolve effective authentication when request auth is set to "Inherit".
  */

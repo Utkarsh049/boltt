@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useRequestStore, KeyValue, RequestBody, ResponseExtractor, ExtractorSource } from "../../store/requestStore";
 import { useEnvStore } from "../../store/envStore";
+import { useProjectsStore } from "../../store/projectsStore";
+import { findFolderAncestry, resolveEffectiveAuth, resolveRequestInheritance } from "../../utils/inheritance";
 import { KVEditor } from "../KVEditor/KVEditor";
 import CodeMirror from "@uiw/react-codemirror";
 import { json } from "@codemirror/lang-json";
@@ -16,6 +18,7 @@ import {
   Key,
   User,
   ChevronDown,
+  ChevronRight,
   Check,
   Sparkles,
   Link2,
@@ -103,11 +106,34 @@ export const RequestPane: React.FC = () => {
     theme,
   } = useRequestStore();
 
+  const projects = useProjectsStore((state) => state.projects);
+  const activeRequestId = useProjectsStore((state) => state.activeRequestId);
+
   const [isAuthDropdownOpen, setIsAuthDropdownOpen] = useState(false);
+  const [showInheritedHeaders, setShowInheritedHeaders] = useState(true);
   const authDropdownRef = useRef<HTMLDivElement>(null);
 
   const activeTabObj = tabs.find((t) => t.id === activeTabId);
   const bodyCache = activeTabObj?.bodyCache;
+
+  // Determine current request ID (request id, activeRequestId from projectsStore, or activeTabId)
+  const currentRequestId = activeRequest.id || activeRequestId || activeTabId;
+
+  // Resolve folder ancestry & inheritance
+  const ancestry = useMemo(() => {
+    return currentRequestId ? findFolderAncestry(projects, currentRequestId) : null;
+  }, [projects, currentRequestId]);
+
+  const inheritance = useMemo(() => {
+    return resolveRequestInheritance(projects, currentRequestId, activeRequest);
+  }, [projects, currentRequestId, activeRequest]);
+
+  // Auth that would be inherited if set to "Inherit"
+  const parentInheritedAuth = useMemo(() => {
+    if (!ancestry || ancestry.folderChain.length === 0) return null;
+    const res = resolveEffectiveAuth({ type: "Inherit" }, ancestry.folderChain);
+    return res.effectiveAuth.type !== "None" ? res : null;
+  }, [ancestry]);
 
   const completionExtension = useMemo(() => {
     return autocompletion({
@@ -132,7 +158,8 @@ export const RequestPane: React.FC = () => {
   }, []);
 
   const authOptions = [
-    { value: "None", label: "Inherit / None", icon: ShieldOff },
+    { value: "Inherit", label: "Inherit from parent", icon: Link2 },
+    { value: "None", label: "No Auth", icon: ShieldOff },
     { value: "Bearer", label: "Bearer Token", icon: Key },
     { value: "Basic", label: "Basic Auth", icon: User },
   ] as const;
@@ -143,6 +170,7 @@ export const RequestPane: React.FC = () => {
   // Active counts
   const activeParamsCount = activeRequest.params.filter((p) => p.enabled && p.key).length;
   const activeHeadersCount = activeRequest.headers.filter((h) => h.enabled && h.key).length;
+  const inheritedHeadersCount = inheritance.inheritedHeaders.filter((h) => h.enabled && h.key).length;
 
   let activeBodyCount = 0;
   if (activeRequest.body.type === "FormData") {
@@ -153,7 +181,10 @@ export const RequestPane: React.FC = () => {
     activeBodyCount = 1;
   }
 
-  const isAuthActive = activeRequest.auth.type !== "None";
+  const isAuthActive =
+    activeRequest.auth.type === "Bearer" ||
+    activeRequest.auth.type === "Basic" ||
+    (activeRequest.auth.type === "Inherit" && inheritance.effectiveAuth.type !== "None");
 
   const extractors = activeRequest.extractors || [];
   const activeExtractorsCount = extractors.filter((e) => e.enabled && e.targetVariable.trim()).length;
@@ -229,8 +260,10 @@ export const RequestPane: React.FC = () => {
   };
 
   // Auth helper handlers
-  const handleAuthTypeChange = (type: "None" | "Bearer" | "Basic") => {
-    if (type === "None") {
+  const handleAuthTypeChange = (type: "Inherit" | "None" | "Bearer" | "Basic") => {
+    if (type === "Inherit") {
+      setAuth({ type: "Inherit" });
+    } else if (type === "None") {
       setAuth({ type: "None" });
     } else if (type === "Bearer") {
       setAuth({ type: "Bearer", config: { token: "" } });
@@ -278,6 +311,14 @@ export const RequestPane: React.FC = () => {
               {activeHeadersCount}
             </span>
           )}
+          {inheritedHeadersCount > 0 && (
+            <span
+              className="bg-bg-tertiary text-text-secondary text-[10px] px-1.5 rounded-full border border-border-primary font-mono"
+              title={`${inheritedHeadersCount} headers cascading from parent folders`}
+            >
+              +{inheritedHeadersCount}
+            </span>
+          )}
         </button>
         <button onClick={() => setActiveTab("body")} className={tabClass("body")}>
           <Code2 size={13} />
@@ -323,8 +364,61 @@ export const RequestPane: React.FC = () => {
 
         {/* Headers Tab */}
         {activeTab === "headers" && (
-          <div className="animate-tab-fade space-y-2">
-            <div className="text-[11px] text-text-secondary mb-2 font-semibold uppercase tracking-wider">
+          <div className="animate-tab-fade space-y-3">
+            {/* Inherited Headers Cascade */}
+            {inheritance.inheritedHeaders.length > 0 && (
+              <div className="border border-border-primary rounded-sm bg-bg-secondary/40 overflow-hidden">
+                <button
+                  type="button"
+                  onClick={() => setShowInheritedHeaders(!showInheritedHeaders)}
+                  className="w-full flex items-center justify-between px-3 py-2 bg-bg-tertiary text-xs font-semibold text-text-secondary hover:text-text-primary transition cursor-pointer select-none"
+                >
+                  <div className="flex items-center space-x-2">
+                    <Link2 size={12} className="text-text-accent" />
+                    <span>Inherited Headers from Folders</span>
+                    <span className="bg-bg-primary text-text-accent text-[10px] px-1.5 rounded border border-border-primary font-mono">
+                      {inheritance.inheritedHeaders.length}
+                    </span>
+                  </div>
+                  {showInheritedHeaders ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+                </button>
+
+                {showInheritedHeaders && (
+                  <div className="p-2 space-y-1 divide-y divide-border-primary/40 font-mono text-xs">
+                    {inheritance.inheritedHeaders.map((ih, idx) => {
+                      const isOverridden = activeRequest.headers.some(
+                        (rh) => rh.enabled && rh.key.trim().toLowerCase() === ih.key.trim().toLowerCase()
+                      );
+                      return (
+                        <div key={idx} className="flex items-center justify-between py-1 px-1 text-[11px]">
+                          <div className="flex items-center space-x-2 min-w-0">
+                            <span className={`font-semibold ${isOverridden ? "line-through text-text-secondary/50" : "text-text-primary"}`}>
+                              {ih.key}:
+                            </span>
+                            <span className={`truncate ${isOverridden ? "line-through text-text-secondary/40" : "text-text-secondary"}`}>
+                              {ih.value}
+                            </span>
+                          </div>
+                          <div className="flex-shrink-0 ml-2">
+                            {isOverridden ? (
+                              <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-bg-primary text-text-secondary/60 border border-border-primary">
+                                Overridden
+                              </span>
+                            ) : (
+                              <span className="text-[9px] uppercase px-1.5 py-0.5 rounded bg-bg-hover text-text-accent border border-border-primary">
+                                Cascading
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="text-[11px] text-text-secondary font-semibold uppercase tracking-wider">
               Request Headers
             </div>
             <KVEditor
@@ -436,6 +530,25 @@ export const RequestPane: React.FC = () => {
         {/* Auth Tab */}
         {activeTab === "auth" && (
           <div className="animate-tab-fade space-y-4">
+            {/* Parent Auth Override Notice (shown when request has explicit auth or None, but parent folder has auth) */}
+            {activeRequest.auth.type !== "Inherit" && parentInheritedAuth && (
+              <div className="flex items-center justify-between p-2.5 bg-bg-tertiary border border-border-primary rounded-sm text-xs max-w-lg">
+                <div className="flex items-center space-x-2 text-text-secondary min-w-0">
+                  <Link2 size={13} className="text-text-accent flex-shrink-0" />
+                  <span className="truncate">
+                    Parent folder <strong className="text-text-primary">"{parentInheritedAuth.inheritedFromFolderName}"</strong> provides {parentInheritedAuth.effectiveAuth.type} Auth.
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setAuth({ type: "Inherit" })}
+                  className="px-2 py-1 text-[11px] bg-bg-primary hover:bg-bg-hover text-text-accent border border-border-primary rounded transition cursor-pointer flex-shrink-0 ml-3 font-medium"
+                >
+                  Use Inherited Auth
+                </button>
+              </div>
+            )}
+
             {/* Auth Dropdown selector type */}
             <div className="flex items-center space-x-3 mb-4">
               <label className="text-xs text-text-secondary">Auth Type:</label>
@@ -443,17 +556,17 @@ export const RequestPane: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsAuthDropdownOpen(!isAuthDropdownOpen)}
-                  className="flex items-center justify-between px-3 py-1.5 min-w-[150px] bg-bg-tertiary text-text-primary border border-border-primary rounded-sm text-xs font-medium cursor-pointer select-none hover:bg-bg-hover transition duration-150 focus:outline-none focus:border-text-accent"
+                  className="flex items-center justify-between px-3 py-1.5 min-w-[170px] bg-bg-tertiary text-text-primary border border-border-primary rounded-sm text-xs font-medium cursor-pointer select-none hover:bg-bg-hover transition duration-150 focus:outline-none focus:border-text-accent"
                 >
                   <div className="flex items-center space-x-2">
-                    <SelectedIcon size={13} className="text-text-secondary" />
+                    <SelectedIcon size={13} className="text-text-accent" />
                     <span>{selectedOption.label}</span>
                   </div>
                   <ChevronDown size={14} className="text-text-secondary ml-1 flex-shrink-0" />
                 </button>
 
                 {isAuthDropdownOpen && (
-                  <div className="absolute left-0 mt-1 w-[160px] bg-bg-secondary border border-border-primary rounded shadow-2xl z-50 py-1 overflow-hidden font-sans">
+                  <div className="absolute left-0 mt-1 w-[180px] bg-bg-secondary border border-border-primary rounded shadow-2xl z-50 py-1 overflow-hidden font-sans">
                     {authOptions.map((opt) => {
                       const Icon = opt.icon;
                       const isSelected = activeRequest.auth.type === opt.value;
@@ -484,6 +597,62 @@ export const RequestPane: React.FC = () => {
                 )}
               </div>
             </div>
+
+            {/* Inherit from Parent Tab Panel */}
+            {activeRequest.auth.type === "Inherit" && (
+              <div className="space-y-3 p-4 bg-bg-secondary border border-border-primary rounded-sm max-w-lg">
+                <div className="flex items-center space-x-2 text-text-accent">
+                  <Link2 size={14} className="flex-shrink-0" />
+                  <span className="font-semibold text-xs">
+                    {inheritance.inheritedFromFolderName
+                      ? `Inheriting from folder "${inheritance.inheritedFromFolderName}"`
+                      : ancestry && ancestry.folderChain.length > 0
+                      ? "Inheriting from parent folders (No auth configured)"
+                      : "Inheriting Auth (Request not in a saved folder)"}
+                  </span>
+                </div>
+
+                {inheritance.effectiveAuth.type === "Bearer" && (
+                  <div className="space-y-2 pt-2 border-t border-border-primary/50 text-xs font-mono">
+                    <div className="text-text-secondary text-[11px]">
+                      Effective Type: <span className="text-text-primary font-bold">Bearer Token</span>
+                    </div>
+                    <div className="text-[11px] text-text-secondary">
+                      Sent as:{" "}
+                      <code className="text-amber-300 font-mono select-all break-all bg-bg-primary px-1.5 py-1 rounded border border-border-primary">
+                        Authorization: Bearer {inheritance.effectiveAuth.config.token || "<empty>"}
+                      </code>
+                    </div>
+                  </div>
+                )}
+
+                {inheritance.effectiveAuth.type === "Basic" && (
+                  <div className="space-y-2 pt-2 border-t border-border-primary/50 text-xs font-mono">
+                    <div className="text-text-secondary text-[11px]">
+                      Effective Type: <span className="text-text-primary font-bold">Basic Auth</span> (User: {inheritance.effectiveAuth.config.username || "<empty>"})
+                    </div>
+                    <div className="text-[11px] text-text-secondary">
+                      Sent as:{" "}
+                      <code className="text-amber-300 font-mono bg-bg-primary px-1.5 py-0.5 rounded border border-border-primary">
+                        Authorization: Basic {
+                          inheritance.effectiveAuth.config.username || inheritance.effectiveAuth.config.password
+                            ? btoa(`${inheritance.effectiveAuth.config.username}:${inheritance.effectiveAuth.config.password}`)
+                            : "<base64 encoded credentials>"
+                        }
+                      </code>
+                    </div>
+                  </div>
+                )}
+
+                {inheritance.effectiveAuth.type === "None" && (
+                  <div className="text-text-secondary text-xs pt-1 leading-relaxed">
+                    {ancestry && ancestry.folderChain.length > 0
+                      ? "None of the ancestor folders have authorization configured. This request will be sent without auth headers."
+                      : "Save this request into a project folder with configured auth to inherit credentials."}
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Bearer Token Form */}
             {activeRequest.auth.type === "Bearer" && (
@@ -545,7 +714,7 @@ export const RequestPane: React.FC = () => {
               </div>
             )}
 
-            {/* Inherit / None state */}
+            {/* None state */}
             {activeRequest.auth.type === "None" && (
               <div className="py-10 text-center border border-dashed border-border-primary rounded bg-bg-secondary/20">
                 <span className="text-text-secondary text-xs">

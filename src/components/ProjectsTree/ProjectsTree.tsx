@@ -15,9 +15,11 @@ import {
   FilePlus,
   Briefcase,
   FileDown,
+  Sliders,
   X
 } from "lucide-react";
 import { ExportPDFModal } from "../ExportPDFModal/ExportPDFModal";
+import { FolderSettingsModal } from "../FolderSettingsModal/FolderSettingsModal";
 import packageInfo from "../../../package.json";
 
 const countRequestsRecursive = (folder: Folder): number => {
@@ -85,6 +87,12 @@ export const ProjectsTree: React.FC = () => {
     requestsCount: number;
   } | null>(null);
 
+  const [folderSettingsModal, setFolderSettingsModal] = useState<{
+    isOpen: boolean;
+    projectId: string;
+    folder: Folder;
+  } | null>(null);
+
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -115,6 +123,7 @@ export const ProjectsTree: React.FC = () => {
     const handleClose = () => {
       setNamingDialog(null);
       setPdfExportModal(null);
+      setFolderSettingsModal(null);
     };
     window.addEventListener("close-all-modals", handleClose);
     return () => window.removeEventListener("close-all-modals", handleClose);
@@ -296,6 +305,8 @@ export const ProjectsTree: React.FC = () => {
       name: `${folder.name} Copy`,
       requests: duplicatedRequests,
       subfolders: duplicatedSubfolders,
+      auth: folder.auth ? JSON.parse(JSON.stringify(folder.auth)) : undefined,
+      headers: folder.headers ? JSON.parse(JSON.stringify(folder.headers)) : undefined,
     };
   };
 
@@ -723,6 +734,22 @@ export const ProjectsTree: React.FC = () => {
                 <Copy size={13} className="text-text-secondary" />
                 <span>Duplicate Folder</span>
               </button>
+              <button
+                onClick={() => {
+                  if (contextMenu.folder) {
+                    setFolderSettingsModal({
+                      isOpen: true,
+                      projectId: contextMenu.projectId,
+                      folder: contextMenu.folder,
+                    });
+                    setContextMenu(null);
+                  }
+                }}
+                className="flex items-center space-x-2 w-full px-2.5 py-1.5 text-xs text-text-primary hover:bg-bg-hover rounded-sm text-left transition cursor-pointer"
+              >
+                <Sliders size={13} className="text-text-secondary" />
+                <span>Folder Settings</span>
+              </button>
               <div className="my-1 border-t border-border-primary"></div>
               <button
                 onClick={() => {
@@ -858,6 +885,27 @@ export const ProjectsTree: React.FC = () => {
           requestsCount={pdfExportModal.requestsCount}
         />
       )}
+
+      {/* Folder Settings Modal */}
+      {folderSettingsModal?.isOpen && (() => {
+        const liveProj = projects.find((p) => p.id === folderSettingsModal.projectId);
+        const findFolderRecursive = (folders: Folder[]): Folder | undefined => {
+          for (const f of folders) {
+            if (f.id === folderSettingsModal.folder.id) return f;
+            const sub = findFolderRecursive(f.subfolders);
+            if (sub) return sub;
+          }
+        };
+        const currentFolder = (liveProj && findFolderRecursive(liveProj.folders)) || folderSettingsModal.folder;
+        return (
+          <FolderSettingsModal
+            isOpen={folderSettingsModal.isOpen}
+            onClose={() => setFolderSettingsModal(null)}
+            projectId={folderSettingsModal.projectId}
+            folder={currentFolder}
+          />
+        );
+      })()}
     </div>
   );
 };

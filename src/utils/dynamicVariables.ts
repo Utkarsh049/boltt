@@ -109,16 +109,19 @@ export const substituteClientVariables = (
 
 /**
  * CodeMirror completion source for `{{` variable interpolation.
- * Autocompletes both active environment variables and built-in dynamic variables.
+ * Autocompletes both active environment variables (with masked secrets) and built-in dynamic variables.
  */
 export const createVariableCompletionSource = (
-  getEnvVars: () => Record<string, string>
+  getEnvVars: () => Record<string, string>,
+  getSecretKeys?: () => Set<string>
 ): CompletionSource => {
   return (context: CompletionContext): CompletionResult | null => {
     const word = context.matchBefore(/\{\{[\w$.]*/);
     if (!word) return null;
 
     const envVars = getEnvVars();
+    const secretKeys = getSecretKeys ? getSecretKeys() : new Set<string>();
+
     const options = [
       ...DYNAMIC_VARIABLES.map((v) => ({
         label: v.label,
@@ -128,14 +131,25 @@ export const createVariableCompletionSource = (
         apply: v.label,
         boost: 2,
       })),
-      ...Object.entries(envVars).map(([key, val]) => ({
-        label: `{{${key}}}`,
-        detail: val ? (val.length > 25 ? `${val.substring(0, 25)}...` : val) : "(empty)",
-        info: `Environment Variable: ${key} = "${val}"`,
-        type: "variable",
-        apply: `{{${key}}}`,
-        boost: 1,
-      })),
+      ...Object.entries(envVars).map(([key, val]) => {
+        const isSecret = secretKeys.has(key);
+        return {
+          label: `{{${key}}}`,
+          detail: isSecret
+            ? "•••••••• (secret)"
+            : val
+            ? val.length > 25
+              ? `${val.substring(0, 25)}...`
+              : val
+            : "(empty)",
+          info: isSecret
+            ? `Secret Variable: {{${key}}} (value masked)`
+            : `Environment Variable: ${key} = "${val}"`,
+          type: isSecret ? "constant" : "variable",
+          apply: `{{${key}}}`,
+          boost: 1,
+        };
+      }),
     ];
 
     return {

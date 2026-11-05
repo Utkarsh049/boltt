@@ -6,6 +6,7 @@ export interface Variable {
   key: string;
   value: string;
   enabled: boolean;
+  is_secret?: boolean;
 }
 
 export interface Environment {
@@ -72,6 +73,7 @@ interface EnvStore {
   deleteEnvironment: (id: string) => Promise<void>;
   setModalOpen: (isOpen: boolean) => void;
   getFlatActiveVariables: () => Record<string, string>;
+  getSecretKeys: () => Set<string>;
   setVariableInActiveEnvironment: (key: string, value: string) => Promise<boolean>;
 }
 
@@ -243,6 +245,20 @@ export const useEnvStore = create<EnvStore>((set, get) => ({
       }
     }
     return flatVars;
+  },
+
+  getSecretKeys: () => {
+    const { environments, activeId } = get();
+    const secretKeys = new Set<string>();
+    if (!activeId) return secretKeys;
+    const activeEnv = environments.find((e) => e.id === activeId);
+    if (!activeEnv) return secretKeys;
+    for (const v of activeEnv.variables) {
+      if (v.is_secret && v.key.trim()) {
+        secretKeys.add(v.key.trim());
+      }
+    }
+    return secretKeys;
   },
 
   setVariableInActiveEnvironment: async (key: string, value: string): Promise<boolean> => {

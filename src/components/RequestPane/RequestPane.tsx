@@ -138,7 +138,10 @@ export const RequestPane: React.FC = () => {
   const completionExtension = useMemo(() => {
     return autocompletion({
       override: [
-        createVariableCompletionSource(() => useEnvStore.getState().getFlatActiveVariables()),
+        createVariableCompletionSource(
+          () => useEnvStore.getState().getFlatActiveVariables(),
+          () => useEnvStore.getState().getSecretKeys()
+        ),
       ],
       defaultKeymap: true,
     });

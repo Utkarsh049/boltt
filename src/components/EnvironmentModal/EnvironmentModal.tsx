@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useEnvStore, Environment, Variable, getGroupFromId } from "../../store/envStore";
-import { X, Plus, Trash2, Eye, EyeOff, Save, Key, Minus, Square } from "lucide-react";
+import { X, Plus, Trash2, Eye, EyeOff, Save, Key, Minus, Square, Lock, Unlock, ShieldCheck } from "lucide-react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 
 export const EnvironmentModal: React.FC = () => {
@@ -47,11 +47,11 @@ export const EnvironmentModal: React.FC = () => {
       // For each environment, make sure there is at least one blank row if the last row is not empty
       clonedEnvs.forEach((env) => {
         if (env.variables.length === 0) {
-          env.variables.push({ key: "", value: "", enabled: true });
+          env.variables.push({ key: "", value: "", enabled: true, is_secret: false });
         } else {
           const last = env.variables[env.variables.length - 1];
           if (last.key || last.value) {
-            env.variables.push({ key: "", value: "", enabled: true });
+            env.variables.push({ key: "", value: "", enabled: true, is_secret: false });
           }
         }
       });
@@ -152,7 +152,7 @@ export const EnvironmentModal: React.FC = () => {
       id: `${targetGroup}:${crypto.randomUUID()}`,
       name: `New Env ${localEnvs.length + 1}`,
       variables: [
-        { key: "", value: "", enabled: true } // start with one ghost-like row
+        { key: "", value: "", enabled: true, is_secret: false } // start with one ghost-like row
       ],
     };
     setLocalEnvs([...localEnvs, newEnv]);
@@ -190,7 +190,7 @@ export const EnvironmentModal: React.FC = () => {
     // Auto-add ghost row logic: if typing in the last row and key/value are not empty, append a new blank row
     const lastRow = updatedVars[updatedVars.length - 1];
     if (index === updatedVars.length - 1 && (lastRow.key || lastRow.value)) {
-      updatedVars.push({ key: "", value: "", enabled: true });
+      updatedVars.push({ key: "", value: "", enabled: true, is_secret: false });
     }
 
     setLocalEnvs(
@@ -202,7 +202,7 @@ export const EnvironmentModal: React.FC = () => {
 
   const handleAddVariableRow = () => {
     if (!selectedEnvId || !selectedEnv) return;
-    const updatedVars = [...selectedEnv.variables, { key: "", value: "", enabled: true }];
+    const updatedVars = [...selectedEnv.variables, { key: "", value: "", enabled: true, is_secret: false }];
     setLocalEnvs(
       localEnvs.map((env) =>
         env.id === selectedEnvId ? { ...env, variables: updatedVars } : env
@@ -216,7 +216,7 @@ export const EnvironmentModal: React.FC = () => {
     
     // Ensure there is at least one blank row
     if (updatedVars.length === 0) {
-      updatedVars = [{ key: "", value: "", enabled: true }];
+      updatedVars = [{ key: "", value: "", enabled: true, is_secret: false }];
     }
 
     setLocalEnvs(
@@ -227,12 +227,12 @@ export const EnvironmentModal: React.FC = () => {
   };
 
   // Toggle mask state for a specific row
-  const toggleValueVisibility = (rowIdx: number) => {
+  const toggleValueVisibility = (rowIdx: number, isCurrentlyVisible: boolean) => {
     if (!selectedEnvId) return;
     const key = `${selectedEnvId}-${rowIdx}`;
     setVisibleValues({
       ...visibleValues,
-      [key]: !visibleValues[key],
+      [key]: !isCurrentlyVisible,
     });
   };
 
@@ -250,7 +250,9 @@ export const EnvironmentModal: React.FC = () => {
     // Save/Update environments from local state
     for (const env of localEnvs) {
       // Clean up variables: remove blank trailing rows
-      const cleanedVars = env.variables.filter((v) => v.key.trim() || v.value.trim());
+      const cleanedVars = env.variables
+        .filter((v) => v.key.trim() || v.value.trim())
+        .map((v) => ({ ...v, is_secret: !!v.is_secret }));
       await saveEnvironment({
         ...env,
         variables: cleanedVars,
@@ -378,6 +380,14 @@ export const EnvironmentModal: React.FC = () => {
                 />
               </div>
 
+              {/* Git-safe Secrets Separation Banner */}
+              <div className="flex items-center space-x-2 px-3 py-1.5 bg-bg-primary/50 border border-border-primary rounded text-[11px] text-text-secondary flex-shrink-0">
+                <ShieldCheck size={13} className="text-text-accent flex-shrink-0" />
+                <span>
+                  Mark private variables with <Lock size={11} className="inline text-amber-400 mx-0.5" /> to save them in <code className="text-amber-300 font-mono text-[10px]">.boltt.secrets.json</code> (excluded from Git).
+                </span>
+              </div>
+
               {/* Variable Grid */}
               <div className="flex-1 flex flex-col min-h-0">
                 <div className="flex items-center justify-between mb-2 flex-shrink-0">
@@ -399,13 +409,19 @@ export const EnvironmentModal: React.FC = () => {
                     <div className="w-8 flex justify-center">Active</div>
                     <div className="flex-1 px-2">Key</div>
                     <div className="flex-1 px-2">Value</div>
-                    <div className="w-16 flex justify-center">Actions</div>
+                    <div className="w-12 flex justify-center" title="Toggle Secret status (stored in .boltt.secrets.json)">Secret</div>
+                    <div className="w-12 flex justify-center">Actions</div>
                   </div>
 
                   {/* Variable Rows */}
                   <div className="flex-1 overflow-y-auto divide-y divide-border-primary min-h-0">
                     {selectedEnv.variables.map((variable, index) => {
-                      const isValueVisible = visibleValues[`${selectedEnv.id}-${index}`];
+                      const isSecret = !!variable.is_secret;
+                      const hasExplicitToggle = `${selectedEnv.id}-${index}` in visibleValues;
+                      const isValueVisible = hasExplicitToggle
+                        ? visibleValues[`${selectedEnv.id}-${index}`]
+                        : !isSecret;
+
                       return (
                         <div key={index} className="group flex items-center py-1 px-2 hover:bg-bg-tertiary/30">
                           {/* Checkbox */}
@@ -439,23 +455,47 @@ export const EnvironmentModal: React.FC = () => {
                               type={isValueVisible ? "text" : "password"}
                               value={variable.value}
                               onChange={(e) => handleVariableChange(index, "value", e.target.value)}
-                              className="flex-1 bg-transparent border-0 focus:ring-0 focus:outline-none text-xs font-mono text-green-300 placeholder-text-secondary/40"
-                              placeholder="value"
+                              className={`flex-1 bg-transparent border-0 focus:ring-0 focus:outline-none text-xs font-mono placeholder-text-secondary/40 ${
+                                isSecret ? "text-amber-300" : "text-green-300"
+                              }`}
+                              placeholder={isSecret ? "secret value" : "value"}
                             />
-                            {(variable.value.length > 0) && (
+                            {variable.value.length > 0 && (
                               <button
-                                onClick={() => toggleValueVisibility(index)}
+                                type="button"
+                                onClick={() => toggleValueVisibility(index, isValueVisible)}
                                 className="text-text-secondary hover:text-text-primary transition p-0.5 cursor-pointer flex-shrink-0"
-                                title={isValueVisible ? "Hide value" : "Show value"}
+                                title={isValueVisible ? "Mask value" : "Show value"}
                               >
                                 {isValueVisible ? <EyeOff size={11} /> : <Eye size={11} />}
                               </button>
                             )}
                           </div>
 
-                          {/* Actions */}
-                          <div className="w-16 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          {/* Secret Toggle */}
+                          <div className="w-12 flex justify-center">
                             <button
+                              type="button"
+                              onClick={() => handleVariableChange(index, "is_secret", !isSecret)}
+                              className={`p-1 rounded transition cursor-pointer flex items-center justify-center ${
+                                isSecret
+                                  ? "bg-amber-400/10 text-amber-400 border border-amber-400/30 hover:bg-amber-400/20"
+                                  : "text-text-secondary/50 hover:text-text-primary hover:bg-bg-hover"
+                              }`}
+                              title={
+                                isSecret
+                                  ? "Secret Variable: Stored in .boltt.secrets.json (Git-ignored). Click to make public."
+                                  : "Public Variable: Stored in environments.json (Git-tracked). Click to make secret."
+                              }
+                            >
+                              {isSecret ? <Lock size={12} /> : <Unlock size={12} />}
+                            </button>
+                          </div>
+
+                          {/* Actions */}
+                          <div className="w-12 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button
+                              type="button"
                               onClick={() => handleDeleteVariable(index)}
                               className="text-text-secondary hover:text-red-400 p-1 cursor-pointer flex items-center justify-center"
                               title="Delete Variable"

@@ -123,5 +123,37 @@ describe("dynamicVariables", () => {
       expect(labels).toContain("{{baseUrl}}");
       expect(labels).toContain("{{apiKey}}");
     });
+
+    it("masks secret variable values in autocomplete suggestions", () => {
+      const source = createVariableCompletionSource(
+        () => ({
+          publicVar: "normal-value",
+          secretToken: "super-secret-password",
+        }),
+        () => new Set(["secretToken"])
+      );
+
+      const mockContext: any = {
+        matchBefore: (regex: RegExp) => {
+          if (regex.test("{{")) return { from: 0, to: 2, text: "{{" };
+          return null;
+        },
+      };
+
+      const result = source(mockContext);
+      expect(result).not.toBeNull();
+      const completion = result as CompletionResult;
+
+      const secretOption = completion.options.find((o) => o.label === "{{secretToken}}");
+      expect(secretOption).toBeDefined();
+      expect(secretOption?.detail).toBe("•••••••• (secret)");
+      expect(secretOption?.info).toContain("Secret Variable: {{secretToken}} (value masked)");
+      expect(secretOption?.info).not.toContain("super-secret-password");
+
+      const publicOption = completion.options.find((o) => o.label === "{{publicVar}}");
+      expect(publicOption).toBeDefined();
+      expect(publicOption?.detail).toBe("normal-value");
+      expect(publicOption?.info).toContain("normal-value");
+    });
   });
 });

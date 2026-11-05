@@ -19,12 +19,14 @@ import {
   Activity,
   Filter,
   X,
+  GitCompare,
 } from "lucide-react";
 import { buildCurlCommand } from "../../utils/curl";
 import { useToastStore } from "../../store/toastStore";
 import { CaptureVariableModal } from "../CaptureVariableModal/CaptureVariableModal";
 import { TimingWaterfallPopover } from "../TimingWaterfall/TimingWaterfallPopover";
 import { evaluateJsonPath } from "../../utils/jsonPath";
+import { ResponseDiffModal } from "../ResponseDiff/ResponseDiffModal";
 
 export const ResponsePane: React.FC = () => {
   const { response, isLoading, activeRequest, theme, sendRequest } = useRequestStore();
@@ -51,6 +53,7 @@ export const ResponsePane: React.FC = () => {
 
   const [jsonPathQuery, setJsonPathQuery] = useState("");
   const [isWaterfallOpen, setIsWaterfallOpen] = useState(false);
+  const [isDiffModalOpen, setIsDiffModalOpen] = useState(false);
 
   // Bytes formatting helper
   const formatBytes = (bytes: number): string => {
@@ -268,6 +271,15 @@ export const ResponsePane: React.FC = () => {
                 <span className="text-text-secondary">
                   Size: <strong className="text-text-primary">{formatBytes(response.size_bytes)}</strong>
                 </span>
+                <button
+                  type="button"
+                  onClick={() => setIsDiffModalOpen(true)}
+                  className="text-text-secondary hover:text-text-primary px-1.5 py-0.5 rounded hover:bg-bg-hover transition cursor-pointer flex items-center space-x-1"
+                  title="Compare response with baseline"
+                >
+                  <GitCompare size={11} className="text-text-accent" />
+                  <span>Diff</span>
+                </button>
               </>
             )}
           </div>
@@ -370,6 +382,14 @@ export const ResponsePane: React.FC = () => {
           
           {/* Quick Actions Panel */}
           <div className="flex items-center justify-end space-x-1.5 border border-border-primary bg-bg-tertiary py-1 px-2 flex-shrink-0 rounded-t-sm border-b-0">
+            <button
+              onClick={() => setIsDiffModalOpen(true)}
+              className="p-1 hover:bg-bg-hover text-text-secondary hover:text-text-primary border border-transparent hover:border-border-primary rounded-sm transition flex items-center space-x-1 text-[11px] cursor-pointer"
+              title="Compare response with previous run or other tab"
+            >
+              <GitCompare size={11} className="text-text-accent" />
+              <span>Diff / Compare</span>
+            </button>
             <button
               onClick={handleOpenCaptureFromBody}
               className="p-1 hover:bg-bg-hover text-text-accent hover:text-text-primary border border-transparent hover:border-border-primary rounded-sm transition flex items-center space-x-1 text-[11px] cursor-pointer"
@@ -576,6 +596,16 @@ export const ResponsePane: React.FC = () => {
         initialProperty={captureModalConfig.property}
         initialTargetVariable={captureModalConfig.targetVariable}
       />
+
+      {/* Response Diff Modal */}
+      {response && (
+        <ResponseDiffModal
+          isOpen={isDiffModalOpen}
+          onClose={() => setIsDiffModalOpen(false)}
+          currentResponse={response}
+          currentRequestName={activeRequest.name || activeRequest.url}
+        />
+      )}
     </div>
   );
 };

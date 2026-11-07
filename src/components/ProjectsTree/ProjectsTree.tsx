@@ -825,13 +825,30 @@ export const ProjectsTree: React.FC = () => {
 
       {/* Glassmorphic custom naming modal overlay */}
       {namingDialog?.isOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4 font-sans">
-          <div className="w-[360px] bg-bg-secondary border border-border-primary rounded-lg shadow-2xl flex flex-col overflow-hidden">
+        <div
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 select-none font-sans"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setNamingDialog(null);
+            }
+          }}
+        >
+          <div
+            className="w-[360px] bg-bg-secondary border border-border-primary rounded-xl shadow-2xl flex flex-col overflow-hidden animate-slide-up"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Modal Header */}
             <div className="h-11 border-b border-border-primary bg-bg-tertiary flex items-center justify-between px-4">
               <span className="font-semibold text-xs text-text-primary uppercase tracking-wider">
                 {namingDialog.title}
               </span>
+              <button
+                type="button"
+                onClick={() => setNamingDialog(null)}
+                className="text-text-secondary hover:text-text-primary transition cursor-pointer"
+              >
+                <X size={16} />
+              </button>
             </div>
             
             {/* Modal Form */}

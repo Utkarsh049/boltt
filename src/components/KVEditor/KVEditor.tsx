@@ -148,7 +148,12 @@ export const KVEditor: React.FC<KVEditorProps> = ({
               <div className="w-8 flex justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 {!isVirtual && (
                   <button
-                    onClick={() => handleRowDelete(index)}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleRowDelete(index);
+                    }}
                     className="text-text-secondary hover:text-red-400 focus:outline-none flex items-center justify-center p-1 cursor-pointer"
                     title="Delete Row"
                   >

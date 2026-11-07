@@ -266,10 +266,10 @@ export const SaveRequestModal: React.FC = () => {
     >
       <div
         ref={modalRef}
-        className="w-[440px] bg-bg-secondary border border-border-primary rounded-xl shadow-2xl flex flex-col overflow-hidden animate-slide-up"
+        className="w-[440px] bg-bg-secondary border border-border-primary rounded-xl shadow-2xl flex flex-col relative animate-slide-up"
       >
         {/* Header */}
-        <div className="h-12 border-b border-border-primary bg-bg-tertiary flex items-center justify-between px-4 flex-shrink-0 rounded-t-lg">
+        <div className="h-12 border-b border-border-primary bg-bg-tertiary flex items-center justify-between px-4 flex-shrink-0 rounded-t-xl">
           <div className="flex items-center space-x-2">
             <Save size={15} className="text-text-accent" />
             <span className="font-semibold text-xs uppercase tracking-wider text-text-primary">
@@ -280,7 +280,7 @@ export const SaveRequestModal: React.FC = () => {
             onClick={() => setSaveModalOpen(false)}
             className="text-text-secondary hover:text-text-primary transition cursor-pointer"
           >
-            <X size={18} />
+            <X size={16} />
           </button>
         </div>
 
@@ -298,7 +298,7 @@ export const SaveRequestModal: React.FC = () => {
               placeholder="e.g. Get Users List"
               value={requestName}
               onChange={(e) => setRequestName(e.target.value)}
-              className="w-full bg-bg-primary text-text-primary border border-border-primary px-3 py-2 rounded text-xs focus:outline-none focus:border-text-accent placeholder-text-secondary/40 font-medium"
+              className="w-full bg-bg-primary text-text-primary border border-border-primary px-3 py-2 rounded-md text-xs focus:outline-none focus:border-text-accent placeholder-text-secondary/40 font-medium"
             />
           </div>
 
@@ -312,7 +312,7 @@ export const SaveRequestModal: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setIsProjectDropdownOpen(!isProjectDropdownOpen)}
-                  className="w-full flex items-center justify-between bg-bg-primary text-text-primary border border-border-primary px-3 py-2 rounded text-xs focus:outline-none focus:border-text-accent cursor-pointer font-medium text-left"
+                  className="w-full flex items-center justify-between bg-bg-primary text-text-primary border border-border-primary px-3 py-2 rounded-md text-xs focus:outline-none focus:border-text-accent cursor-pointer font-medium text-left"
                 >
                   <div className="flex items-center space-x-2 truncate">
                     <Briefcase size={13} className="text-text-secondary" />
@@ -324,7 +324,7 @@ export const SaveRequestModal: React.FC = () => {
                 </button>
 
                 {isProjectDropdownOpen && (
-                  <div className="absolute left-0 mt-1 w-full bg-bg-secondary border border-border-primary rounded shadow-2xl z-50 py-1 max-h-60 overflow-y-auto">
+                  <div className="absolute left-0 mt-1 w-full bg-bg-secondary border border-border-primary rounded-md shadow-2xl z-50 py-1 max-h-56 overflow-y-auto">
                     {projects.map((p) => {
                       const isSelected = p.id === selectedProjectId;
                       return (
@@ -468,7 +468,7 @@ export const SaveRequestModal: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => setIsCreatingFolder(false)}
-                      className="px-2.5 py-1 border border-border-primary rounded text-[11px] text-[#c0c7d3] hover:bg-bg-hover transition cursor-pointer"
+                      className="px-2.5 py-1 border border-border-primary rounded-md text-[11px] text-text-secondary hover:text-text-primary hover:bg-bg-hover transition cursor-pointer"
                     >
                       Cancel
                     </button>
@@ -476,7 +476,7 @@ export const SaveRequestModal: React.FC = () => {
                       type="button"
                       disabled={!newFolderName.trim()}
                       onClick={handleCreateFolderInline}
-                      className="px-3 py-1 bg-text-accent disabled:opacity-50 hover:bg-blue-300 text-[#00325a] rounded text-[11px] font-bold transition cursor-pointer"
+                      className="px-3 py-1 bg-text-accent disabled:opacity-50 hover:opacity-90 text-bg-primary rounded-md text-[11px] font-semibold transition cursor-pointer shadow-sm"
                     >
                       Create
                     </button>
@@ -487,7 +487,7 @@ export const SaveRequestModal: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setIsFolderDropdownOpen(!isFolderDropdownOpen)}
-                    className="w-full flex items-center justify-between bg-bg-primary text-text-primary border border-border-primary px-3 py-2 rounded text-xs focus:outline-none focus:border-text-accent cursor-pointer font-medium text-left"
+                    className="w-full flex items-center justify-between bg-bg-primary text-text-primary border border-border-primary px-3 py-2 rounded-md text-xs focus:outline-none focus:border-text-accent cursor-pointer font-medium text-left"
                   >
                     <div className="flex items-center space-x-2 truncate">
                       <FolderIcon size={13} className="text-text-accent" />
@@ -499,7 +499,7 @@ export const SaveRequestModal: React.FC = () => {
                   </button>
 
                   {isFolderDropdownOpen && (
-                    <div className="absolute left-0 mt-1 w-full bg-bg-secondary border border-border-primary rounded shadow-2xl z-50 py-1 max-h-60 overflow-y-auto">
+                    <div className="absolute left-0 mt-1 w-full bg-bg-secondary border border-border-primary rounded-md shadow-2xl z-50 py-1 max-h-56 overflow-y-auto">
                       {flatFolders.map((f) => {
                         const isSelected = f.id === selectedFolderId;
                         return (
@@ -552,16 +552,16 @@ export const SaveRequestModal: React.FC = () => {
             <button
               type="button"
               onClick={() => setSaveModalOpen(false)}
-              className="px-3.5 py-2 border border-border-primary rounded text-xs text-[#c0c7d3] hover:bg-bg-hover transition cursor-pointer font-medium"
+              className="px-3.5 py-1.5 border border-border-primary rounded-md text-xs text-text-secondary hover:text-text-primary hover:bg-bg-hover transition cursor-pointer font-medium"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={!selectedProjectId || !selectedFolderId}
-              className="px-5 py-2 bg-text-accent hover:bg-blue-300 disabled:opacity-50 disabled:cursor-not-allowed text-[#00325a] rounded text-xs transition cursor-pointer font-bold flex items-center space-x-1.5"
+              className="px-4 py-1.5 bg-text-accent hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed text-bg-primary rounded-md text-xs transition cursor-pointer font-semibold flex items-center space-x-1.5 shadow-sm"
             >
-              <Save size={12} />
+              <Save size={13} />
               <span>Save Request</span>
             </button>
           </div>

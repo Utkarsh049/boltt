@@ -158,10 +158,10 @@ export const FolderSettingsModal: React.FC<FolderSettingsModalProps> = ({
     >
       <div
         ref={modalRef}
-        className="w-[560px] max-h-[85vh] bg-bg-secondary border border-border-primary rounded-xl shadow-2xl flex flex-col overflow-hidden animate-slide-up"
+        className="w-[560px] min-h-[440px] max-h-[85vh] bg-bg-secondary border border-border-primary rounded-xl shadow-2xl flex flex-col relative animate-slide-up"
       >
         {/* Header */}
-        <div className="h-12 border-b border-border-primary bg-bg-tertiary flex items-center justify-between px-4 flex-shrink-0">
+        <div className="h-12 border-b border-border-primary bg-bg-tertiary flex items-center justify-between px-4 flex-shrink-0 rounded-t-xl">
           <div className="flex items-center space-x-2 min-w-0">
             <FolderIcon size={16} className="text-text-accent flex-shrink-0 fill-text-accent/10" />
             <span className="font-semibold text-xs uppercase tracking-wider text-text-primary truncate">
@@ -215,8 +215,10 @@ export const FolderSettingsModal: React.FC<FolderSettingsModalProps> = ({
         </div>
 
         {/* Tab Content Form */}
-        <form onSubmit={handleSave} className="flex-1 flex flex-col min-h-0 overflow-hidden">
-          <div className="flex-1 p-5 overflow-y-auto space-y-4 text-xs font-sans">
+        <form onSubmit={handleSave} className="flex-1 flex flex-col min-h-0">
+          <div className={`flex-1 p-5 space-y-4 text-xs font-sans min-h-[300px] ${
+            activeTab === "auth" ? "overflow-visible" : "overflow-y-auto"
+          }`}>
             {/* 1. Auth Tab */}
             {activeTab === "auth" && (
               <div className="space-y-4">
@@ -234,7 +236,7 @@ export const FolderSettingsModal: React.FC<FolderSettingsModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setIsAuthDropdownOpen(!isAuthDropdownOpen)}
-                    className="flex items-center justify-between w-full px-3 py-2 bg-bg-primary border border-border-primary rounded text-xs text-text-primary hover:border-text-secondary/50 transition cursor-pointer"
+                    className="flex items-center justify-between w-full px-3 py-2 bg-bg-primary border border-border-primary rounded-md text-xs text-text-primary hover:border-text-secondary/50 transition cursor-pointer"
                   >
                     <div className="flex items-center space-x-2">
                       <CurrentAuthIcon size={13} className="text-text-accent" />
@@ -244,7 +246,7 @@ export const FolderSettingsModal: React.FC<FolderSettingsModalProps> = ({
                   </button>
 
                   {isAuthDropdownOpen && (
-                    <div className="absolute left-0 mt-1 w-full bg-bg-secondary border border-border-primary rounded shadow-2xl z-50 py-1 overflow-hidden font-sans">
+                    <div className="absolute left-0 mt-1 w-full bg-bg-secondary border border-border-primary rounded-md shadow-2xl z-50 py-1 max-h-60 overflow-y-auto font-sans">
                       {authOptions.map((opt) => {
                         const Icon = opt.icon;
                         const isSelected = auth.type === opt.value;
@@ -397,19 +399,19 @@ export const FolderSettingsModal: React.FC<FolderSettingsModalProps> = ({
           </div>
 
           {/* Footer Actions */}
-          <div className="h-14 border-t border-border-primary bg-bg-tertiary flex items-center justify-end px-5 space-x-2 flex-shrink-0">
+          <div className="h-14 border-t border-border-primary bg-bg-tertiary flex items-center justify-end px-5 space-x-2 flex-shrink-0 rounded-b-xl">
             <button
               type="button"
               onClick={onClose}
               disabled={isSaving}
-              className="px-3.5 py-1.5 rounded text-xs text-text-secondary hover:text-text-primary hover:bg-bg-hover transition cursor-pointer border border-border-primary"
+              className="px-3.5 py-1.5 rounded-md text-xs text-text-secondary hover:text-text-primary hover:bg-bg-hover transition cursor-pointer border border-border-primary font-medium"
             >
               Cancel
             </button>
             <button
               type="submit"
               disabled={isSaving}
-              className="px-4 py-1.5 rounded text-xs font-semibold bg-text-accent text-bg-primary hover:opacity-90 disabled:opacity-50 transition flex items-center space-x-1.5 cursor-pointer shadow-sm"
+              className="px-4 py-1.5 rounded-md text-xs font-semibold bg-text-accent text-bg-primary hover:opacity-90 disabled:opacity-50 transition flex items-center space-x-1.5 cursor-pointer shadow-sm"
             >
               <Save size={13} />
               <span>{isSaving ? "Saving..." : "Save Settings"}</span>

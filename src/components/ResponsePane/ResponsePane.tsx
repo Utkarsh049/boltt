@@ -217,71 +217,113 @@ export const ResponsePane: React.FC = () => {
   }, [isResizing, response?.headers?.length]);
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden">
-      {/* Header Metrics */}
-      <div className="flex items-center justify-between border-b border-border-primary pb-2.5 mb-2.5 flex-shrink-0 flex-wrap gap-2">
-        <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-          Response View
-        </h3>
-        
-        {response && (
-          <div className="flex items-center space-x-2.5 text-xs font-mono flex-wrap gap-y-1">
-            {/* Status Code */}
-            <span
-              className={`px-2 py-0.5 rounded border text-xs font-mono font-semibold flex items-center space-x-1 ${getStatusColor(
-                response.status
-              )}`}
-            >
-              {response.status === 0 ? (
-                <>
-                  <AlertTriangle size={11} className="text-red-400" />
-                  <span>0 {response.status_text || "Network Error"}</span>
-                </>
-              ) : (
-                <span>{`${response.status} ${response.status_text}`}</span>
-              )}
-            </span>
-            
-            {response.status !== 0 && (
-              <>
-                {response.timing ? (
-                  <div className="relative inline-block">
-                    <button
-                      type="button"
-                      onClick={() => setIsWaterfallOpen(!isWaterfallOpen)}
-                      className="text-text-secondary hover:text-text-primary px-1.5 py-0.5 rounded hover:bg-bg-hover transition cursor-pointer flex items-center space-x-1"
-                      title="Click to view detailed network timing waterfall"
-                    >
-                      <Activity size={11} className="text-text-accent" />
-                      <span>
-                        Time: <strong className="text-text-primary">{response.time_ms} ms</strong>
-                      </span>
-                    </button>
-                    <TimingWaterfallPopover
-                      timing={response.timing}
-                      isOpen={isWaterfallOpen}
-                      onClose={() => setIsWaterfallOpen(false)}
-                    />
-                  </div>
+    <div className="response-pane-container flex-1 flex flex-col h-full overflow-hidden">
+      {/* Header Metrics & Quick Actions Toolbar */}
+      <div className="flex items-center justify-between border-b border-border-primary pb-2 mb-2 flex-shrink-0 flex-wrap gap-2">
+        <div className="flex items-center space-x-2 min-w-0">
+          <h3 className="text-xs font-semibold text-text-secondary uppercase tracking-wider flex-shrink-0">
+            Response
+          </h3>
+          
+          {response && (
+            <div className="flex items-center space-x-2 text-xs font-mono flex-wrap">
+              {/* Status Code */}
+              <span
+                className={`px-2 py-0.5 rounded-md border text-xs font-mono font-semibold flex items-center space-x-1 ${getStatusColor(
+                  response.status
+                )}`}
+              >
+                {response.status === 0 ? (
+                  <>
+                    <AlertTriangle size={11} className="text-red-400" />
+                    <span>0 {response.status_text || "Network Error"}</span>
+                  </>
                 ) : (
-                  <span className="text-text-secondary">
-                    Time: <strong className="text-text-primary">{response.time_ms} ms</strong>
-                  </span>
+                  <span>{`${response.status} ${response.status_text}`}</span>
                 )}
-                <span className="text-text-secondary">
-                  Size: <strong className="text-text-primary">{formatBytes(response.size_bytes)}</strong>
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setIsDiffModalOpen(true)}
-                  className="text-text-secondary hover:text-text-primary px-1.5 py-0.5 rounded hover:bg-bg-hover transition cursor-pointer flex items-center space-x-1"
-                  title="Compare response with baseline"
-                >
-                  <GitCompare size={11} className="text-text-accent" />
-                  <span>Diff</span>
-                </button>
-              </>
-            )}
+              </span>
+              
+              {response.status !== 0 && (
+                <>
+                  {response.timing ? (
+                    <div className="relative inline-block">
+                      <button
+                        type="button"
+                        onClick={() => setIsWaterfallOpen(!isWaterfallOpen)}
+                        className="text-text-secondary hover:text-text-primary px-1.5 py-0.5 rounded-md hover:bg-bg-hover transition cursor-pointer flex items-center space-x-1"
+                        title="Click to view detailed network timing waterfall"
+                      >
+                        <Activity size={11} className="text-text-accent" />
+                        <span>
+                          Time: <strong className="text-text-primary">{response.time_ms} ms</strong>
+                        </span>
+                      </button>
+                      <TimingWaterfallPopover
+                        timing={response.timing}
+                        isOpen={isWaterfallOpen}
+                        onClose={() => setIsWaterfallOpen(false)}
+                      />
+                    </div>
+                  ) : (
+                    <span className="text-text-secondary">
+                      Time: <strong className="text-text-primary">{response.time_ms} ms</strong>
+                    </span>
+                  )}
+                  <span className="text-text-secondary">
+                    Size: <strong className="text-text-primary">{formatBytes(response.size_bytes)}</strong>
+                  </span>
+                </>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Action Toolbar on Header Right */}
+        {!isLoading && response && response.status !== 0 && (
+          <div className="flex items-center space-x-1">
+            <button
+              type="button"
+              onClick={() => setIsDiffModalOpen(true)}
+              className="px-2 py-1 hover:bg-bg-hover text-text-secondary hover:text-text-primary border border-border-primary/60 rounded-md transition flex items-center space-x-1 text-[11px] cursor-pointer"
+              title="Compare response with previous run or other tab"
+            >
+              <GitCompare size={12} className="text-text-accent" />
+              <span>Diff</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleOpenCaptureFromBody}
+              className="px-2 py-1 hover:bg-bg-hover text-text-accent hover:text-text-primary border border-border-primary/60 rounded-md transition flex items-center space-x-1 text-[11px] cursor-pointer"
+              title="Capture response value into environment variable"
+            >
+              <Sparkles size={12} />
+              <span>Capture</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleCopyCurl}
+              className="px-2 py-1 hover:bg-bg-hover text-text-secondary hover:text-text-primary border border-border-primary/60 rounded-md transition flex items-center space-x-1 text-[11px] cursor-pointer"
+              title="Copy request as cURL command"
+            >
+              <Terminal size={12} />
+              <span>cURL</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleCopyBody}
+              className="p-1 hover:bg-bg-hover text-text-secondary hover:text-text-primary border border-border-primary/60 rounded-md transition flex items-center justify-center cursor-pointer"
+              title="Copy response body"
+            >
+              <Copy size={12} />
+            </button>
+            <button
+              type="button"
+              onClick={handleCopyHeaders}
+              className="p-1 hover:bg-bg-hover text-text-secondary hover:text-text-primary border border-border-primary/60 rounded-md transition flex items-center justify-center cursor-pointer"
+              title="Copy response headers"
+            >
+              <List size={12} />
+            </button>
           </div>
         )}
       </div>
@@ -296,7 +338,7 @@ export const ResponsePane: React.FC = () => {
 
       {/* Empty State */}
       {!isLoading && !response && (
-        <div className="flex-1 flex flex-col items-center justify-center text-center p-6 border border-dashed border-border-primary rounded-sm bg-bg-primary/50">
+        <div className="flex-1 flex flex-col items-center justify-center text-center p-6 border border-dashed border-border-primary rounded-lg bg-bg-primary/50">
           <Inbox className="w-8 h-8 text-text-secondary/40 mb-2" />
           <span className="text-text-secondary text-xs max-w-xs leading-relaxed">
             Hit Send in the Request Builder to dispatch the request and inspect the response.
@@ -306,7 +348,7 @@ export const ResponsePane: React.FC = () => {
 
       {/* Dedicated Network Error State (Status 0) */}
       {!isLoading && response && response.status === 0 && (
-        <div className="flex-1 flex flex-col p-6 items-center justify-center text-center bg-bg-primary border border-border-primary rounded-sm min-h-0 overflow-y-auto">
+        <div className="flex-1 flex flex-col p-6 items-center justify-center text-center bg-bg-primary border border-border-primary rounded-lg min-h-0 overflow-y-auto">
           <div className="w-12 h-12 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-3 text-red-400 flex-shrink-0">
             <WifiOff size={22} />
           </div>
@@ -318,7 +360,7 @@ export const ResponsePane: React.FC = () => {
           </p>
 
           {/* Error Details Box */}
-          <div className="w-full max-w-md bg-bg-secondary border border-red-500/20 rounded p-3 mb-4 text-left shadow-inner">
+          <div className="w-full max-w-md bg-bg-secondary border border-red-500/20 rounded-md p-3 mb-4 text-left shadow-inner">
             <div className="flex items-center justify-between text-[10px] uppercase font-bold text-red-400/90 tracking-wider mb-1.5">
               <span className="flex items-center space-x-1">
                 <AlertCircle size={11} />
@@ -340,7 +382,7 @@ export const ResponsePane: React.FC = () => {
           </div>
 
           {/* Troubleshooting Checklist */}
-          <div className="w-full max-w-md bg-bg-tertiary/40 border border-border-primary rounded p-3 text-left mb-5">
+          <div className="w-full max-w-md bg-bg-tertiary/40 border border-border-primary rounded-md p-3 text-left mb-5">
             <div className="text-[10px] uppercase font-bold text-text-secondary tracking-wider mb-2">
               Troubleshooting Suggestions
             </div>
@@ -359,7 +401,7 @@ export const ResponsePane: React.FC = () => {
             <button
               type="button"
               onClick={handleRetry}
-              className="px-3.5 py-1.5 rounded text-xs font-semibold bg-text-accent text-bg-primary hover:opacity-90 transition flex items-center space-x-1.5 cursor-pointer shadow-sm"
+              className="px-3.5 py-1.5 rounded-md text-xs font-semibold bg-text-accent text-bg-primary hover:opacity-90 transition flex items-center space-x-1.5 cursor-pointer shadow-sm"
             >
               <RefreshCw size={12} />
               <span>Retry Request</span>
@@ -367,7 +409,7 @@ export const ResponsePane: React.FC = () => {
             <button
               type="button"
               onClick={handleCopyCurl}
-              className="px-3.5 py-1.5 rounded text-xs text-text-secondary hover:text-text-primary hover:bg-bg-hover border border-border-primary transition flex items-center space-x-1.5 cursor-pointer"
+              className="px-3.5 py-1.5 rounded-md text-xs text-text-secondary hover:text-text-primary hover:bg-bg-hover border border-border-primary transition flex items-center space-x-1.5 cursor-pointer"
             >
               <Terminal size={12} />
               <span>Copy as cURL</span>
@@ -379,55 +421,10 @@ export const ResponsePane: React.FC = () => {
       {/* Realized Response view split (Status != 0) */}
       {!isLoading && response && response.status !== 0 && (
         <div className="flex-1 flex flex-col min-h-0 overflow-hidden relative">
-          
-          {/* Quick Actions Panel */}
-          <div className="flex items-center justify-end space-x-1.5 border border-border-primary bg-bg-tertiary py-1 px-2 flex-shrink-0 rounded-t-sm border-b-0">
-            <button
-              onClick={() => setIsDiffModalOpen(true)}
-              className="p-1 hover:bg-bg-hover text-text-secondary hover:text-text-primary border border-transparent hover:border-border-primary rounded-sm transition flex items-center space-x-1 text-[11px] cursor-pointer"
-              title="Compare response with previous run or other tab"
-            >
-              <GitCompare size={11} className="text-text-accent" />
-              <span>Diff / Compare</span>
-            </button>
-            <button
-              onClick={handleOpenCaptureFromBody}
-              className="p-1 hover:bg-bg-hover text-text-accent hover:text-text-primary border border-transparent hover:border-border-primary rounded-sm transition flex items-center space-x-1 text-[11px] cursor-pointer"
-              title="Capture response value into environment variable"
-            >
-              <Sparkles size={11} />
-              <span>Capture Variable</span>
-            </button>
-            <button
-              onClick={handleCopyCurl}
-              className="p-1 hover:bg-bg-hover text-text-secondary hover:text-text-primary border border-transparent hover:border-border-primary rounded-sm transition flex items-center space-x-1 text-[11px] cursor-pointer"
-              title="Copy request as cURL command"
-            >
-              <Terminal size={11} />
-              <span>cURL</span>
-            </button>
-            <button
-              onClick={handleCopyBody}
-              className="p-1 hover:bg-bg-hover text-text-secondary hover:text-text-primary border border-transparent hover:border-border-primary rounded-sm transition flex items-center space-x-1 text-[11px] cursor-pointer"
-              title="Copy response body"
-            >
-              <Copy size={11} />
-              <span>Copy Body</span>
-            </button>
-            <button
-              onClick={handleCopyHeaders}
-              className="p-1 hover:bg-bg-hover text-text-secondary hover:text-text-primary border border-transparent hover:border-border-primary rounded-sm transition flex items-center space-x-1 text-[11px] cursor-pointer"
-              title="Copy response headers"
-            >
-              <Copy size={11} />
-              <span>Copy Headers</span>
-            </button>
-          </div>
-
           {/* Resizable Headers vs Body vertically split */}
           <div
             ref={containerRef}
-            className={`flex-grow bg-bg-primary p-3 border border-border-primary rounded-b-sm overflow-hidden min-h-0 flex flex-col ${
+            className={`flex-grow bg-bg-primary p-3 border border-border-primary rounded-lg overflow-hidden min-h-0 flex flex-col ${
               isResizing ? "select-none" : ""
             }`}
           >
@@ -452,7 +449,7 @@ export const ResponsePane: React.FC = () => {
                   <span>Response Headers ({response.headers.length})</span>
                 </h4>
                 {headersExpanded && (
-                  <div className="flex-1 bg-bg-secondary/20 rounded border border-border-primary font-mono text-[11px] overflow-y-auto min-h-0 divide-y divide-bg-tertiary">
+                  <div className="flex-1 bg-bg-secondary/20 rounded-md border border-border-primary font-mono text-[11px] overflow-y-auto min-h-0 divide-y divide-bg-tertiary">
                     {response.headers.map((h, i) => (
                       <div
                         key={i}
@@ -508,20 +505,9 @@ export const ResponsePane: React.FC = () => {
                   <FileText size={11} />
                   <span>Response Body</span>
                 </h4>
-                {bodyExpanded && (
-                  <button
-                    type="button"
-                    onClick={handleOpenCaptureFromBody}
-                    className="text-[10px] text-text-secondary hover:text-text-accent flex items-center space-x-1 px-1.5 py-0.5 rounded hover:bg-bg-hover transition cursor-pointer"
-                    title="Capture variable from response body or current selection"
-                  >
-                    <Sparkles size={10} />
-                    <span>Capture Variable</span>
-                  </button>
-                )}
               </div>
               {bodyExpanded && (
-                <div className="flex-1 min-h-0 overflow-hidden flex flex-col border border-border-primary rounded-sm bg-bg-secondary/20">
+                <div className="flex-1 min-h-0 overflow-hidden flex flex-col border border-border-primary rounded-md bg-bg-secondary/20">
                   {isResponseJson && (
                     <div className="flex items-center space-x-2 px-2.5 py-1.5 bg-bg-secondary border-b border-border-primary text-xs flex-shrink-0">
                       <div className="relative flex-1 flex items-center">

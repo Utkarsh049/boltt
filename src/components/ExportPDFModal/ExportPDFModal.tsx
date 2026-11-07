@@ -69,7 +69,7 @@ export const ExportPDFModal: React.FC<ExportPDFModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 select-none font-sans"
+      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 select-none font-sans animate-fade-in"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           onClose();
@@ -78,7 +78,7 @@ export const ExportPDFModal: React.FC<ExportPDFModalProps> = ({
     >
       <div className="w-[440px] bg-bg-secondary border border-border-primary rounded-xl shadow-2xl flex flex-col overflow-hidden animate-slide-up">
         {/* Header */}
-        <div className="h-12 border-b border-border-primary bg-bg-tertiary flex items-center justify-between px-4 flex-shrink-0 rounded-t-lg">
+        <div className="h-12 border-b border-border-primary bg-bg-tertiary flex items-center justify-between px-4 flex-shrink-0 rounded-t-xl">
           <div className="flex items-center space-x-2">
             <FileDown size={15} className="text-text-accent" />
             <span className="font-semibold text-xs uppercase tracking-wider text-text-primary">
@@ -89,7 +89,7 @@ export const ExportPDFModal: React.FC<ExportPDFModalProps> = ({
             onClick={onClose}
             className="text-text-secondary hover:text-text-primary transition cursor-pointer focus:outline-none outline-none"
           >
-            <X size={18} />
+            <X size={16} />
           </button>
         </div>
 
@@ -108,7 +108,7 @@ export const ExportPDFModal: React.FC<ExportPDFModalProps> = ({
           ) : (
             <>
               {/* Folder Details */}
-              <div className="bg-bg-primary border border-border-primary p-4 rounded-sm space-y-2">
+              <div className="bg-bg-primary border border-border-primary p-4 rounded-md space-y-2">
                 <div className="flex justify-between text-xs">
                   <span className="text-text-secondary">
                     {folderId === "" ? "Target Project:" : "Target Folder:"}
@@ -124,7 +124,7 @@ export const ExportPDFModal: React.FC<ExportPDFModalProps> = ({
               </div>
 
               {/* Security Warning Callout */}
-              <div className="flex items-start space-x-2.5 p-3 border border-amber-500/20 bg-amber-500/5 rounded text-[11px] text-amber-200/90 leading-normal">
+              <div className="flex items-start space-x-2.5 p-3 border border-amber-500/20 bg-amber-500/5 rounded-md text-[11px] text-amber-200/90 leading-normal">
                 <ShieldAlert size={14} className="text-amber-400 flex-shrink-0 mt-0.5" />
                 <div className="space-y-1">
                   <p className="font-semibold">Security Notice</p>
@@ -136,7 +136,7 @@ export const ExportPDFModal: React.FC<ExportPDFModalProps> = ({
 
               {/* Error Display */}
               {error && (
-                <div className="p-3 border border-red-500/20 bg-red-500/5 rounded text-xs text-red-400 flex items-start space-x-1.5">
+                <div className="p-3 border border-red-500/20 bg-red-500/5 rounded-md text-xs text-red-400 flex items-start space-x-1.5">
                   <ShieldAlert size={14} className="flex-shrink-0 mt-0.5" />
                   <span>Failed to export PDF: {error}</span>
                 </div>
@@ -150,7 +150,7 @@ export const ExportPDFModal: React.FC<ExportPDFModalProps> = ({
                       onClose();
                     }
                   }}
-                  className={`px-3.5 py-2 border border-border-primary rounded text-xs text-[#c0c7d3] hover:bg-bg-hover cursor-pointer font-medium focus:outline-none outline-none ${
+                  className={`px-3.5 py-1.5 border border-border-primary rounded-md text-xs text-text-secondary hover:text-text-primary hover:bg-bg-hover cursor-pointer font-medium focus:outline-none outline-none ${
                     isExporting ? "opacity-50 cursor-not-allowed pointer-events-none" : ""
                   }`}
                 >
@@ -163,12 +163,12 @@ export const ExportPDFModal: React.FC<ExportPDFModalProps> = ({
                       handleExport();
                     }
                   }}
-                  className={`px-5 py-2 bg-text-accent hover:bg-blue-300 text-[#00325a] rounded text-xs cursor-pointer font-bold flex items-center space-x-1.5 focus:outline-none outline-none ${
+                  className={`px-4 py-1.5 bg-text-accent hover:opacity-90 text-bg-primary rounded-md text-xs cursor-pointer font-semibold flex items-center space-x-1.5 focus:outline-none outline-none shadow-sm ${
                     (isExporting || requestsCount === 0) ? "opacity-50 cursor-not-allowed pointer-events-none" : ""
                   }`}
                 >
                   {isExporting ? (
-                    <div className="w-3 h-3 border-2 border-[#00325a] border-t-transparent rounded-full animate-spin flex-shrink-0" />
+                    <div className="w-3 h-3 border-2 border-bg-primary border-t-transparent rounded-full animate-spin flex-shrink-0" />
                   ) : (
                     <FileDown size={12} className="flex-shrink-0" />
                   )}

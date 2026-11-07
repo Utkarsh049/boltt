@@ -18,6 +18,24 @@ export const TimingWaterfallPopover: React.FC<TimingWaterfallPopoverProps> = ({
   useEffect(() => {
     if (!isOpen) return;
 
+    const adjustPosition = () => {
+      if (!popoverRef.current) return;
+      const rect = popoverRef.current.getBoundingClientRect();
+      const container = popoverRef.current.closest(".response-pane-container") || document.body;
+      const containerRect = container.getBoundingClientRect();
+
+      let shiftX = 0;
+      if (rect.left < containerRect.left + 8) {
+        shiftX = (containerRect.left + 8) - rect.left;
+      } else if (rect.right > containerRect.right - 8) {
+        shiftX = -(rect.right - (containerRect.right - 8));
+      }
+
+      popoverRef.current.style.transform = shiftX !== 0 ? `translateX(${shiftX}px)` : "none";
+    };
+
+    const rafId = requestAnimationFrame(adjustPosition);
+
     const handleClickOutside = (e: MouseEvent) => {
       if (popoverRef.current && !popoverRef.current.contains(e.target as Node)) {
         onClose();
@@ -30,9 +48,12 @@ export const TimingWaterfallPopover: React.FC<TimingWaterfallPopoverProps> = ({
 
     document.addEventListener("mousedown", handleClickOutside);
     window.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("resize", adjustPosition);
     return () => {
+      cancelAnimationFrame(rafId);
       document.removeEventListener("mousedown", handleClickOutside);
       window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("resize", adjustPosition);
     };
   }, [isOpen, onClose]);
 
@@ -81,7 +102,7 @@ export const TimingWaterfallPopover: React.FC<TimingWaterfallPopoverProps> = ({
   return (
     <div
       ref={popoverRef}
-      className="absolute right-0 top-full mt-2 w-72 bg-bg-secondary border border-border-primary rounded-md shadow-2xl z-50 p-3.5 text-xs font-sans animate-fade-in select-none"
+      className="absolute left-0 top-full mt-2 w-72 max-w-[calc(100vw-32px)] bg-bg-secondary border border-border-primary rounded-xl shadow-2xl z-50 p-3.5 text-xs font-sans animate-fade-in select-none"
     >
       {/* Header */}
       <div className="flex items-center justify-between border-b border-border-primary pb-2 mb-2.5">
@@ -120,9 +141,9 @@ export const TimingWaterfallPopover: React.FC<TimingWaterfallPopoverProps> = ({
           const pct = Math.round((phase.ms / total) * 100);
           return (
             <div key={idx} className="flex items-center justify-between py-0.5 group">
-              <div className="flex items-center space-x-2 min-w-0">
+              <div className="flex items-center space-x-2 min-w-0 flex-1">
                 <span className={`w-2 h-2 rounded-full ${phase.color} flex-shrink-0`} />
-                <span className="text-text-secondary font-sans truncate" title={phase.description}>
+                <span className="text-text-secondary font-sans truncate flex-1 min-w-0" title={phase.description}>
                   {phase.name}
                 </span>
               </div>

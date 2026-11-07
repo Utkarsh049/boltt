@@ -158,14 +158,14 @@ export const UrlBar: React.FC = () => {
             type="button"
             disabled={isLoading}
             onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className={`flex items-center justify-between px-3 h-9 border rounded-sm text-xs font-mono font-bold transition duration-150 cursor-pointer select-none min-w-[105px] ${currentColors.text} ${currentColors.bg} ${currentColors.border} hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed`}
+            className={`flex items-center justify-between px-3 h-9 border rounded-md text-xs font-mono font-bold transition duration-150 cursor-pointer select-none min-w-[105px] ${currentColors.text} ${currentColors.bg} ${currentColors.border} hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed`}
           >
             <span>{activeRequest.method}</span>
             <ChevronDown size={14} className="ml-1 opacity-70" />
           </button>
 
           {isDropdownOpen && (
-            <div className="absolute left-0 mt-1 w-[125px] bg-bg-secondary border border-border-primary rounded shadow-2xl z-50 py-1 overflow-hidden">
+            <div className="absolute left-0 mt-1 w-[125px] bg-bg-secondary border border-border-primary rounded-md shadow-2xl z-50 py-1 overflow-hidden">
               {methods.map((method) => {
                 const methodColors = getMethodColors(method);
                 const isSelected = activeRequest.method === method;
@@ -205,7 +205,7 @@ export const UrlBar: React.FC = () => {
             onPaste={handlePaste}
             disabled={isLoading}
             placeholder="Enter request URL (e.g. https://httpbin.org/get) or paste cURL"
-            className={`w-full bg-bg-primary text-text-primary border px-3 pr-24 h-9 rounded-sm text-xs font-mono focus:outline-none focus:border-text-accent placeholder-text-secondary/60 transition-colors ${
+            className={`w-full bg-bg-primary text-text-primary border px-3 pr-24 h-9 rounded-md text-xs font-mono focus:outline-none focus:border-text-accent placeholder-text-secondary/60 transition-colors ${
               activeRequest.ssl_verify === false
                 ? "border-amber-500/60 focus:border-amber-500"
                 : "border-border-primary"
@@ -226,7 +226,7 @@ export const UrlBar: React.FC = () => {
                 onClick={() => setIsSslPopoverOpen(!isSslPopoverOpen)}
                 aria-label="SSL Verification Settings"
                 aria-expanded={isSslPopoverOpen}
-                className={`p-1 hover:bg-bg-hover/80 rounded transition cursor-pointer ${
+                className={`p-1 hover:bg-bg-hover/80 rounded-md transition cursor-pointer ${
                   activeRequest.ssl_verify === false ? "text-amber-400" : "text-text-secondary hover:text-text-primary"
                 }`}
                 title="SSL Verification Settings"
@@ -235,7 +235,7 @@ export const UrlBar: React.FC = () => {
               </button>
               
               {isSslPopoverOpen && (
-                <div className="absolute right-0 top-full mt-4 w-56 bg-bg-secondary border border-border-primary rounded shadow-2xl p-3 z-50 flex flex-col space-y-2 font-sans select-none">
+                <div className="absolute right-0 top-full mt-4 w-56 bg-bg-secondary border border-border-primary rounded-md shadow-2xl p-3 z-50 flex flex-col space-y-2 font-sans select-none">
                   <div className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">
                     SSL Settings
                   </div>
@@ -263,7 +263,7 @@ export const UrlBar: React.FC = () => {
         <button
           onClick={handleSave}
           disabled={isLoading}
-          className="bg-bg-hover text-text-accent border border-border-primary px-4 h-9 rounded-sm text-xs font-semibold hover:bg-bg-hover-light transition cursor-pointer flex items-center space-x-1.5"
+          className="bg-bg-hover text-text-accent border border-border-primary px-4 h-9 rounded-md text-xs font-semibold hover:bg-bg-hover-light transition cursor-pointer flex items-center space-x-1.5"
           title="Save request (Ctrl+S / Cmd+S)"
         >
           <Save size={12} />
@@ -274,10 +274,10 @@ export const UrlBar: React.FC = () => {
         <button
           onClick={handleSend}
           disabled={isLoading}
-          className="bg-text-accent text-[#00325a] hover:bg-blue-300 px-5 h-9 rounded-sm text-xs font-bold transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-1.5 min-w-[80px]"
+          className="bg-text-accent text-bg-primary hover:opacity-90 px-5 h-9 rounded-md text-xs font-semibold transition duration-150 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-1.5 min-w-[80px] shadow-sm cursor-pointer"
         >
           {isLoading ? (
-            <span className="w-4 h-4 border-2 border-[#00325a] border-t-transparent rounded-full animate-spin"></span>
+            <span className="w-4 h-4 border-2 border-bg-primary border-t-transparent rounded-full animate-spin"></span>
           ) : (
             <>
               <Send size={12} />

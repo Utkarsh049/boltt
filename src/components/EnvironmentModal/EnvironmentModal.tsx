@@ -64,6 +64,7 @@ export const EnvironmentModal: React.FC = () => {
   // Track visibility toggles for each row in the selected environment
   // Format: "envId-rowIdx": boolean
   const [visibleValues, setVisibleValues] = useState<Record<string, boolean>>({});
+  const [isSavedRecently, setIsSavedRecently] = useState(false);
 
   // When modal opens or group changes, copy store environments to local state
   useEffect(() => {
@@ -263,7 +264,7 @@ export const EnvironmentModal: React.FC = () => {
     });
   };
 
-  const handleSave = async () => {
+  const handleSave = async (closeOnSave = false) => {
     // 1. Commit deletions/additions to the store
     // Find removed environments of the target active group
     const currentGroupEnvs = environments.filter((e) => getGroupFromId(e.id) === targetGroup);
@@ -298,20 +299,29 @@ export const EnvironmentModal: React.FC = () => {
       await setActiveIdForGroup(targetGroup, null);
     }
 
-    await handleClose();
+    setIsSavedRecently(true);
+    setTimeout(() => {
+      setIsSavedRecently(false);
+    }, 2500);
+
+    if (closeOnSave) {
+      await handleClose();
+    }
   };
 
   const content = (
     <div className={`bg-bg-secondary border-border-primary flex flex-col overflow-hidden ${
       isEnvWindow 
         ? "w-screen h-screen" 
-        : "w-[780px] h-[520px] border rounded-lg shadow-2xl"
+        : "w-[780px] h-[520px] border rounded-xl shadow-2xl animate-slide-up"
     }`}>
       {/* Modal Header */}
       <div
         onMouseDown={handleHeaderMouseDown}
         onDoubleClick={handleHeaderDoubleClick}
-        className="h-12 border-b border-border-primary bg-bg-tertiary flex items-center justify-between px-4 flex-shrink-0 select-none cursor-default"
+        className={`h-12 border-b border-border-primary bg-bg-tertiary flex items-center justify-between px-4 flex-shrink-0 select-none cursor-default ${
+          !isEnvWindow ? "rounded-t-xl" : ""
+        }`}
       >
         <div className="flex items-center space-x-3">
           <div className="flex items-center space-x-2">
@@ -323,7 +333,7 @@ export const EnvironmentModal: React.FC = () => {
           <div
             onMouseDown={(e) => e.stopPropagation()}
             onDoubleClick={(e) => e.stopPropagation()}
-            className="flex items-center bg-bg-primary/80 p-0.5 rounded border border-border-primary text-xs"
+            className="flex items-center bg-bg-primary p-0.5 rounded-lg border border-border-primary text-xs"
           >
             {(["production", "staging", "local"] as const).map((group) => {
               const isSelected = targetGroup === group;
@@ -337,9 +347,9 @@ export const EnvironmentModal: React.FC = () => {
                     setSelectedGroup(group);
                     setActiveGroup(group);
                   }}
-                  className={`px-2.5 py-0.5 rounded-sm capitalize text-[11px] font-medium transition cursor-pointer ${
+                  className={`px-3 py-1 rounded-md capitalize text-xs font-medium transition cursor-pointer ${
                     isSelected
-                      ? "bg-text-accent text-[#00325a] font-bold shadow-sm"
+                      ? "bg-bg-secondary text-text-primary shadow-sm"
                       : "text-text-secondary hover:text-text-primary hover:bg-bg-hover"
                   }`}
                 >
@@ -416,7 +426,7 @@ export const EnvironmentModal: React.FC = () => {
           <div className="p-3 border-t border-border-primary bg-bg-primary/80 flex-shrink-0">
             <button
               onClick={handleAddEnvironment}
-              className="w-full py-1.5 border border-dashed border-border-primary hover:border-text-accent/50 rounded text-xs text-[#c0c7d3] hover:text-text-accent flex items-center justify-center space-x-1.5 transition cursor-pointer bg-bg-tertiary/30 hover:bg-bg-tertiary/60"
+              className="w-full py-1.5 border border-dashed border-border-primary hover:border-text-accent/50 rounded-md text-xs text-text-secondary hover:text-text-accent flex items-center justify-center space-x-1.5 transition cursor-pointer bg-bg-tertiary/30 hover:bg-bg-tertiary/60"
             >
               <Plus size={13} />
               <span>Add Environment</span>
@@ -437,13 +447,13 @@ export const EnvironmentModal: React.FC = () => {
                   type="text"
                   value={selectedEnv.name}
                   onChange={(e) => handleNameChange(e.target.value)}
-                  className="bg-bg-primary border border-border-primary hover:border-text-secondary/40 focus:border-text-accent px-3 py-1.5 rounded text-xs text-text-primary focus:outline-none transition w-full"
+                  className="bg-bg-primary border border-border-primary hover:border-text-secondary/40 focus:border-text-accent px-3 py-1.5 rounded-md text-xs text-text-primary focus:outline-none transition w-full"
                   placeholder="e.g. Production"
                 />
               </div>
 
               {/* Git-safe Secrets Separation Banner */}
-              <div className="flex items-center space-x-2 px-3 py-1.5 bg-bg-primary/50 border border-border-primary rounded text-[11px] text-text-secondary flex-shrink-0">
+              <div className="flex items-center space-x-2 px-3 py-1.5 bg-bg-primary/50 border border-border-primary rounded-md text-[11px] text-text-secondary flex-shrink-0">
                 <ShieldCheck size={13} className="text-text-accent flex-shrink-0" />
                 <span>
                   Mark private variables with <Lock size={11} className="inline text-amber-400 mx-0.5" /> to save them in <code className="text-amber-300 font-mono text-[10px]">.boltt.secrets.json</code> (excluded from Git).
@@ -593,21 +603,36 @@ export const EnvironmentModal: React.FC = () => {
       </div>
 
       {/* Modal Footer */}
-      <div className="h-12 border-t border-border-primary bg-bg-tertiary flex items-center justify-end px-4 space-x-3 flex-shrink-0">
-        <button
-          onClick={handleClose}
-          className="px-4 py-1.5 border border-border-primary hover:bg-bg-hover rounded text-xs font-medium text-[#c0c7d3] hover:text-text-primary transition cursor-pointer"
-        >
-          Cancel
-        </button>
-        
-        <button
-          onClick={handleSave}
-          className="px-4 py-1.5 bg-text-accent hover:bg-blue-300 rounded text-xs font-bold text-[#00325a] flex items-center space-x-1.5 transition cursor-pointer"
-        >
-          <Save size={13} />
-          <span>Save Changes</span>
-        </button>
+      <div className={`h-12 border-t border-border-primary bg-bg-tertiary flex items-center justify-between px-4 flex-shrink-0 ${
+        !isEnvWindow ? "rounded-b-xl" : ""
+      }`}>
+        <div className="flex items-center space-x-2">
+          {isSavedRecently && (
+            <span className="flex items-center space-x-1.5 text-xs text-green-400 font-medium animate-fade-in">
+              <ShieldCheck size={14} />
+              <span>Changes saved successfully</span>
+            </span>
+          )}
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <button
+            type="button"
+            onClick={handleClose}
+            className="px-3.5 py-1.5 border border-border-primary hover:bg-bg-hover rounded-md text-xs font-medium text-text-secondary hover:text-text-primary transition cursor-pointer"
+          >
+            {isSavedRecently ? "Done" : "Cancel"}
+          </button>
+          
+          <button
+            type="button"
+            onClick={() => handleSave(false)}
+            className="px-4 py-1.5 bg-text-accent hover:opacity-90 rounded-md text-xs font-semibold text-bg-primary flex items-center space-x-1.5 transition cursor-pointer shadow-sm"
+          >
+            <Save size={13} />
+            <span>Save Changes</span>
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -623,7 +648,7 @@ export const EnvironmentModal: React.FC = () => {
           handleClose();
         }
       }}
-      className="fixed inset-0 bg-black/65 backdrop-blur-sm flex items-center justify-center z-[60] animate-fade-in p-4"
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4"
     >
       {content}
     </div>

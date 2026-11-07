@@ -826,7 +826,7 @@ export const ProjectsTree: React.FC = () => {
       {/* Glassmorphic custom naming modal overlay */}
       {namingDialog?.isOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 select-none font-sans"
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 select-none font-sans animate-fade-in"
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setNamingDialog(null);
@@ -838,7 +838,7 @@ export const ProjectsTree: React.FC = () => {
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div className="h-11 border-b border-border-primary bg-bg-tertiary flex items-center justify-between px-4">
+            <div className="h-11 border-b border-border-primary bg-bg-tertiary flex items-center justify-between px-4 rounded-t-xl">
               <span className="font-semibold text-xs text-text-primary uppercase tracking-wider">
                 {namingDialog.title}
               </span>
@@ -866,7 +866,7 @@ export const ProjectsTree: React.FC = () => {
                   onChange={(e) =>
                     setNamingDialog((prev) => (prev ? { ...prev, value: e.target.value } : null))
                   }
-                  className="w-full bg-bg-primary text-text-primary border border-border-primary px-3 py-2 rounded text-xs focus:outline-none focus:border-text-accent placeholder-text-secondary/40 font-medium"
+                  className="w-full bg-bg-primary text-text-primary border border-border-primary px-3 py-2 rounded-md text-xs focus:outline-none focus:border-text-accent placeholder-text-secondary/40 font-medium"
                 />
               </div>
 
@@ -875,13 +875,13 @@ export const ProjectsTree: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setNamingDialog(null)}
-                  className="px-3 py-1.5 border border-border-primary rounded text-xs text-[#c0c7d3] hover:bg-bg-hover transition cursor-pointer font-medium"
+                  className="px-3.5 py-1.5 border border-border-primary rounded-md text-xs text-text-secondary hover:text-text-primary hover:bg-bg-hover transition cursor-pointer font-medium"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-1.5 bg-text-accent hover:bg-blue-300 text-[#00325a] rounded text-xs transition cursor-pointer font-bold"
+                  className="px-4 py-1.5 bg-text-accent hover:opacity-90 text-bg-primary rounded-md text-xs transition cursor-pointer font-semibold shadow-sm"
                 >
                   Save
                 </button>

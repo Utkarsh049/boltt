@@ -87,15 +87,15 @@ export const ReleaseNotesModal: React.FC = () => {
       aria-modal="true"
       aria-labelledby="release-notes-modal-title"
       tabIndex={-1}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-fade-in select-none font-sans p-4 outline-none"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fade-in select-none font-sans p-4 outline-none"
       onClick={() => setNotesModalOpen(false)}
     >
       <div
-        className="w-[500px] max-w-[92vw] max-h-[85vh] bg-bg-secondary border border-border-primary rounded-xl shadow-2xl overflow-hidden flex flex-col"
+        className="w-[500px] max-w-[92vw] max-h-[85vh] bg-bg-secondary border border-border-primary rounded-xl shadow-2xl overflow-hidden flex flex-col animate-slide-up"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
-        <div className="h-12 border-b border-border-primary bg-bg-tertiary flex items-center justify-between px-4 flex-shrink-0">
+        <div className="h-12 border-b border-border-primary bg-bg-tertiary flex items-center justify-between px-4 flex-shrink-0 rounded-t-xl">
           <div className="flex items-center space-x-2">
             <Sparkles size={16} className="text-text-accent" />
             <span id="release-notes-modal-title" className="font-semibold text-sm text-text-primary">

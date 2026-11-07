@@ -44,24 +44,28 @@ export const EnvironmentDropdown: React.FC = () => {
     <div className="relative inline-block text-left" ref={containerRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex space-x-2 px-3 py-1.5 bg-bg-tertiary/50 border border-border-primary hover:bg-bg-hover hover:border-text-secondary/40 rounded text-xs text-[#c0c7d3] hover:text-text-primary transition cursor-pointer select-none"
+        className="flex items-center space-x-2 px-2.5 py-1.5 bg-bg-tertiary/50 border border-border-primary hover:bg-bg-hover hover:border-text-secondary/40 rounded-md text-xs text-text-secondary hover:text-text-primary transition cursor-pointer select-none"
       >
-        <Globe size={13} className={activeId ? "text-green-400" : "text-text-secondary"} />
-        <span className="font-mono max-w-[120px] truncate capitalize">
-          {activeEnv ? `${activeGroup}: ${activeEnv.name}` : `No Env (${activeGroup})`}
+        <Globe size={13} className={activeId ? "text-green-400 flex-shrink-0" : "text-text-secondary flex-shrink-0"} />
+        <span className="px-1.5 py-0.5 bg-bg-primary text-text-accent text-[10px] font-mono rounded font-semibold uppercase tracking-wide border border-border-primary/50 flex-shrink-0">
+          {activeGroup}
         </span>
-        <ChevronDown size={12} className="text-text-secondary" />
+        <span className="font-sans max-w-[150px] truncate text-text-primary">
+          {activeEnv ? activeEnv.name : "No Environment"}
+        </span>
+        <ChevronDown size={12} className="text-text-secondary flex-shrink-0" />
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-1.5 w-56 bg-bg-secondary border border-border-primary rounded shadow-xl z-50 overflow-hidden py-1">
-          <div className="px-3 py-1 text-[10px] font-bold text-text-secondary uppercase tracking-wider border-b border-border-primary mb-1">
-            {activeGroup} Environments
+        <div className="absolute right-0 mt-1.5 w-60 bg-bg-secondary border border-border-primary rounded-md shadow-2xl z-50 overflow-hidden py-1">
+          <div className="px-3 py-1.5 text-[10px] font-bold text-text-secondary uppercase tracking-wider border-b border-border-primary mb-1 flex items-center justify-between">
+            <span>{activeGroup} Environments</span>
+            <span className="text-[10px] text-text-secondary/60 lowercase font-normal">{currentGroupEnvs.length} available</span>
           </div>
           
           <button
             onClick={() => handleSelectEnv(null)}
-            className="w-full text-left px-3 py-1.5 text-xs text-[#c0c7d3] hover:bg-bg-tertiary hover:text-text-primary flex items-center justify-between transition cursor-pointer"
+            className="w-full text-left px-3 py-1.5 text-xs text-text-secondary hover:bg-bg-tertiary hover:text-text-primary flex items-center justify-between transition cursor-pointer"
           >
             <span className="truncate">No Environment</span>
             {!activeId && <Check size={12} className="text-text-accent" />}
@@ -71,7 +75,7 @@ export const EnvironmentDropdown: React.FC = () => {
             <button
               key={env.id}
               onClick={() => handleSelectEnv(env.id)}
-              className="w-full text-left px-3 py-1.5 text-xs text-[#c0c7d3] hover:bg-bg-tertiary hover:text-text-primary flex items-center justify-between transition cursor-pointer"
+              className="w-full text-left px-3 py-1.5 text-xs text-text-secondary hover:bg-bg-tertiary hover:text-text-primary flex items-center justify-between transition cursor-pointer"
             >
               <span className="truncate">{env.name}</span>
               {activeId === env.id && <Check size={12} className="text-text-accent" />}

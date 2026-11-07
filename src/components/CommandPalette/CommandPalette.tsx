@@ -328,7 +328,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[70] bg-black/65 backdrop-blur-sm flex items-start justify-center pt-[10vh] p-4 select-none font-sans"
+      className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm flex items-start justify-center pt-[10vh] p-4 select-none font-sans animate-fade-in"
       onClick={(e) => {
         if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
           onClose();
@@ -341,7 +341,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
         className="w-full max-w-2xl bg-bg-secondary border border-border-primary rounded-xl shadow-2xl overflow-hidden flex flex-col max-h-[75vh] animate-slide-up"
       >
         {/* Search Input Bar */}
-        <div className="h-14 border-b border-border-primary bg-bg-secondary px-4 flex items-center space-x-3 flex-shrink-0">
+        <div className="h-14 border-b border-border-primary bg-bg-secondary px-4 flex items-center space-x-3 flex-shrink-0 rounded-t-xl">
           <Search size={18} className="text-text-accent flex-shrink-0" />
           <input
             ref={inputRef}

@@ -121,8 +121,8 @@ export const CaptureVariableModal: React.FC<CaptureVariableModalProps> = ({
 
   if (!isOpen) return null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: React.FormEvent, keepOpen = false) => {
+    if (e) e.preventDefault();
     const cleanVar = targetVariable.trim().replace(/^\{\{|\}\}$/g, "");
     if (!cleanVar) {
       showToast("Please provide a variable name", "error");
@@ -166,7 +166,12 @@ export const CaptureVariableModal: React.FC<CaptureVariableModalProps> = ({
       }
 
       showToast(`Captured {{${cleanVar}}} = "${evaluatedValue.slice(0, 32)}${evaluatedValue.length > 32 ? "..." : ""}"`, "success");
-      onClose();
+      if (keepOpen) {
+        setProperty("");
+        setTargetVariable("");
+      } else {
+        onClose();
+      }
     } catch (err) {
       console.error("Failed to capture variable:", err);
       showToast("Failed to capture variable", "error");
@@ -186,10 +191,10 @@ export const CaptureVariableModal: React.FC<CaptureVariableModalProps> = ({
     >
       <div
         ref={modalRef}
-        className="w-[460px] bg-bg-secondary border border-border-primary rounded-xl shadow-2xl flex flex-col overflow-hidden animate-slide-up"
+        className="w-[460px] bg-bg-secondary border border-border-primary rounded-xl shadow-2xl flex flex-col relative animate-slide-up"
       >
         {/* Header */}
-        <div className="h-12 border-b border-border-primary bg-bg-tertiary flex items-center justify-between px-4 flex-shrink-0">
+        <div className="h-12 border-b border-border-primary bg-bg-tertiary flex items-center justify-between px-4 flex-shrink-0 rounded-t-xl">
           <div className="flex items-center space-x-2">
             <Link2 size={15} className="text-text-accent" />
             <span className="font-semibold text-xs uppercase tracking-wider text-text-primary">
@@ -201,24 +206,24 @@ export const CaptureVariableModal: React.FC<CaptureVariableModalProps> = ({
             className="text-text-secondary hover:text-text-primary transition cursor-pointer"
             type="button"
           >
-            <X size={18} />
+            <X size={16} />
           </button>
         </div>
 
         {/* Content Form */}
-        <form onSubmit={handleSubmit} className="p-5 space-y-4 text-xs">
+        <form onSubmit={(e) => handleSubmit(e, false)} className="p-5 space-y-4 text-xs">
           {/* Source Selector */}
           <div className="space-y-1.5">
             <label className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">
               Extraction Source
             </label>
-            <div className="grid grid-cols-3 gap-1.5 bg-bg-primary p-1 rounded border border-border-primary">
+            <div className="grid grid-cols-3 gap-1 bg-bg-primary p-0.5 rounded-lg border border-border-primary">
               <button
                 type="button"
                 onClick={() => setSource("body")}
-                className={`flex items-center justify-center space-x-1.5 py-1.5 rounded transition cursor-pointer text-xs ${
+                className={`flex items-center justify-center space-x-1.5 py-1.5 rounded-md transition cursor-pointer text-xs ${
                   source === "body"
-                    ? "bg-bg-tertiary text-text-primary font-semibold shadow-sm border border-border-primary"
+                    ? "bg-bg-secondary text-text-primary font-medium shadow-sm"
                     : "text-text-secondary hover:text-text-primary"
                 }`}
               >
@@ -228,9 +233,9 @@ export const CaptureVariableModal: React.FC<CaptureVariableModalProps> = ({
               <button
                 type="button"
                 onClick={() => setSource("header")}
-                className={`flex items-center justify-center space-x-1.5 py-1.5 rounded transition cursor-pointer text-xs ${
+                className={`flex items-center justify-center space-x-1.5 py-1.5 rounded-md transition cursor-pointer text-xs ${
                   source === "header"
-                    ? "bg-bg-tertiary text-text-primary font-semibold shadow-sm border border-border-primary"
+                    ? "bg-bg-secondary text-text-primary font-medium shadow-sm"
                     : "text-text-secondary hover:text-text-primary"
                 }`}
               >
@@ -240,9 +245,9 @@ export const CaptureVariableModal: React.FC<CaptureVariableModalProps> = ({
               <button
                 type="button"
                 onClick={() => setSource("status")}
-                className={`flex items-center justify-center space-x-1.5 py-1.5 rounded transition cursor-pointer text-xs ${
+                className={`flex items-center justify-center space-x-1.5 py-1.5 rounded-md transition cursor-pointer text-xs ${
                   source === "status"
-                    ? "bg-bg-tertiary text-text-primary font-semibold shadow-sm border border-border-primary"
+                    ? "bg-bg-secondary text-text-primary font-medium shadow-sm"
                     : "text-text-secondary hover:text-text-primary"
                 }`}
               >
@@ -414,22 +419,31 @@ export const CaptureVariableModal: React.FC<CaptureVariableModalProps> = ({
           </div>
 
           {/* Action buttons */}
-          <div className="flex justify-end space-x-2 pt-2">
+          <div className="flex items-center justify-end space-x-2 pt-2 border-t border-border-primary/40">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="px-3 py-1.5 rounded text-xs text-text-secondary hover:text-text-primary hover:bg-bg-hover transition cursor-pointer border border-border-primary"
+              className="px-3.5 py-1.5 rounded-md text-xs text-text-secondary hover:text-text-primary hover:bg-bg-hover transition cursor-pointer border border-border-primary font-medium"
             >
               Cancel
             </button>
             <button
+              type="button"
+              disabled={isSubmitting || evaluatedValue === null || !targetVariable.trim()}
+              onClick={(e) => handleSubmit(e, true)}
+              className="px-3 py-1.5 rounded-md text-xs font-medium text-text-secondary hover:text-text-primary border border-border-primary hover:bg-bg-hover transition flex items-center space-x-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              title="Capture variable and keep dialog open to capture another"
+            >
+              <span>Capture & Next</span>
+            </button>
+            <button
               type="submit"
               disabled={isSubmitting || evaluatedValue === null || !targetVariable.trim()}
-              className="px-4 py-1.5 rounded text-xs font-semibold bg-text-accent text-bg-primary hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center space-x-1.5 cursor-pointer shadow-sm"
+              className="px-4 py-1.5 rounded-md text-xs font-semibold bg-text-accent text-bg-primary hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center space-x-1.5 cursor-pointer shadow-sm"
             >
               <Sparkles size={12} />
-              <span>{isSubmitting ? "Capturing..." : "Capture Variable"}</span>
+              <span>{isSubmitting ? "Capturing..." : "Capture & Close"}</span>
             </button>
           </div>
         </form>

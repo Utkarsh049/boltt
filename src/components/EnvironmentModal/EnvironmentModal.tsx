@@ -313,7 +313,7 @@ export const EnvironmentModal: React.FC = () => {
     <div className={`bg-bg-secondary border-border-primary flex flex-col overflow-hidden ${
       isEnvWindow 
         ? "w-screen h-screen" 
-        : "w-[780px] h-[520px] border rounded-xl shadow-2xl animate-slide-up"
+        : "w-[880px] max-w-[95vw] h-[540px] max-h-[90vh] border rounded-xl shadow-2xl animate-slide-up"
     }`}>
       {/* Modal Header */}
       <div
@@ -396,7 +396,7 @@ export const EnvironmentModal: React.FC = () => {
       {/* Modal Body */}
       <div className="flex-1 flex min-h-0 overflow-hidden">
         {/* Left Panel: Environment List */}
-        <div className="w-1/3 bg-bg-primary/50 flex flex-col border-r border-border-primary">
+        <div className="w-60 flex-shrink-0 bg-bg-primary/50 flex flex-col border-r border-border-primary">
           <div className="flex-1 p-3 overflow-y-auto space-y-1.5 min-h-0">
             <div className="text-[10px] font-bold text-text-secondary uppercase tracking-wider mb-2 px-1">
               Environments
@@ -407,7 +407,7 @@ export const EnvironmentModal: React.FC = () => {
                 onClick={() => setSelectedEnvId(env.id)}
                 className={`group flex items-center justify-between px-3 py-2 rounded-sm text-xs font-medium cursor-pointer transition ${
                   selectedEnvId === env.id
-                    ? "bg-bg-tertiary text-text-accent border-l-2 border-l-text-accent"
+                    ? "bg-bg-tertiary text-text-accent"
                     : "text-text-secondary hover:bg-bg-tertiary/40 hover:text-text-primary"
                 }`}
               >
@@ -435,7 +435,7 @@ export const EnvironmentModal: React.FC = () => {
         </div>
 
         {/* Right Panel: Variable Editor */}
-        <div className="w-2/3 flex flex-col bg-bg-secondary">
+        <div className="flex-1 flex flex-col bg-bg-secondary min-w-0">
           {selectedEnv ? (
             <div className="flex-1 flex flex-col min-h-0 p-4 space-y-4">
               {/* Environment Name Input */}

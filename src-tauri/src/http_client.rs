@@ -39,10 +39,12 @@ pub enum AuthConfig {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ResponseExtractor {
     pub id: String,
     pub source: String,
     pub property: String,
+    #[serde(alias = "target_variable")]
     pub target_variable: String,
     pub enabled: bool,
 }

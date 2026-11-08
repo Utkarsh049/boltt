@@ -44,7 +44,7 @@ export const UpdateToast: React.FC = () => {
       style={{
         animation: "toast-slide-in 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards",
       }}
-      className="fixed bottom-6 right-6 z-50 w-[360px] max-w-[calc(100vw-3rem)] bg-bg-secondary border border-border-primary rounded-xl shadow-2xl overflow-hidden font-sans select-none flex flex-col text-xs"
+      className="fixed bottom-6 right-8 z-50 w-[360px] max-w-[calc(100vw-3rem)] bg-bg-secondary border border-border-primary rounded-xl shadow-2xl overflow-hidden font-sans select-none flex flex-col text-xs"
     >
       {/* Toast Top Bar */}
       <div className="flex items-center justify-between px-3.5 py-2.5 bg-bg-tertiary border-b border-border-primary">

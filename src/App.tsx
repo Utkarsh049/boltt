@@ -670,7 +670,7 @@ function App() {
             className="relative p-1 hover:bg-bg-hover rounded border border-transparent hover:border-border-primary transition cursor-pointer flex items-center justify-center text-text-secondary hover:text-text-primary disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-1.5 focus-visible:ring-text-accent"
             title={updateStatus === "checking" ? "Checking for updates..." : "Check for software updates"}
           >
-            <Download size={14} className={updateStatus === "checking" ? "animate-bounce text-text-accent" : ""} />
+            <Download size={14} className={updateStatus === "checking" ? "text-text-accent" : ""} />
             {(updateStatus === "available" || updateStatus === "ready") && (
               <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-text-accent animate-pulse" />
             )}

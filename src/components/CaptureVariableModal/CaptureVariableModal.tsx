@@ -191,7 +191,7 @@ export const CaptureVariableModal: React.FC<CaptureVariableModalProps> = ({
     >
       <div
         ref={modalRef}
-        className="w-[460px] bg-bg-secondary border border-border-primary rounded-xl shadow-2xl flex flex-col relative animate-slide-up"
+        className="w-[500px] bg-bg-secondary border border-border-primary rounded-xl shadow-2xl flex flex-col relative animate-slide-up"
       >
         {/* Header */}
         <div className="h-12 border-b border-border-primary bg-bg-tertiary flex items-center justify-between px-4 flex-shrink-0 rounded-t-xl">
@@ -214,8 +214,8 @@ export const CaptureVariableModal: React.FC<CaptureVariableModalProps> = ({
         <form onSubmit={(e) => handleSubmit(e, false)} className="p-5 space-y-4 text-xs">
           {/* Source Selector */}
           <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">
-              Extraction Source
+            <label className="text-[10px] font-bold text-text-secondary uppercase tracking-wider flex items-center justify-between">
+              <span>Extraction Source</span>
             </label>
             <div className="grid grid-cols-3 gap-1 bg-bg-primary p-0.5 rounded-lg border border-border-primary">
               <button
@@ -373,9 +373,9 @@ export const CaptureVariableModal: React.FC<CaptureVariableModalProps> = ({
           </div>
 
           {/* Live Preview of Extracted Value */}
-          <div className="space-y-1">
-            <label className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">
-              Live Preview
+          <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-text-secondary uppercase tracking-wider flex items-center justify-between">
+              <span>Live Preview</span>
             </label>
             <div className="p-2 bg-bg-primary/80 border border-border-primary rounded min-h-[38px] flex items-center">
               {evaluatedValue !== null ? (
@@ -402,14 +402,14 @@ export const CaptureVariableModal: React.FC<CaptureVariableModalProps> = ({
               <span className="font-mono text-text-primary font-medium">{activeEnvName}</span>
             </div>
 
-            <label className="flex items-start space-x-2 cursor-pointer pt-1">
+            <label className="flex items-start space-x-2 gap-2 cursor-pointer pt-1">
               <input
                 type="checkbox"
                 checked={addToExtractors}
                 onChange={(e) => setAddToExtractors(e.target.checked)}
                 className="mt-0.5 rounded border-border-primary text-text-accent focus:ring-0 focus:outline-none bg-bg-primary cursor-pointer"
               />
-              <div className="text-[11px] text-text-secondary leading-tight">
+              <div className="text-xs text-text-secondary leading-tight">
                 <span className="text-text-primary font-medium">Chain to Request Extractors</span>
                 <p className="text-[10px] text-text-secondary/80 mt-0.5">
                   Automatically re-extract and update this variable on every future successful response.

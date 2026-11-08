@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from "react";
 import { UrlBar } from "./components/UrlBar/UrlBar";
 import { RequestPane } from "./components/RequestPane/RequestPane";
-import { Palette, RefreshCw, Folder as FolderIcon, Globe, Clock, Eye, EyeOff, Plus, Minus, Square, X, Trash2, Download, Search, Settings } from "lucide-react";
+import { Palette, RefreshCw, Folder as FolderIcon, Clock, Eye, EyeOff, Plus, Minus, Square, X, Trash2, Download, Search } from "lucide-react";
 import "./App.css";
 import { Group, Panel, Separator, type PanelImperativeHandle } from "react-resizable-panels";
 import { ResponsePane } from "./components/ResponsePane/ResponsePane";
 import { useRequestStore } from "./store/requestStore";
-import { useEnvStore, openEnvironmentWindow } from "./store/envStore";
+import { useEnvStore } from "./store/envStore";
 import { EnvironmentDropdown } from "./components/EnvironmentDropdown/EnvironmentDropdown";
 import { EnvironmentModal } from "./components/EnvironmentModal/EnvironmentModal";
 import { ProjectsTree } from "./components/ProjectsTree/ProjectsTree";
@@ -25,7 +25,7 @@ import { useToastStore } from "./store/toastStore";
 import { useUpdateStore } from "./store/updateStore";
 import { isCurlCommand } from "./utils/curl";
 
-type SidebarTab = "workspace" | "environments" | "history";
+type SidebarTab = "workspace" | "history";
 
 const getInitialWindowLabel = () => {
   try {
@@ -135,10 +135,6 @@ function App() {
   const openTab = useRequestStore((state) => state.openTab);
 
   const loadEnvironments = useEnvStore((state) => state.loadEnvironments);
-  const activeGroup = useEnvStore((state) => state.activeGroup);
-  const groupActiveIds = useEnvStore((state) => state.groupActiveIds);
-  const setActiveGroup = useEnvStore((state) => state.setActiveGroup);
-  const environments = useEnvStore((state) => state.environments);
   const historyEntries = useHistoryStore((state) => state.entries);
   const clearHistory = useHistoryStore((state) => state.clearHistory);
   const showToast = useToastStore((state) => state.showToast);
@@ -591,11 +587,11 @@ function App() {
           <button
             type="button"
             onClick={() => usePaletteStore.getState().open()}
-            className="flex items-center space-x-2 px-2.5 py-1 bg-bg-secondary hover:bg-bg-hover text-text-secondary hover:text-text-primary rounded border border-border-primary text-xs transition cursor-pointer"
+            className="flex items-center space-x-2 px-2.5 py-2 bg-bg-secondary hover:bg-bg-hover text-text-secondary hover:text-text-primary rounded border border-border-primary text-xs transition cursor-pointer"
             title="Open Command Palette (Ctrl+K or Cmd+K)"
           >
             <Search size={13} className="text-text-accent" />
-            <span className="hidden sm:inline text-[11px]">Command Palette</span>
+            <span className="hidden sm:inline text-xs">Command Palette</span>
             <kbd className="font-mono text-[10px] px-1 py-0.2 rounded bg-bg-tertiary border border-border-primary text-text-tertiary">
               Ctrl+K
             </kbd>
@@ -729,38 +725,31 @@ function App() {
             {/* Sidebar Horizontal Options Tabs */}
             <div className="flex border-b border-border-primary bg-bg-tertiary h-9 flex-shrink-0">
               <button
+                type="button"
                 onClick={() => setSidebarTab("workspace")}
-                className={`flex-1 flex items-center justify-center text-[11px] font-semibold transition px-2 min-w-0 ${sidebarTab === "workspace"
+                className={`flex-1 flex items-center justify-center text-[11px] font-semibold transition px-2 min-w-0 cursor-pointer ${
+                  sidebarTab === "workspace"
                     ? "bg-bg-secondary text-text-accent"
                     : "text-text-secondary hover:text-text-primary"
-                  }`}
-               >
-                 <FolderIcon size={13} className="flex-shrink-0" />
-                 {sidebarTab === "workspace" && <span className="ml-1.5 truncate whitespace-nowrap">Workspace</span>}
-               </button>
- 
-               <button
-                 onClick={() => setSidebarTab("environments")}
-                 className={`flex-1 flex items-center justify-center text-[11px] font-semibold transition px-2 min-w-0 ${sidebarTab === "environments"
-                     ? "bg-bg-secondary text-text-accent"
-                     : "text-text-secondary hover:text-text-primary"
-                   }`}
-               >
-                 <Globe size={13} className="flex-shrink-0" />
-                 {sidebarTab === "environments" && <span className="ml-1.5 truncate whitespace-nowrap">Environments</span>}
-               </button>
- 
-               <button
-                 onClick={() => setSidebarTab("history")}
-                 className={`flex-1 flex items-center justify-center text-[11px] font-semibold transition px-2 min-w-0 ${sidebarTab === "history"
-                     ? "bg-bg-secondary text-text-accent"
-                     : "text-text-secondary hover:text-text-primary"
-                   }`}
-               >
-                 <Clock size={13} className="flex-shrink-0" />
-                 {sidebarTab === "history" && <span className="ml-1.5 truncate whitespace-nowrap">History</span>}
-               </button>
-             </div>
+                }`}
+              >
+                <FolderIcon size={13} className="flex-shrink-0" />
+                <span className="ml-1.5 truncate whitespace-nowrap">Workspace</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setSidebarTab("history")}
+                className={`flex-1 flex items-center justify-center text-[11px] font-semibold transition px-2 min-w-0 cursor-pointer ${
+                  sidebarTab === "history"
+                    ? "bg-bg-secondary text-text-accent"
+                    : "text-text-secondary hover:text-text-primary"
+                }`}
+              >
+                <Clock size={13} className="flex-shrink-0" />
+                <span className="ml-1.5 truncate whitespace-nowrap">History</span>
+              </button>
+            </div>
  
              {/* Sidebar Content Area */}
              <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
@@ -777,57 +766,7 @@ function App() {
                  </div>
                )}
 
-              {sidebarTab === "environments" && (
-                <div className="flex-1 p-3 overflow-y-auto min-h-0 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-[12px] font-bold text-[#8b919d] uppercase tracking-wider">
-                      Environments
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => openEnvironmentWindow(activeGroup)}
-                      className="text-[11px] text-text-accent hover:underline flex items-center space-x-1 cursor-pointer font-medium"
-                      title="Manage Environments"
-                    >
-                      <Settings size={12} />
-                      <span>Manage</span>
-                    </button>
-                  </div>
-                  <div className="space-y-1.5 font-mono text-xs">
-                    {(["production", "staging", "local"] as const).map((group) => {
-                      const isActiveGroup = activeGroup === group;
-                      const activeEnvId = groupActiveIds[group];
-                      const hasActiveEnv = activeEnvId !== null;
-                      const activeEnvName = hasActiveEnv
-                        ? environments.find((e) => e.id === activeEnvId)?.name
-                        : null;
 
-                      return (
-                        <div
-                          key={group}
-                          onClick={() => setActiveGroup(group)}
-                          className={`flex items-center justify-between px-2.5 py-1.5 rounded-sm cursor-pointer transition border ${isActiveGroup
-                              ? "bg-bg-tertiary/50 border-border-primary text-text-accent"
-                              : "border-transparent text-text-secondary hover:text-text-primary hover:bg-bg-tertiary/20"
-                            }`}
-                        >
-                          <div className="flex flex-col min-w-0">
-                            <span className="capitalize text-xs font-semibold">{group}</span>
-                            {activeEnvName && (
-                              <span className="text-[10px] text-text-secondary truncate font-mono mt-0.5">
-                                {activeEnvName}
-                              </span>
-                            )}
-                          </div>
-                          {hasActiveEnv && (
-                            <span className="w-1.5 h-1.5 bg-green-500 rounded-full flex-shrink-0 ml-2" />
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
 
               {sidebarTab === "history" && (
                 <div className="flex-1 p-3 overflow-y-auto min-h-0 flex flex-col">

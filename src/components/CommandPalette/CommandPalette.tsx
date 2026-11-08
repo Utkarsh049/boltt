@@ -34,7 +34,7 @@ import {
 export interface CommandPaletteProps {
   isOpen?: boolean;
   onClose?: () => void;
-  onNavigateSidebar?: (tab: "workspace" | "environments" | "history") => void;
+  onNavigateSidebar?: (tab: "workspace" | "history") => void;
   onOpenDiff?: () => void;
 }
 
@@ -169,9 +169,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       }
 
       case "navigation": {
-        if (onNavigateSidebar) {
+        if (item.actionId === "nav_environments") {
+          openEnvironmentWindow(useEnvStore.getState().activeGroup);
+        } else if (onNavigateSidebar) {
           if (item.actionId === "nav_workspace") onNavigateSidebar("workspace");
-          else if (item.actionId === "nav_environments") onNavigateSidebar("environments");
           else if (item.actionId === "nav_history") onNavigateSidebar("history");
         }
         break;

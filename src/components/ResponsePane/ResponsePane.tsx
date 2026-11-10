@@ -308,22 +308,6 @@ export const ResponsePane: React.FC = () => {
               <Terminal size={12} />
               <span>cURL</span>
             </button>
-            <button
-              type="button"
-              onClick={handleCopyBody}
-              className="p-1 hover:bg-bg-hover text-text-secondary hover:text-text-primary border border-border-primary/60 rounded-md transition flex items-center justify-center cursor-pointer"
-              title="Copy response body"
-            >
-              <Copy size={12} />
-            </button>
-            <button
-              type="button"
-              onClick={handleCopyHeaders}
-              className="p-1 hover:bg-bg-hover text-text-secondary hover:text-text-primary border border-border-primary/60 rounded-md transition flex items-center justify-center cursor-pointer"
-              title="Copy response headers"
-            >
-              <List size={12} />
-            </button>
           </div>
         )}
       </div>
@@ -440,14 +424,29 @@ export const ResponsePane: React.FC = () => {
                 }
                 className="flex flex-col min-h-0 overflow-hidden mb-2"
               >
-                <h4
-                  onClick={() => setHeadersExpanded(!headersExpanded)}
-                  className="text-[10px] font-bold text-text-secondary uppercase mb-1.5 flex items-center space-x-1.5 flex-shrink-0 cursor-pointer hover:text-text-primary transition select-none"
-                >
-                  {headersExpanded ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
-                  <List size={11} />
-                  <span>Response Headers ({response.headers.length})</span>
-                </h4>
+                <div className="flex items-center justify-between mb-1.5 flex-shrink-0 select-none">
+                  <h4
+                    onClick={() => setHeadersExpanded(!headersExpanded)}
+                    className="text-[10px] font-bold text-text-secondary uppercase flex items-center space-x-1.5 cursor-pointer hover:text-text-primary transition"
+                  >
+                    {headersExpanded ? <ChevronDown size={11} /> : <ChevronRight size={11} />}
+                    <List size={11} />
+                    <span>Response Headers ({response.headers.length})</span>
+                  </h4>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleCopyHeaders();
+                    }}
+                    className="flex items-center space-x-1 px-1.5 py-0.5 text-[10px] font-medium text-text-secondary hover:text-text-primary hover:bg-bg-hover rounded transition cursor-pointer"
+                    title="Copy response headers"
+                  >
+                    <Copy size={11} />
+                    <span>Copy Headers</span>
+                  </button>
+                </div>
                 {headersExpanded && (
                   <div className="flex-1 bg-bg-secondary/20 rounded-md border border-border-primary font-mono text-[11px] overflow-y-auto min-h-0 divide-y divide-bg-tertiary">
                     {response.headers.map((h, i) => (
@@ -505,6 +504,19 @@ export const ResponsePane: React.FC = () => {
                   <FileText size={11} />
                   <span>Response Body</span>
                 </h4>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleCopyBody();
+                  }}
+                  className="flex items-center space-x-1 px-1.5 py-0.5 text-[10px] font-medium text-text-secondary hover:text-text-primary hover:bg-bg-hover rounded transition cursor-pointer"
+                  title="Copy response body"
+                >
+                  <Copy size={11} />
+                  <span>Copy Body</span>
+                </button>
               </div>
               {bodyExpanded && (
                 <div className="flex-1 min-h-0 overflow-hidden flex flex-col border border-border-primary rounded-md bg-bg-secondary/20">

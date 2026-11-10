@@ -6,7 +6,7 @@ export const ToastList: React.FC = () => {
   const { toasts, removeToast } = useToastStore();
 
   return (
-    <div className="fixed bottom-6 right-6 z-50 flex flex-col space-y-2 max-w-sm pointer-events-none select-none font-sans">
+    <div className="fixed bottom-6 right-8 z-50 flex flex-col space-y-2 max-w-sm pointer-events-none select-none font-sans">
       {toasts.map((toast) => (
         <ToastItem key={toast.id} toast={toast} onRemove={removeToast} />
       ))}

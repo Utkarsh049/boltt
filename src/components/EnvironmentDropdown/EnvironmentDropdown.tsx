@@ -12,10 +12,63 @@ export const EnvironmentDropdown: React.FC = () => {
   const [isGroupMenuOpen, setIsGroupMenuOpen] = useState(false);
   const [hoveredSubGroup, setHoveredSubGroup] = useState<"production" | "staging" | "local" | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const groupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const subGroupTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const activeId = groupActiveIds[activeGroup] || null;
   const currentGroupEnvs = environments.filter((e) => getGroupFromId(e.id) === activeGroup);
   const activeEnv = currentGroupEnvs.find((e) => e.id === activeId);
+
+  // Clear timers on unmount
+  useEffect(() => {
+    return () => {
+      if (groupTimerRef.current) clearTimeout(groupTimerRef.current);
+      if (subGroupTimerRef.current) clearTimeout(subGroupTimerRef.current);
+    };
+  }, []);
+
+  const closeAllMenus = () => {
+    if (groupTimerRef.current) clearTimeout(groupTimerRef.current);
+    if (subGroupTimerRef.current) clearTimeout(subGroupTimerRef.current);
+    setIsOpen(false);
+    setIsGroupMenuOpen(false);
+    setHoveredSubGroup(null);
+  };
+
+  const handleGroupMouseEnter = () => {
+    if (groupTimerRef.current) {
+      clearTimeout(groupTimerRef.current);
+      groupTimerRef.current = null;
+    }
+    setIsGroupMenuOpen(true);
+  };
+
+  const handleGroupMouseLeave = () => {
+    if (groupTimerRef.current) clearTimeout(groupTimerRef.current);
+    groupTimerRef.current = setTimeout(() => {
+      setIsGroupMenuOpen(false);
+      setHoveredSubGroup(null);
+    }, 220);
+  };
+
+  const handleSubGroupMouseEnter = (group: "production" | "staging" | "local") => {
+    if (groupTimerRef.current) {
+      clearTimeout(groupTimerRef.current);
+      groupTimerRef.current = null;
+    }
+    if (subGroupTimerRef.current) {
+      clearTimeout(subGroupTimerRef.current);
+      subGroupTimerRef.current = null;
+    }
+    setHoveredSubGroup(group);
+  };
+
+  const handleSubGroupMouseLeave = () => {
+    if (subGroupTimerRef.current) clearTimeout(subGroupTimerRef.current);
+    subGroupTimerRef.current = setTimeout(() => {
+      setHoveredSubGroup(null);
+    }, 220);
+  };
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -24,9 +77,7 @@ export const EnvironmentDropdown: React.FC = () => {
         containerRef.current &&
         !containerRef.current.contains(event.target as Node)
       ) {
-        setIsOpen(false);
-        setIsGroupMenuOpen(false);
-        setHoveredSubGroup(null);
+        closeAllMenus();
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -37,16 +88,12 @@ export const EnvironmentDropdown: React.FC = () => {
 
   const handleSelectEnv = (id: string | null) => {
     setActiveIdForGroup(activeGroup, id);
-    setIsOpen(false);
-    setIsGroupMenuOpen(false);
-    setHoveredSubGroup(null);
+    closeAllMenus();
   };
 
   const handleManageClick = () => {
     openEnvironmentWindow(activeGroup);
-    setIsOpen(false);
-    setIsGroupMenuOpen(false);
-    setHoveredSubGroup(null);
+    closeAllMenus();
   };
 
   return (
@@ -74,11 +121,8 @@ export const EnvironmentDropdown: React.FC = () => {
           {/* Windows-style Flyout: Switch Environment Group */}
           <div
             className="relative"
-            onMouseEnter={() => setIsGroupMenuOpen(true)}
-            onMouseLeave={() => {
-              setIsGroupMenuOpen(false);
-              setHoveredSubGroup(null);
-            }}
+            onMouseEnter={handleGroupMouseEnter}
+            onMouseLeave={handleGroupMouseLeave}
           >
             <button
               type="button"
@@ -98,7 +142,11 @@ export const EnvironmentDropdown: React.FC = () => {
 
             {/* Level 1 Flyout Submenu: Groups (Production, Staging, Local) */}
             {isGroupMenuOpen && (
-              <div className="absolute right-full top-0 mr-1 w-56 bg-bg-secondary border border-border-primary rounded-md shadow-2xl z-50 py-1 overflow-visible animate-fade-in font-sans">
+              <div
+                onMouseEnter={handleGroupMouseEnter}
+                onMouseLeave={handleGroupMouseLeave}
+                className="absolute right-full top-0 mr-1 w-56 bg-bg-secondary border border-border-primary rounded-md shadow-2xl z-50 py-1 overflow-visible animate-fade-in font-sans after:absolute after:top-0 after:bottom-0 after:-right-2 after:w-3"
+              >
                 <div className="px-3 py-1.5 text-[10px] font-bold text-text-secondary uppercase tracking-wider border-b border-border-primary mb-1">
                   Environment Groups
                 </div>
@@ -112,15 +160,14 @@ export const EnvironmentDropdown: React.FC = () => {
                     <div
                       key={group}
                       className="relative"
-                      onMouseEnter={() => setHoveredSubGroup(group)}
-                      onMouseLeave={() => setHoveredSubGroup(null)}
+                      onMouseEnter={() => handleSubGroupMouseEnter(group)}
+                      onMouseLeave={handleSubGroupMouseLeave}
                     >
                       <button
                         type="button"
                         onClick={() => {
                           setActiveGroup(group);
-                          setIsGroupMenuOpen(false);
-                          setHoveredSubGroup(null);
+                          closeAllMenus();
                         }}
                         className={`w-full text-left px-3 py-2 text-xs flex items-center justify-between transition cursor-pointer hover:bg-bg-tertiary ${
                           isCurrentActiveGroup ? "text-text-accent font-semibold bg-bg-tertiary/60" : "text-text-secondary hover:text-text-primary"
@@ -142,7 +189,17 @@ export const EnvironmentDropdown: React.FC = () => {
 
                       {/* Level 2 Flyout Submenu: Environments in this Group */}
                       {hoveredSubGroup === group && (
-                        <div className="absolute right-full top-0 mr-1 w-52 bg-bg-secondary border border-border-primary rounded-md shadow-2xl z-50 py-1 overflow-hidden animate-fade-in font-sans">
+                        <div
+                          onMouseEnter={() => {
+                            handleGroupMouseEnter();
+                            handleSubGroupMouseEnter(group);
+                          }}
+                          onMouseLeave={() => {
+                            handleSubGroupMouseLeave();
+                            handleGroupMouseLeave();
+                          }}
+                          className="absolute right-full top-0 mr-1 w-52 bg-bg-secondary border border-border-primary rounded-md shadow-2xl z-50 py-1 overflow-hidden animate-fade-in font-sans after:absolute after:top-0 after:bottom-0 after:-right-2 after:w-3"
+                        >
                           <div className="px-3 py-1.5 text-[10px] font-bold text-text-secondary uppercase tracking-wider border-b border-border-primary mb-1 flex items-center justify-between">
                             <span className="capitalize">{group} Envs</span>
                             <span className="text-[10px] text-text-secondary/60 lowercase font-normal">
@@ -155,9 +212,7 @@ export const EnvironmentDropdown: React.FC = () => {
                             onClick={() => {
                               setActiveGroup(group);
                               setActiveIdForGroup(group, null);
-                              setIsOpen(false);
-                              setIsGroupMenuOpen(false);
-                              setHoveredSubGroup(null);
+                              closeAllMenus();
                             }}
                             className="w-full text-left px-3 py-1.5 text-xs text-text-secondary hover:bg-bg-tertiary hover:text-text-primary flex items-center justify-between transition cursor-pointer"
                           >
@@ -172,9 +227,7 @@ export const EnvironmentDropdown: React.FC = () => {
                               onClick={() => {
                                 setActiveGroup(group);
                                 setActiveIdForGroup(group, env.id);
-                                setIsOpen(false);
-                                setIsGroupMenuOpen(false);
-                                setHoveredSubGroup(null);
+                                closeAllMenus();
                               }}
                               className="w-full text-left px-3 py-1.5 text-xs text-text-secondary hover:bg-bg-tertiary hover:text-text-primary flex items-center justify-between transition cursor-pointer"
                             >

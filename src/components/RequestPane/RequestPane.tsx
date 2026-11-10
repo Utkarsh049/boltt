@@ -353,7 +353,7 @@ export const RequestPane: React.FC = () => {
         {/* Params Tab */}
         {activeTab === "params" && (
           <div className="animate-tab-fade space-y-2">
-            <div className="text-[11px] text-text-secondary mb-2 font-semibold uppercase tracking-wider">
+            <div className="text-[11px] text-text-secondary font-semibold uppercase tracking-wider">
               Query Parameters
             </div>
             <KVEditor
@@ -367,7 +367,7 @@ export const RequestPane: React.FC = () => {
 
         {/* Headers Tab */}
         {activeTab === "headers" && (
-          <div className="animate-tab-fade space-y-3">
+          <div className="animate-tab-fade space-y-2">
             {/* Inherited Headers Cascade */}
             {inheritance.inheritedHeaders.length > 0 && (
               <div className="border border-border-primary rounded-sm bg-bg-secondary/40 overflow-hidden">

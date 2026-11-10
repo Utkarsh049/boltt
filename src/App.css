@@ -59,6 +59,50 @@ button:focus-visible {
   outline-offset: 1px;
 }
 
+/* Custom Modern Scrollbars - Accent themed, thin by default, expands on grab, transparent track */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-track-piece,
+::-webkit-scrollbar-corner {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+*::-webkit-scrollbar-thumb,
+::-webkit-scrollbar-thumb {
+  background-color: var(--text-accent);
+  border-radius: 9999px;
+  border: 1.5px solid transparent;
+  background-clip: padding-box;
+  transition: border-width 0.15s ease, filter 0.15s ease;
+}
+
+*::-webkit-scrollbar-thumb:hover,
+::-webkit-scrollbar-thumb:hover,
+*::-webkit-scrollbar-thumb:active,
+::-webkit-scrollbar-thumb:active {
+  background-color: var(--text-accent) !important;
+  border: 0px solid transparent !important;
+  filter: brightness(1.15);
+}
+
+.scrollbar-none::-webkit-scrollbar,
+* .scrollbar-none::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
+.scrollbar-none {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
 /* Custom Modern Checkbox Design System */
 input[type="checkbox"] {
   appearance: none;

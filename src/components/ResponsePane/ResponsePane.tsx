@@ -293,10 +293,10 @@ export const ResponsePane: React.FC = () => {
             <button
               type="button"
               onClick={handleOpenCaptureFromBody}
-              className="px-2 py-1 hover:bg-bg-hover text-text-accent hover:text-text-primary border border-border-primary/60 rounded-md transition flex items-center space-x-1 text-[11px] cursor-pointer"
+              className="px-2 py-1 hover:bg-bg-hover text-text-secondary hover:text-text-primary border border-border-primary/60 rounded-md transition flex items-center space-x-1 text-[11px] cursor-pointer"
               title="Capture response value into environment variable"
             >
-              <Sparkles size={12} />
+              <Sparkles size={12} className="text-text-accent"/>
               <span>Capture</span>
             </button>
             <button
@@ -305,7 +305,7 @@ export const ResponsePane: React.FC = () => {
               className="px-2 py-1 hover:bg-bg-hover text-text-secondary hover:text-text-primary border border-border-primary/60 rounded-md transition flex items-center space-x-1 text-[11px] cursor-pointer"
               title="Copy request as cURL command"
             >
-              <Terminal size={12} />
+              <Terminal size={12} className="text-text-accent"/>
               <span>cURL</span>
             </button>
           </div>
@@ -452,7 +452,7 @@ export const ResponsePane: React.FC = () => {
                     {response.headers.map((h, i) => (
                       <div
                         key={i}
-                        className="group flex items-center justify-between py-1 px-2 hover:bg-bg-tertiary/40 transition"
+                        className="group flex items-center justify-between py-1 pl-2.5 pr-4 hover:bg-bg-tertiary/40 transition"
                       >
                         <span className="text-text-secondary font-semibold select-none">{h.key}</span>
                         <div className="flex items-center space-x-2 pl-4 min-w-0">
@@ -463,7 +463,7 @@ export const ResponsePane: React.FC = () => {
                               e.stopPropagation();
                               handleCaptureHeader(h.key);
                             }}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 hover:bg-bg-hover text-text-secondary hover:text-text-accent rounded cursor-pointer flex-shrink-0"
+                            className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus:opacity-100 transition-opacity p-1 hover:bg-bg-hover text-text-secondary hover:text-text-accent rounded cursor-pointer flex-shrink-0"
                             title={`Capture "${h.key}" as variable`}
                           >
                             <Sparkles size={11} />

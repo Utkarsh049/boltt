@@ -607,10 +607,12 @@ function App() {
                 }
                 setIsThemeDropdownOpen(!isThemeDropdownOpen);
               }}
-              className={`p-1 hover:bg-bg-hover rounded border border-transparent hover:border-border-primary transition cursor-pointer flex items-center justify-center ${isThemeDropdownOpen ? "bg-bg-hover border-border-primary" : ""}`}
+              className={`p-1 hover:bg-bg-hover rounded border border-transparent hover:border-border-primary transition cursor-pointer flex items-center justify-center text-text-secondary hover:text-text-primary focus-visible:outline-none focus-visible:ring-1.5 focus-visible:ring-text-accent ${
+                isThemeDropdownOpen ? "bg-bg-hover border-border-primary text-text-primary" : ""
+              }`}
               title="Select color theme"
             >
-              <Palette size={14} className="text-text-secondary hover:text-text-primary" />
+              <Palette size={14} />
             </button>
 
             {isThemeDropdownOpen && (
@@ -655,7 +657,7 @@ function App() {
           <button
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="p-1 hover:bg-bg-hover rounded border border-transparent hover:border-border-primary transition cursor-pointer disabled:opacity-60"
+            className="p-1 hover:bg-bg-hover rounded border border-transparent hover:border-border-primary transition cursor-pointer flex items-center justify-center text-text-secondary hover:text-text-primary disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-1.5 focus-visible:ring-text-accent"
             title="Sync workspace with filesystem"
           >
             <RefreshCw size={14} className={isRefreshing ? "animate-spin text-text-accent" : ""} />

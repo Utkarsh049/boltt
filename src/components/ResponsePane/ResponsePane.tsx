@@ -11,7 +11,7 @@ import {
   Inbox,
   ChevronDown,
   ChevronRight,
-  Sparkles,
+  Scan,
   AlertTriangle,
   AlertCircle,
   WifiOff,
@@ -296,7 +296,7 @@ export const ResponsePane: React.FC = () => {
               className="px-2 py-1 hover:bg-bg-hover text-text-secondary hover:text-text-primary border border-border-primary/60 rounded-md transition flex items-center space-x-1 text-[11px] cursor-pointer"
               title="Capture response value into environment variable"
             >
-              <Sparkles size={12} className="text-text-accent"/>
+              <Scan size={12} className="text-text-accent"/>
               <span>Capture</span>
             </button>
             <button
@@ -452,10 +452,10 @@ export const ResponsePane: React.FC = () => {
                     {response.headers.map((h, i) => (
                       <div
                         key={i}
-                        className="group flex items-center justify-between py-1 pl-2.5 pr-4 hover:bg-bg-tertiary/40 transition"
+                        className="group flex items-center justify-between py-1 pl-2.5 pr-4 hover:bg-bg-tertiary/40 transition-colors"
                       >
-                        <span className="text-text-secondary font-semibold select-none">{h.key}</span>
-                        <div className="flex items-center space-x-2 pl-4 min-w-0">
+                        <span className="text-text-secondary font-semibold select-none flex-shrink-0">{h.key}</span>
+                        <div className="flex items-center gap-2 pl-4 min-w-0 justify-end">
                           <span className="text-text-primary text-right break-all select-all">{h.value}</span>
                           <button
                             type="button"
@@ -463,10 +463,10 @@ export const ResponsePane: React.FC = () => {
                               e.stopPropagation();
                               handleCaptureHeader(h.key);
                             }}
-                            className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus:opacity-100 transition-opacity p-1 hover:bg-bg-hover text-text-secondary hover:text-text-accent rounded cursor-pointer flex-shrink-0"
+                            className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 focus:opacity-100 w-5 h-5 flex items-center justify-center hover:bg-bg-hover text-text-secondary hover:text-text-accent rounded cursor-pointer flex-shrink-0 transition-colors"
                             title={`Capture "${h.key}" as variable`}
                           >
-                            <Sparkles size={11} />
+                            <Scan size={11} />
                           </button>
                         </div>
                       </div>

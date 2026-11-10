@@ -37,6 +37,28 @@ type BaselineSource = "previous" | "tab" | "custom";
 type ViewMode = "split" | "unified";
 type FilterMode = "all" | "changesOnly";
 
+const COMMON_STATUS_MAP: Record<number, string> = {
+  200: "OK",
+  201: "Created",
+  202: "Accepted",
+  204: "No Content",
+  301: "Moved Permanently",
+  302: "Found",
+  304: "Not Modified",
+  400: "Bad Request",
+  401: "Unauthorized",
+  403: "Forbidden",
+  404: "Not Found",
+  405: "Method Not Allowed",
+  409: "Conflict",
+  422: "Unprocessable Entity",
+  429: "Too Many Requests",
+  500: "Internal Server Error",
+  502: "Bad Gateway",
+  503: "Service Unavailable",
+  504: "Gateway Timeout",
+};
+
 export const ResponseDiffModal: React.FC<ResponseDiffModalProps> = ({
   isOpen,
   onClose,
@@ -69,7 +91,7 @@ export const ResponseDiffModal: React.FC<ResponseDiffModalProps> = ({
   });
 
   const [customBody, setCustomBody] = useState<string>("{\n  \n}");
-  const [customStatus, setCustomStatus] = useState<number>(200);
+  const [customStatus, setCustomStatus] = useState<number | string>(200);
   const [customStatusText, setCustomStatusText] = useState<string>("OK");
 
   const [viewMode, setViewMode] = useState<ViewMode>("split");
@@ -142,7 +164,7 @@ export const ResponseDiffModal: React.FC<ResponseDiffModalProps> = ({
     if (sourceType === "custom") {
       const bytes = new TextEncoder().encode(customBody).length;
       return {
-        status: customStatus || 200,
+        status: Number(customStatus) || 200,
         status_text: customStatusText || "OK",
         headers: [],
         body: customBody,
@@ -557,15 +579,23 @@ export const ResponseDiffModal: React.FC<ResponseDiffModalProps> = ({
                   <input
                     type="number"
                     value={customStatus}
-                    onChange={(e) => setCustomStatus(Number(e.target.value) || 200)}
-                    className="w-16 px-1.5 py-0.5 bg-bg-secondary border border-border-primary rounded text-text-primary font-mono text-xs focus:outline-none focus:border-text-accent"
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setCustomStatus(val === "" ? "" : Number(val));
+                      const num = Number(val);
+                      if (num in COMMON_STATUS_MAP) {
+                        setCustomStatusText(COMMON_STATUS_MAP[num]);
+                      }
+                    }}
+                    placeholder="200"
+                    className="w-16 px-2 py-0.5 bg-bg-secondary border border-border-primary rounded text-text-primary font-mono text-xs text-center focus:outline-none focus:border-text-accent transition-colors [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                   />
                   <input
                     type="text"
                     value={customStatusText}
                     onChange={(e) => setCustomStatusText(e.target.value)}
                     placeholder="Status text"
-                    className="w-24 px-1.5 py-0.5 bg-bg-secondary border border-border-primary rounded text-text-primary text-xs focus:outline-none focus:border-text-accent"
+                    className="w-24 px-2 py-0.5 bg-bg-secondary border border-border-primary rounded text-text-primary text-xs focus:outline-none focus:border-text-accent transition-colors"
                   />
                 </div>
               </div>

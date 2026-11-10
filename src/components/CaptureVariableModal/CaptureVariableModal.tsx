@@ -5,8 +5,7 @@ import { useToastStore } from "../../store/toastStore";
 import { extractValueFromResponse } from "../../utils/responseExtractor";
 import {
   X,
-  Sparkles,
-  Link2,
+  Scan,
   FileCode,
   List,
   Hash,
@@ -196,7 +195,7 @@ export const CaptureVariableModal: React.FC<CaptureVariableModalProps> = ({
         {/* Header */}
         <div className="h-12 border-b border-border-primary bg-bg-tertiary flex items-center justify-between px-4 flex-shrink-0 rounded-t-xl">
           <div className="flex items-center space-x-2">
-            <Link2 size={15} className="text-text-accent" />
+            <Scan size={15} className="text-text-accent" />
             <span className="font-semibold text-xs uppercase tracking-wider text-text-primary">
               Capture Variable
             </span>
@@ -442,7 +441,7 @@ export const CaptureVariableModal: React.FC<CaptureVariableModalProps> = ({
               disabled={isSubmitting || evaluatedValue === null || !targetVariable.trim()}
               className="px-4 py-1.5 rounded-md text-xs font-semibold bg-text-accent text-bg-primary hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition flex items-center space-x-1.5 cursor-pointer shadow-sm"
             >
-              <Sparkles size={12} />
+              <Scan size={12} />
               <span>{isSubmitting ? "Capturing..." : "Capture & Close"}</span>
             </button>
           </div>

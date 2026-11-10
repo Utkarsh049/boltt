@@ -103,6 +103,18 @@ button:focus-visible {
   -ms-overflow-style: none !important;
 }
 
+/* Custom Number Input Stepper Reset - eliminates unstyled native OS spinners */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
 /* Custom Modern Checkbox Design System */
 input[type="checkbox"] {
   appearance: none;

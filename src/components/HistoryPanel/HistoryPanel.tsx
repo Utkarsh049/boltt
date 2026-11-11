@@ -13,9 +13,9 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
   alwaysExpanded = false,
   limit = 8,
 }) => {
-  const { entries, clearHistory } = useHistoryStore();
+  const { entries, clearHistory, isRecentCollapsed, toggleRecentCollapsed } = useHistoryStore();
   const showToast = useToastStore((state) => state.showToast);
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const isCollapsed = alwaysExpanded ? false : isRecentCollapsed;
   const [now, setNow] = useState(Date.now());
 
   // Periodically refresh relative timestamps
@@ -121,7 +121,7 @@ export const HistoryPanel: React.FC<HistoryPanelProps> = ({
       {/* Header */}
       {!alwaysExpanded && (
         <div
-          onClick={() => setIsCollapsed(!isCollapsed)}
+          onClick={toggleRecentCollapsed}
           className="flex items-center justify-between py-1.5 px-1 hover:text-text-primary text-text-secondary cursor-pointer transition select-none flex-shrink-0"
         >
           <div className="flex items-center space-x-1.5">

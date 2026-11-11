@@ -755,47 +755,41 @@ function App() {
  
              {/* Sidebar Content Area */}
              <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-               {sidebarTab === "workspace" && (
-                 <div className="flex-1 flex flex-col min-h-0 overflow-hidden">
-                   {/* Projects tree area scrollable */}
-                   <div className="flex-1 p-3 overflow-y-auto min-h-0">
-                     <ProjectsTree />
-                   </div>
-                   {/* Pinned history panel at bottom */}
-                   <div className="border-t border-border-primary p-3 bg-bg-secondary/50 flex-shrink-0">
-                     <HistoryPanel limit={8} />
-                   </div>
+               <div className={`flex-1 flex flex-col min-h-0 overflow-hidden ${sidebarTab === "workspace" ? "" : "hidden"}`}>
+                 {/* Projects tree area scrollable */}
+                 <div className="flex-1 p-3 overflow-y-auto min-h-0">
+                   <ProjectsTree />
                  </div>
-               )}
+                 {/* Pinned history panel at bottom */}
+                 <div className="border-t border-border-primary p-3 bg-bg-secondary/50 flex-shrink-0">
+                   <HistoryPanel limit={8} />
+                 </div>
+               </div>
 
-
-
-              {sidebarTab === "history" && (
-                <div className="flex-1 p-3 overflow-y-auto min-h-0 flex flex-col">
-                  <div className="flex items-center justify-between mb-2 flex-shrink-0">
-                    <span className="text-[12px] font-bold text-text-secondary uppercase tracking-wider">
-                      Recent Requests
-                    </span>
-                    {historyEntries.length > 0 && (
-                      <button
-                        onClick={() => {
-                          clearHistory();
-                          showToast("History cleared", "info");
-                        }}
-                        className="flex items-center space-x-1 px-1.5 py-0.5 text-[10px] font-semibold text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded transition cursor-pointer"
-                        title="Clear all recent request logs"
-                      >
-                        <Trash2 size={11} />
-                        <span>Clear</span>
-                      </button>
-                    )}
-                  </div>
-                  <div className="flex-1 min-h-0">
-                    <HistoryPanel alwaysExpanded={true} limit={100} />
-                  </div>
-                </div>
-              )}
-            </div>
+               <div className={`flex-1 p-3 overflow-y-auto min-h-0 flex flex-col ${sidebarTab === "history" ? "" : "hidden"}`}>
+                 <div className="flex items-center justify-between mb-2 flex-shrink-0">
+                   <span className="text-[12px] font-bold text-text-secondary uppercase tracking-wider">
+                     Recent Requests
+                   </span>
+                   {historyEntries.length > 0 && (
+                     <button
+                       onClick={() => {
+                         clearHistory();
+                         showToast("History cleared", "info");
+                       }}
+                       className="flex items-center space-x-1 px-1.5 py-0.5 text-[10px] font-semibold text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded transition cursor-pointer"
+                       title="Clear all recent request logs"
+                     >
+                       <Trash2 size={11} />
+                       <span>Clear</span>
+                     </button>
+                   )}
+                 </div>
+                 <div className="flex-1 min-h-0">
+                   <HistoryPanel alwaysExpanded={true} limit={100} />
+                 </div>
+               </div>
+             </div>
 
             <div className="p-3 border-t border-border-primary text-[12px] text-text-secondary bg-bg-tertiary/20 flex-shrink-0 flex items-center justify-between">
               <div>

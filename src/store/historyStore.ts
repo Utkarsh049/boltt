@@ -10,15 +10,43 @@ export interface HistoryEntry {
   sentAt: number;
 }
 
+const RECENT_HISTORY_COLLAPSED_KEY = "boltt-recent-history-collapsed";
+
 interface HistoryStore {
   entries: HistoryEntry[];
+  isRecentCollapsed: boolean;
+  setIsRecentCollapsed: (collapsed: boolean) => void;
+  toggleRecentCollapsed: () => void;
   loadHistory: () => Promise<void>;
   clearHistory: () => Promise<void>;
   addLocalEntry: (entry: HistoryEntry) => void;
 }
 
+const getInitialRecentCollapsed = (): boolean => {
+  if (typeof localStorage !== "undefined") {
+    return localStorage.getItem(RECENT_HISTORY_COLLAPSED_KEY) === "true";
+  }
+  return false;
+};
+
 export const useHistoryStore = create<HistoryStore>((set) => ({
   entries: [],
+  isRecentCollapsed: getInitialRecentCollapsed(),
+  setIsRecentCollapsed: (collapsed: boolean) => {
+    if (typeof localStorage !== "undefined") {
+      localStorage.setItem(RECENT_HISTORY_COLLAPSED_KEY, String(collapsed));
+    }
+    set({ isRecentCollapsed: collapsed });
+  },
+  toggleRecentCollapsed: () => {
+    set((state) => {
+      const next = !state.isRecentCollapsed;
+      if (typeof localStorage !== "undefined") {
+        localStorage.setItem(RECENT_HISTORY_COLLAPSED_KEY, String(next));
+      }
+      return { isRecentCollapsed: next };
+    });
+  },
   loadHistory: async () => {
     try {
       const entries = await invoke<HistoryEntry[]>("load_history");

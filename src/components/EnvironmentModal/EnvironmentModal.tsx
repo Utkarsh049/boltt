@@ -648,7 +648,7 @@ export const EnvironmentModal: React.FC = () => {
           handleClose();
         }
       }}
-      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 animate-fade-in p-4"
+      className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4"
     >
       {content}
     </div>

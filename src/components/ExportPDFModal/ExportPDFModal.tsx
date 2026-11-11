@@ -69,7 +69,7 @@ export const ExportPDFModal: React.FC<ExportPDFModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 select-none font-sans animate-fade-in"
+      className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 select-none font-sans"
       onClick={(e) => {
         if (e.target === e.currentTarget) {
           onClose();

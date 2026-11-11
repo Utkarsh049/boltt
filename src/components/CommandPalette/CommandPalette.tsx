@@ -329,7 +329,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm flex items-start justify-center pt-[10vh] p-4 select-none font-sans animate-fade-in"
+      className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm flex items-start justify-center pt-[10vh] p-4 select-none font-sans"
       onClick={(e) => {
         if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
           onClose();

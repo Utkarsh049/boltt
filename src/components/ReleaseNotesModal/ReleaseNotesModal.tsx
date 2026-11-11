@@ -87,7 +87,7 @@ export const ReleaseNotesModal: React.FC = () => {
       aria-modal="true"
       aria-labelledby="release-notes-modal-title"
       tabIndex={-1}
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fade-in select-none font-sans p-4 outline-none"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm select-none font-sans p-4 outline-none"
       onClick={() => setNotesModalOpen(false)}
     >
       <div

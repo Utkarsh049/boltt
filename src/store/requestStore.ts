@@ -183,6 +183,25 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
     const validThemes = ["dark", "light", "nord", "dracula", "space", "glass"];
     if (!validThemes.includes(theme)) return;
 
+    const currentTheme = get().theme;
+
+    // If theme is already set, handle persistence commit if needed, and avoid duplicate DOM/state churn
+    if (theme === currentTheme) {
+      if (options.persist && typeof localStorage !== "undefined" && localStorage.getItem("boltt-theme") !== theme) {
+        localStorage.setItem("boltt-theme", theme);
+        if (typeof window !== "undefined" && (window as any).__TAURI_INTERNALS__) {
+          import("@tauri-apps/api/event").then(({ emit }) => {
+            emit("theme-changed", theme).catch((err) => {
+              console.warn("Failed to broadcast theme change:", err);
+            });
+          }).catch((err) => {
+            console.debug("Tauri event API not resolved:", err);
+          });
+        }
+      }
+      return;
+    }
+
     if (options.persist && typeof localStorage !== "undefined") {
       localStorage.setItem("boltt-theme", theme);
     }
@@ -196,8 +215,8 @@ export const useRequestStore = create<RequestStore>((set, get) => ({
     }
     set({ theme });
     
-    // Broadcast theme changes to other windows (multi-window sync)
-    if (typeof window !== "undefined" && (window as any).__TAURI_INTERNALS__) {
+    // Broadcast theme changes to other windows ONLY on committed theme change (persist: true)
+    if (options.persist && typeof window !== "undefined" && (window as any).__TAURI_INTERNALS__) {
       import("@tauri-apps/api/event").then(({ emit }) => {
         emit("theme-changed", theme).catch((err) => {
           console.warn("Failed to broadcast theme change:", err);

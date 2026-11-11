@@ -12,7 +12,6 @@ import {
   ScoredCommandItem,
   searchCommands,
   highlightMatches,
-  parsePaletteQuery,
   extractProjectRequests,
   extractEnvironmentCommands,
   extractThemeCommands,
@@ -28,7 +27,19 @@ import {
   Layers,
   CornerDownLeft,
   X,
-  FileCode,
+  Send,
+  Plus,
+  Save,
+  Terminal,
+  Copy,
+  ShieldCheck,
+  ShieldAlert,
+  GitCompare,
+  Trash2,
+  Sliders,
+  FolderTree,
+  Folder,
+  History,
 } from "lucide-react";
 
 export interface CommandPaletteProps {
@@ -54,59 +65,99 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const activeId = useEnvStore((state) => state.activeId);
   const setActiveId = useEnvStore((state) => state.setActiveId);
   const getFlatActiveVariables = useEnvStore((state) => state.getFlatActiveVariables);
-  const {
-    theme,
-    setTheme,
-    sendRequest,
-    openTab,
-    closeTab,
-    activeTabId,
-    activeRequest,
-    response,
-    setSslVerify,
-    importCurl,
-  } = useRequestStore();
+
+  const setTheme = useRequestStore((state) => state.setTheme);
+  const sendRequest = useRequestStore((state) => state.sendRequest);
+  const openTab = useRequestStore((state) => state.openTab);
+  const closeTab = useRequestStore((state) => state.closeTab);
+  const activeTabId = useRequestStore((state) => state.activeTabId);
+  const hasActiveUrl = useRequestStore((state) => !!state.activeRequest.url);
+  const hasResponse = useRequestStore((state) => !!state.response);
+  const sslVerify = useRequestStore((state) => state.activeRequest.ssl_verify ?? true);
+  const setSslVerify = useRequestStore((state) => state.setSslVerify);
+  const importCurl = useRequestStore((state) => state.importCurl);
+
   const { clearHistory } = useHistoryStore();
   const { showToast } = useToastStore();
 
   const [query, setQuery] = useState("");
   const [selectedIndex, setSelectedIndex] = useState(0);
 
+  const initialThemeRef = useRef<string>(useRequestStore.getState().theme);
+  const isThemeCommittedRef = useRef<boolean>(false);
+
   const inputRef = useRef<HTMLInputElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  // Focus input and reset query whenever modal opens
+  // Focus input and reset query whenever modal opens; capture initial theme
   useEffect(() => {
     if (isOpen) {
+      initialThemeRef.current = useRequestStore.getState().theme;
+      isThemeCommittedRef.current = false;
       setQuery("");
       setSelectedIndex(0);
       setTimeout(() => {
         inputRef.current?.focus();
       }, 50);
+    } else {
+      if (!isThemeCommittedRef.current && initialThemeRef.current) {
+        if (useRequestStore.getState().theme !== initialThemeRef.current) {
+          setTheme(initialThemeRef.current, { persist: false });
+        }
+      }
     }
-  }, [isOpen]);
+  }, [isOpen, setTheme]);
 
-  // Aggregate all command items
+  // Clean up on unmount: restore initial theme if not committed
+  useEffect(() => {
+    return () => {
+      if (!isThemeCommittedRef.current && initialThemeRef.current) {
+        if (useRequestStore.getState().theme !== initialThemeRef.current) {
+          setTheme(initialThemeRef.current, { persist: false });
+        }
+      }
+    };
+  }, [setTheme]);
+
+  // Aggregate all command items (only when modal is open to avoid background work)
   const allCommands: CommandItem[] = useMemo(() => {
+    if (!isOpen) return [];
     const actionItems = extractQuickActionCommands({
-      hasActiveRequest: !!activeRequest.url,
-      hasResponse: !!response,
-      sslVerify: activeRequest.ssl_verify ?? true,
+      hasActiveRequest: hasActiveUrl,
+      hasResponse: hasResponse,
+      sslVerify: sslVerify,
     });
     const reqItems = extractProjectRequests(projects);
     const envItems = extractEnvironmentCommands(environments, activeId);
-    const themeItems = extractThemeCommands(theme);
+    const themeItems = extractThemeCommands(initialThemeRef.current || useRequestStore.getState().theme);
     const navItems = extractNavigationCommands();
 
     return [...actionItems, ...reqItems, ...envItems, ...themeItems, ...navItems];
-  }, [projects, environments, activeId, theme, activeRequest, response]);
+  }, [isOpen, projects, environments, activeId, hasActiveUrl, hasResponse, sslVerify]);
 
   // Run fuzzy search and category parsing
   const searchResults: ScoredCommandItem[] = useMemo(() => {
+    if (!isOpen || allCommands.length === 0) return [];
     return searchCommands(allCommands, query, 80);
-  }, [allCommands, query]);
+  }, [isOpen, allCommands, query]);
+
+  // Live theme preview as user moves up/down or hovers over theme options
+  useEffect(() => {
+    if (!isOpen) return;
+    const current = searchResults[selectedIndex];
+    if (current && current.item.category === "theme" && current.item.data?.themeId) {
+      const targetTheme = current.item.data.themeId;
+      if (useRequestStore.getState().theme !== targetTheme) {
+        setTheme(targetTheme, { persist: false });
+      }
+    } else {
+      if (useRequestStore.getState().theme !== initialThemeRef.current) {
+        setTheme(initialThemeRef.current, { persist: false });
+      }
+    }
+  }, [selectedIndex, searchResults, isOpen, setTheme]);
 
   // Keep selected index within bounds
   useEffect(() => {
@@ -130,6 +181,22 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
 
   // Handle command execution
   const executeCommand = async (item: CommandItem) => {
+    if (item.category === "theme") {
+      isThemeCommittedRef.current = true;
+      const themeId: string = item.data.themeId;
+      setTheme(themeId, { persist: true });
+      showToast(`Theme switched to ${item.title}`, "info");
+      onClose();
+      return;
+    }
+
+    // Revert uncommitted preview if any other command executed
+    if (!isThemeCommittedRef.current && initialThemeRef.current) {
+      if (useRequestStore.getState().theme !== initialThemeRef.current) {
+        setTheme(initialThemeRef.current, { persist: false });
+      }
+    }
+
     onClose();
 
     switch (item.category) {
@@ -158,13 +225,6 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           envId ? `Switched environment to ${item.title}` : "Cleared active environment",
           "success"
         );
-        break;
-      }
-
-      case "theme": {
-        const themeId: string = item.data.themeId;
-        setTheme(themeId);
-        showToast(`Theme switched to ${item.title}`, "info");
         break;
       }
 
@@ -219,8 +279,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           }
 
           case "copy_curl": {
-            if (activeRequest && activeRequest.url) {
-              const cmd = buildCurlCommand(activeRequest);
+            const currentReq = useRequestStore.getState().activeRequest;
+            if (currentReq && currentReq.url) {
+              const cmd = buildCurlCommand(currentReq);
               await navigator.clipboard.writeText(cmd);
               showToast("cURL command copied to clipboard", "success");
             } else {
@@ -230,7 +291,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           }
 
           case "toggle_ssl": {
-            const current = activeRequest.ssl_verify ?? true;
+            const currentReq = useRequestStore.getState().activeRequest;
+            const current = currentReq?.ssl_verify ?? true;
             setSslVerify(!current);
             showToast(`SSL verification ${!current ? "enabled" : "disabled"}`, "info");
             break;
@@ -261,6 +323,15 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     }
   };
 
+  const handleDismiss = () => {
+    if (!isThemeCommittedRef.current && initialThemeRef.current) {
+      if (useRequestStore.getState().theme !== initialThemeRef.current) {
+        setTheme(initialThemeRef.current, { persist: false });
+      }
+    }
+    onClose();
+  };
+
   // Keyboard navigation handler inside the palette
   const handleKeyDown = (e: React.KeyboardEvent) => {
     const isCtrlOrMeta = e.ctrlKey || e.metaKey;
@@ -271,7 +342,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       (typeof e.key === "string" && e.key.toLowerCase() === "k");
     if (isCtrlOrMeta && isKeyK && !e.altKey) {
       e.preventDefault();
-      onClose();
+      handleDismiss();
       return;
     }
 
@@ -293,38 +364,121 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       }
     } else if (e.key === "Escape") {
       e.preventDefault();
-      onClose();
+      handleDismiss();
     }
   };
 
   if (!isOpen) return null;
 
-  const { filterCategory } = parsePaletteQuery(query);
+  const getItemVisual = (item: CommandItem, isSelected: boolean) => {
+    if (item.category === "request" && item.badge) {
+      const method = item.badge.toUpperCase();
+      const colorClass = getMethodColor(method);
 
-  const getCategoryIcon = (category: CommandCategory, badge?: string) => {
-    switch (category) {
-      case "request":
-        return badge ? (
-          <span className={`text-[10px] font-black w-8 text-left ${getMethodColor(badge)}`}>
-            {badge}
-          </span>
-        ) : (
-          <FileCode size={14} className="text-text-accent flex-shrink-0" />
-        );
-      case "action":
-        return <Zap size={14} className="text-amber-400 flex-shrink-0" />;
-      case "environment":
-        return <Globe size={14} className="text-blue-400 flex-shrink-0" />;
-      case "theme":
-        return <Palette size={14} className="text-purple-400 flex-shrink-0" />;
-      case "navigation":
-        return <Layers size={14} className="text-emerald-400 flex-shrink-0" />;
+      return (
+        <span
+          className={`w-9 text-left font-mono text-[11px] font-extrabold tracking-wide flex-shrink-0 ${colorClass}`}
+        >
+          {method}
+        </span>
+      );
     }
+
+    let iconColor = isSelected ? "text-text-primary" : "text-text-secondary";
+
+    // Green whenever needed
+    if (item.actionId === "send_request") {
+      iconColor = "text-emerald-400";
+    }
+    // Red for remove or delete
+    else if (item.actionId === "close_tab" || item.actionId === "clear_history") {
+      iconColor = "text-red-400";
+    }
+
+    let iconNode = <Zap size={15} className={iconColor} />;
+
+    if (item.category === "action") {
+      switch (item.actionId) {
+        case "send_request":
+          iconNode = <Send size={15} className={iconColor} />;
+          break;
+        case "new_tab":
+          iconNode = <Plus size={15} className={iconColor} />;
+          break;
+        case "close_tab":
+          iconNode = <X size={15} className={iconColor} />;
+          break;
+        case "save_request":
+          iconNode = <Save size={15} className={iconColor} />;
+          break;
+        case "import_curl":
+          iconNode = <Terminal size={15} className={iconColor} />;
+          break;
+        case "copy_curl":
+          iconNode = <Copy size={15} className={iconColor} />;
+          break;
+        case "toggle_ssl":
+          iconNode = item.badge?.includes("Strict") ? (
+            <ShieldCheck size={15} className="text-emerald-400" />
+          ) : (
+            <ShieldAlert size={15} className={iconColor} />
+          );
+          break;
+        case "open_diff":
+          iconNode = <GitCompare size={15} className={iconColor} />;
+          break;
+        case "clear_history":
+          iconNode = <Trash2 size={15} className={iconColor} />;
+          break;
+        case "manage_environments":
+          iconNode = <Sliders size={15} className={iconColor} />;
+          break;
+        default:
+          iconNode = <Zap size={15} className={iconColor} />;
+      }
+    } else if (item.category === "environment") {
+      iconNode = <Globe size={15} className={iconColor} />;
+    } else if (item.category === "theme") {
+      iconNode = <Palette size={15} className={iconColor} />;
+    } else if (item.category === "navigation") {
+      if (item.actionId === "nav_workspace") {
+        iconNode = <FolderTree size={15} className={iconColor} />;
+      } else if (item.actionId === "nav_history") {
+        iconNode = <History size={15} className={iconColor} />;
+      } else {
+        iconNode = <Layers size={15} className={iconColor} />;
+      }
+    }
+
+    return (
+      <div className="w-5 flex items-center justify-center flex-shrink-0">
+        {iconNode}
+      </div>
+    );
   };
 
-  const handleSetPrefix = (prefix: string) => {
-    setQuery(prefix);
-    inputRef.current?.focus();
+  const renderShortcutKeycaps = (shortcut: string) => {
+    const parts = shortcut.split("+");
+    return (
+      <div className="flex items-center space-x-1">
+        {parts.map((p, idx) => (
+          <React.Fragment key={idx}>
+            {idx > 0 && <span className="text-[10px] text-text-tertiary/60 font-mono">+</span>}
+            <kbd className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-bg-primary/90 border border-border-primary text-text-secondary shadow-2xs">
+              {p}
+            </kbd>
+          </React.Fragment>
+        ))}
+      </div>
+    );
+  };
+
+  const categoryLabels: Record<CommandCategory, string> = {
+    action: "Actions",
+    request: "Saved Requests",
+    environment: "Environments",
+    theme: "Themes",
+    navigation: "Navigation",
   };
 
   return (
@@ -332,7 +486,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       className="fixed inset-0 z-[70] bg-black/70 backdrop-blur-sm flex items-start justify-center pt-[10vh] p-4 select-none font-sans"
       onClick={(e) => {
         if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-          onClose();
+          handleDismiss();
         }
       }}
     >
@@ -372,91 +526,18 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           )}
         </div>
 
-        {/* Category Quick Filter Pills */}
-        <div className="border-b border-border-primary bg-bg-tertiary/60 px-4 py-1.5 flex items-center space-x-1.5 overflow-x-auto text-[11px] flex-shrink-0">
-          <button
-            type="button"
-            onClick={() => handleSetPrefix("")}
-            className={`px-2 py-0.5 rounded border transition ${
-              !filterCategory
-                ? "bg-bg-secondary border-text-accent text-text-accent font-medium"
-                : "border-transparent text-text-tertiary hover:text-text-primary"
-            }`}
-          >
-            All
-          </button>
-          <button
-            type="button"
-            onClick={() => handleSetPrefix("> ")}
-            className={`px-2 py-0.5 rounded border transition flex items-center space-x-1 ${
-              filterCategory === "action"
-                ? "bg-bg-secondary border-text-accent text-text-accent font-medium"
-                : "border-transparent text-text-tertiary hover:text-text-primary"
-            }`}
-          >
-            <Zap size={11} className="text-amber-400" />
-            <span>Actions ({">"})</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleSetPrefix("req: ")}
-            className={`px-2 py-0.5 rounded border transition flex items-center space-x-1 ${
-              filterCategory === "request"
-                ? "bg-bg-secondary border-text-accent text-text-accent font-medium"
-                : "border-transparent text-text-tertiary hover:text-text-primary"
-            }`}
-          >
-            <FileCode size={11} className="text-blue-400" />
-            <span>Requests (req:)</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleSetPrefix("env: ")}
-            className={`px-2 py-0.5 rounded border transition flex items-center space-x-1 ${
-              filterCategory === "environment"
-                ? "bg-bg-secondary border-text-accent text-text-accent font-medium"
-                : "border-transparent text-text-tertiary hover:text-text-primary"
-            }`}
-          >
-            <Globe size={11} className="text-emerald-400" />
-            <span>Environments (env:)</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleSetPrefix("theme: ")}
-            className={`px-2 py-0.5 rounded border transition flex items-center space-x-1 ${
-              filterCategory === "theme"
-                ? "bg-bg-secondary border-text-accent text-text-accent font-medium"
-                : "border-transparent text-text-tertiary hover:text-text-primary"
-            }`}
-          >
-            <Palette size={11} className="text-purple-400" />
-            <span>Themes (theme:)</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => handleSetPrefix("nav: ")}
-            className={`px-2 py-0.5 rounded border transition flex items-center space-x-1 ${
-              filterCategory === "navigation"
-                ? "bg-bg-secondary border-text-accent text-text-accent font-medium"
-                : "border-transparent text-text-tertiary hover:text-text-primary"
-            }`}
-          >
-            <Layers size={11} className="text-cyan-400" />
-            <span>Navigation (nav:)</span>
-          </button>
-        </div>
-
         {/* Results List */}
-        <div ref={listRef} className="flex-1 min-h-0 overflow-y-auto py-1">
+        <div ref={listRef} className="flex-1 min-h-0 overflow-y-auto px-2 py-2">
           {searchResults.length === 0 ? (
-            <div className="py-12 px-4 text-center">
-              <Search size={24} className="text-text-tertiary/40 mx-auto mb-2" />
-              <p className="text-xs text-text-secondary font-medium">
+            <div className="py-14 px-4 text-center select-none">
+              <div className="w-12 h-12 rounded-full bg-bg-tertiary/60 border border-border-primary/60 flex items-center justify-center mx-auto mb-3 text-text-tertiary">
+                <Search size={20} />
+              </div>
+              <p className="text-xs text-text-primary font-medium">
                 No matching commands or requests found
               </p>
-              <p className="text-[11px] text-text-tertiary mt-1">
-                Try searching with &gt; for actions, req: for requests, or env: for environments.
+              <p className="text-[11px] text-text-tertiary mt-1 max-w-xs mx-auto leading-relaxed">
+                Try searching with <code className="text-text-accent font-mono">&gt;</code> for actions, <code className="text-text-accent font-mono">req:</code> for requests, or <code className="text-text-accent font-mono">env:</code> for environments.
               </p>
             </div>
           ) : (
@@ -467,84 +548,118 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               const subtitleSegments = item.subtitle
                 ? highlightMatches(item.subtitle, subtitleMatches || [])
                 : [];
+              const prevCategory = index > 0 ? searchResults[index - 1].item.category : null;
+              const showCategoryHeader = item.category !== prevCategory;
 
               return (
-                <div
-                  key={item.id}
-                  ref={(el) => {
-                    itemRefs.current[index] = el;
-                  }}
-                  onClick={() => executeCommand(item)}
-                  onMouseEnter={() => setSelectedIndex(index)}
-                  className={`px-4 py-2 flex items-center justify-between cursor-pointer transition border-l-2 ${
-                    isSelected
-                      ? "bg-bg-tertiary border-text-accent"
-                      : "border-transparent hover:bg-bg-tertiary/40"
-                  }`}
-                >
-                  <div className="flex items-center space-x-3 min-w-0 flex-1">
-                    {/* Category Icon or Method Badge */}
-                    <div className="w-8 flex items-center justify-center flex-shrink-0">
-                      {getCategoryIcon(item.category, item.badge)}
+                <React.Fragment key={item.id}>
+                  {showCategoryHeader && (
+                    <div
+                      className={`px-3 flex items-center space-x-3 select-none ${
+                        index === 0 ? "pt-2 pb-1.5" : "pt-4 pb-1.5"
+                      }`}
+                    >
+                      <span className="text-xs font-bold uppercase tracking-wider text-text-accent">
+                        {categoryLabels[item.category] || item.category}
+                      </span>
+                      <div className="flex-1 h-px bg-border-primary/60" />
                     </div>
+                  )}
 
-                    {/* Title & Subtitle */}
-                    <div className="min-w-0 flex-1">
-                      <div className="text-xs font-medium text-text-primary truncate">
-                        {titleSegments.map((seg, i) =>
-                          seg.isMatch ? (
-                            <span
-                              key={i}
-                              className="text-text-accent font-bold underline decoration-text-accent/40"
-                            >
-                              {seg.text}
+                  <div
+                    ref={(el) => {
+                      itemRefs.current[index] = el;
+                    }}
+                    onClick={() => executeCommand(item)}
+                    onMouseEnter={() => setSelectedIndex(index)}
+                    className={`group my-0.5 px-3 py-2 rounded-lg flex items-center justify-between cursor-pointer transition-colors duration-75 select-none ${
+                      isSelected
+                        ? "bg-bg-tertiary/90 border border-border-primary/80 shadow-xs"
+                        : "border border-transparent hover:bg-bg-tertiary/40"
+                    }`}
+                  >
+                    <div className="flex items-center space-x-3 min-w-0 flex-1">
+                      {/* Bare Icon or Method Name */}
+                      {getItemVisual(item, isSelected)}
+
+                      {/* Title & Subtitle */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center space-x-2">
+                          <span
+                            className={`text-xs truncate ${
+                              isSelected
+                                ? "text-text-primary font-semibold"
+                                : "text-text-primary/90 font-medium"
+                            }`}
+                          >
+                            {titleSegments.map((seg, i) =>
+                              seg.isMatch ? (
+                                <span
+                                  key={i}
+                                  className="text-text-accent font-bold underline decoration-text-accent/50 underline-offset-2"
+                                >
+                                  {seg.text}
+                                </span>
+                              ) : (
+                                <span key={i}>{seg.text}</span>
+                              )
+                            )}
+                          </span>
+                        </div>
+
+                        {item.subtitle && (
+                          <div className="flex items-center space-x-1 text-[11px] text-text-tertiary truncate mt-0.5">
+                            {item.category === "request" && (
+                              <Folder size={11} className="text-text-tertiary/60 flex-shrink-0" />
+                            )}
+                            <span className="truncate">
+                              {subtitleSegments.map((seg, i) =>
+                                seg.isMatch ? (
+                                  <span key={i} className="text-text-accent font-semibold">
+                                    {seg.text}
+                                  </span>
+                                ) : (
+                                  <span key={i}>{seg.text}</span>
+                                )
+                              )}
                             </span>
-                          ) : (
-                            <span key={i}>{seg.text}</span>
-                          )
+                          </div>
                         )}
                       </div>
-                      {item.subtitle && (
-                        <div className="text-[11px] text-text-tertiary truncate">
-                          {subtitleSegments.map((seg, i) =>
-                            seg.isMatch ? (
-                              <span key={i} className="text-text-accent font-semibold">
-                                {seg.text}
-                              </span>
-                            ) : (
-                              <span key={i}>{seg.text}</span>
-                            )
+                    </div>
+
+                    {/* Right Metadata / Shortcut / Status / Enter */}
+                    <div className="flex items-center space-x-2 flex-shrink-0 ml-3">
+                      {item.shortcut && renderShortcutKeycaps(item.shortcut)}
+
+                      {item.badge && item.category !== "request" && (
+                        <span
+                          className={`text-[10px] font-medium px-2 py-0.5 rounded-full border flex items-center space-x-1.5 ${
+                            item.badge === "Active"
+                              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/25"
+                              : item.badgeColor
+                              ? `${item.badgeColor} bg-bg-primary/80 border-border-primary/80`
+                              : "text-text-secondary bg-bg-primary/80 border-border-primary/80"
+                          }`}
+                        >
+                          {item.badge === "Active" && (
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                           )}
-                        </div>
+                          <span>{item.badge}</span>
+                        </span>
+                      )}
+
+                      {isSelected && (
+                        <kbd
+                          className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-text-accent/15 border border-text-accent/30 text-text-accent flex items-center justify-center shadow-2xs font-bold"
+                          title="Press Enter to execute"
+                        >
+                          <CornerDownLeft size={11} />
+                        </kbd>
                       )}
                     </div>
                   </div>
-
-                  {/* Right Metadata / Shortcut / Status */}
-                  <div className="flex items-center space-x-2 flex-shrink-0 ml-3">
-                    {item.shortcut && (
-                      <kbd className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-bg-secondary border border-border-primary text-text-tertiary">
-                        {item.shortcut}
-                      </kbd>
-                    )}
-
-                    {item.badge && item.category !== "request" && (
-                      <span
-                        className={`text-[10px] font-medium px-1.5 py-0.5 rounded bg-bg-secondary border border-border-primary ${
-                          item.badgeColor || "text-text-secondary"
-                        }`}
-                      >
-                        {item.badge}
-                      </span>
-                    )}
-
-                    {isSelected && (
-                      <div className="text-text-accent p-0.5 rounded">
-                        <CornerDownLeft size={13} />
-                      </div>
-                    )}
-                  </div>
-                </div>
+                </React.Fragment>
               );
             })
           )}

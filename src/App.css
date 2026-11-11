@@ -79,7 +79,6 @@ button:focus-visible {
   border-radius: 9999px;
   border: 1.5px solid transparent;
   background-clip: padding-box;
-  transition: border-width 0.15s ease, filter 0.15s ease;
 }
 
 *::-webkit-scrollbar-thumb:hover,

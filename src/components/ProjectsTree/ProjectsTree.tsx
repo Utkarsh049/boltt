@@ -5,7 +5,6 @@ import {
   Folder as FolderIcon, 
   FolderOpen as FolderOpenIcon, 
   ChevronRight, 
-  ChevronDown, 
   Plus, 
   MoreVertical, 
   Edit2, 
@@ -13,7 +12,7 @@ import {
   Copy, 
   FolderPlus, 
   FilePlus,
-  Briefcase,
+  Boxes,
   FileDown,
   Sliders,
   X
@@ -378,22 +377,22 @@ export const ProjectsTree: React.FC = () => {
   const getMethodBadgeStyle = (method: string) => {
     switch (method) {
       case "GET":
-        return "text-[#4ade80]";
+        return "text-[#4ade80] bg-[#4ade80]/10 border-[#4ade80]/20";
       case "POST":
-        return "text-[#fb923c]";
+        return "text-[#fb923c] bg-[#fb923c]/10 border-[#fb923c]/20";
       case "PUT":
-        return "text-[#60a5fa]";
+        return "text-[#60a5fa] bg-[#60a5fa]/10 border-[#60a5fa]/20";
       case "PATCH":
-        return "text-[#c084fc]";
+        return "text-[#c084fc] bg-[#c084fc]/10 border-[#c084fc]/20";
       case "DELETE":
-        return "text-[#f87171]";
+        return "text-[#f87171] bg-[#f87171]/10 border-[#f87171]/20";
       default:
-        return "text-[#8b919d]";
+        return "text-[#8b919d] bg-[#8b919d]/10 border-[#8b919d]/20";
     }
   };
 
   // Recursive renderers
-  const renderRequest = (request: SavedRequest, folderId: string, projectId: string, depth: number) => {
+  const renderRequest = (request: SavedRequest, folderId: string, projectId: string) => {
     const isActive = activeRequestId === request.id;
     return (
       <div
@@ -402,31 +401,36 @@ export const ProjectsTree: React.FC = () => {
         onContextMenu={(e) =>
           onContextMenu(e, "request", projectId, { folderId, requestId: request.id, request })
         }
-        style={{ paddingLeft: `${depth * 12 + 12}px` }}
-        className={`group flex items-center justify-between py-1.5 pr-2 text-xs font-mono rounded cursor-pointer transition select-none ${
+        className={`group relative flex items-center justify-between py-1.5 px-2 text-xs rounded-md cursor-pointer transition select-none ${
           isActive
-            ? "bg-bg-tertiary text-text-accent "
-            : "text-text-secondary hover:bg-bg-tertiary/40 hover:text-text-primary"
+            ? "bg-bg-hover text-text-primary font-medium"
+            : "text-text-secondary hover:bg-bg-hover hover:text-text-primary"
         }`}
       >
+        {/* Horizontal tree branch line */}
+        <span className="absolute -left-2.5 top-1/2 w-2.5 h-[1px] bg-border-primary/40 pointer-events-none group-hover:bg-text-accent/40 transition-colors" />
+
         <div className="flex items-center space-x-2 min-w-0 flex-1">
           <span
-            className={`text-[9px] font-extrabold flex-shrink-0 min-w-[32px] text-left ${getMethodBadgeStyle(
+            className={`text-[9px] font-bold font-mono px-1.5 py-0.5 rounded flex-shrink-0 min-w-[34px] text-center tracking-tight border ${getMethodBadgeStyle(
               request.method
             )}`}
           >
             {request.method}
           </span>
-          <span className="truncate text-[11px]">{request.name}</span>
+          <span className={`truncate text-[11px] font-sans ${isActive ? "text-text-primary font-semibold" : ""}`}>
+            {request.name}
+          </span>
         </div>
-        
+
         {/* Hover trigger for context menu */}
         <button
           onClick={(e) => {
             e.stopPropagation();
             onContextMenu(e, "request", projectId, { folderId, requestId: request.id, request });
           }}
-          className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-bg-hover transition text-text-secondary hover:text-text-primary cursor-pointer"
+          className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-bg-hover transition text-text-secondary hover:text-text-primary cursor-pointer flex-shrink-0"
+          title="Request options"
         >
           <MoreVertical size={11} />
         </button>
@@ -434,52 +438,74 @@ export const ProjectsTree: React.FC = () => {
     );
   };
 
-  const renderFolder = (folder: Folder, projectId: string, depth: number) => {
+  const renderFolder = (folder: Folder, projectId: string) => {
     const isExpanded = !!expandedIds[folder.id];
+
     return (
       <div key={folder.id} className="space-y-0.5">
         <div
           onClick={(e) => toggleExpand(folder.id, e)}
           onContextMenu={(e) => onContextMenu(e, "folder", projectId, { folderId: folder.id, folder })}
-          style={{ paddingLeft: `${depth * 12 + 8}px` }}
-          className="group flex items-center justify-between py-1.5 pr-2 rounded text-xs font-medium text-[#c0c7d3] hover:bg-bg-tertiary/40 hover:text-text-primary cursor-pointer select-none"
+          className="group relative flex items-center justify-between py-1.5 px-2 rounded-md text-xs font-medium bg-transparent hover:bg-bg-hover text-text-secondary hover:text-text-primary cursor-pointer select-none transition"
         >
+          {/* Horizontal tree branch line */}
+          <span className="absolute -left-2.5 top-1/2 w-2.5 h-[1px] bg-border-primary/40 pointer-events-none group-hover:bg-text-accent/40 transition-colors" />
+
           <div className="flex items-center space-x-1.5 min-w-0 flex-1">
-            <span className="text-text-secondary">
-              {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            <span className="text-text-secondary/70 group-hover:text-text-primary transition-colors flex-shrink-0">
+              <ChevronRight
+                size={13}
+                className={`transition-transform duration-150 ${isExpanded ? "rotate-90 text-text-primary" : ""}`}
+              />
             </span>
-            <span className="text-text-accent/90 flex-shrink-0">
+            <span className="text-amber-400/90 flex-shrink-0 transition-transform group-hover:scale-105">
               {isExpanded ? (
-                <FolderOpenIcon size={13} className="fill-text-accent/10" />
+                <FolderOpenIcon size={14} className="fill-amber-400/20" />
               ) : (
-                <FolderIcon size={13} className="fill-text-accent/10" />
+                <FolderIcon size={14} className="fill-amber-400/10" />
               )}
             </span>
-            <span className="truncate text-[11px] font-semibold">{folder.name}</span>
+            <span className={`truncate text-[11px] font-semibold ${isExpanded ? "text-text-primary" : ""}`}>
+              {folder.name}
+            </span>
           </div>
 
-          {/* Hover trigger for context menu */}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onContextMenu(e, "folder", projectId, { folderId: folder.id, folder });
-            }}
-            className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-bg-hover transition text-text-secondary hover:text-text-primary cursor-pointer"
-          >
-            <MoreVertical size={11} />
-          </button>
+          <div className="flex items-center space-x-1 flex-shrink-0">
+            {/* Quick add request button */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleAddRequestInFolder(projectId, folder.id);
+              }}
+              className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-bg-hover transition text-text-secondary hover:text-text-accent cursor-pointer"
+              title="Add request"
+            >
+              <Plus size={12} />
+            </button>
+
+            {/* Hover trigger for context menu */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onContextMenu(e, "folder", projectId, { folderId: folder.id, folder });
+              }}
+              className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-bg-hover transition text-text-secondary hover:text-text-primary cursor-pointer"
+              title="Folder options"
+            >
+              <MoreVertical size={11} />
+            </button>
+          </div>
         </div>
 
+        {/* Folder Children with Vertical Tree Line */}
         {isExpanded && (
-          <div className="space-y-0.5">
-            {folder.subfolders.map((sub) => renderFolder(sub, projectId, depth + 1))}
-            {folder.requests.map((req) => renderRequest(req, folder.id, projectId, depth + 1))}
+          <div className="relative ml-3.5 pl-2.5 border-l border-border-primary/40 space-y-0.5 my-0.5 hover:border-border-primary/70 transition-colors">
+            {folder.subfolders.map((sub) => renderFolder(sub, projectId))}
+            {folder.requests.map((req) => renderRequest(req, folder.id, projectId))}
             {folder.subfolders.length === 0 && folder.requests.length === 0 && (
-              <div
-                style={{ paddingLeft: `${(depth + 1) * 12 + 20}px` }}
-                className="py-1 text-[10px] text-text-secondary/50 italic select-none"
-              >
-                Empty Folder
+              <div className="relative flex items-center py-1 px-2 text-[10px] text-text-secondary/40 italic select-none">
+                <span className="absolute -left-2.5 top-1/2 w-2.5 h-[1px] bg-border-primary/40 pointer-events-none" />
+                <span>Empty folder</span>
               </div>
             )}
           </div>
@@ -490,25 +516,29 @@ export const ProjectsTree: React.FC = () => {
 
   const renderProject = (project: Project) => {
     const isExpanded = !!expandedIds[project.id];
+
     return (
-      <div key={project.id} className="border border-border-primary/40 bg-bg-secondary rounded overflow-hidden">
+      <div key={project.id} className="space-y-0.5 select-none">
         {/* Project Header */}
         <div
           onClick={(e) => toggleExpand(project.id, e)}
           onContextMenu={(e) => onContextMenu(e, "project", project.id, {})}
-          className={`group flex items-center justify-between px-2.5 py-2 text-xs font-semibold cursor-pointer select-none transition ${
-            isExpanded ? "bg-bg-tertiary/60 text-text-primary" : "text-text-secondary hover:bg-bg-tertiary/30 hover:text-text-primary"
-          }`}
+          className="group flex items-center justify-between px-2 py-1.5 rounded-md text-xs font-semibold bg-transparent hover:bg-bg-hover text-text-secondary hover:text-text-primary cursor-pointer select-none transition"
         >
           <div className="flex items-center space-x-1.5 min-w-0 flex-1">
-            <span className="text-text-secondary">
-              {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+            <span className="text-text-secondary/70 group-hover:text-text-primary transition-colors flex-shrink-0">
+              <ChevronRight
+                size={13}
+                className={`transition-transform duration-150 ${isExpanded ? "rotate-90 text-text-primary" : ""}`}
+              />
             </span>
-            <Briefcase size={13} className="text-text-secondary flex-shrink-0" />
-            <span className="truncate uppercase tracking-wider text-[12px]">{project.name}</span>
+            <Boxes size={14} className="text-text-accent flex-shrink-0" />
+            <span className={`truncate uppercase tracking-wider text-[11px] font-bold ${isExpanded ? "text-text-primary" : "text-text-secondary group-hover:text-text-primary"}`}>
+              {project.name}
+            </span>
           </div>
 
-          <div className="flex items-center space-x-1">
+          <div className="flex items-center space-x-1 flex-shrink-0">
             {/* Quick add folder button */}
             <button
               onClick={(e) => {
@@ -526,22 +556,25 @@ export const ProjectsTree: React.FC = () => {
                 onContextMenu(e, "project", project.id, {});
               }}
               className="opacity-0 group-hover:opacity-100 p-0.5 rounded hover:bg-bg-hover transition text-text-secondary hover:text-text-primary cursor-pointer"
+              title="Project options"
             >
               <MoreVertical size={11} />
             </button>
           </div>
         </div>
 
-        {/* Project Body */}
+        {/* Project Folders with Vertical Tree Line */}
         {isExpanded && (
-          <div className="p-1 space-y-0.5 border-t border-border-primary/20 bg-bg-primary/10">
-            {project.folders.map((folder) => renderFolder(folder, project.id, 0))}
-            {project.folders.length === 0 && (
-              <div className="py-3 px-4 text-center text-[10px] text-text-secondary/60 select-none">
+          <div className="relative ml-3.5 pl-2.5 border-l border-border-primary/40 space-y-0.5 my-0.5 hover:border-border-primary/70 transition-colors">
+            {project.folders.length > 0 ? (
+              project.folders.map((folder) => renderFolder(folder, project.id))
+            ) : (
+              <div className="relative flex items-center py-1.5 px-2 text-[10px] text-text-secondary/40 italic select-none">
+                <span className="absolute -left-2.5 top-1/2 w-2.5 h-[1px] bg-border-primary/40 pointer-events-none" />
                 <span>No folders yet. </span>
                 <button
                   onClick={() => triggerNamingDialog("create-folder", project.id)}
-                  className="text-text-accent hover:underline cursor-pointer"
+                  className="ml-1 text-text-accent hover:underline cursor-pointer"
                 >
                   Create folder
                 </button>
@@ -560,21 +593,23 @@ export const ProjectsTree: React.FC = () => {
         <span className="text-[12px] font-bold text-text-secondary uppercase tracking-wider">
           Projects
         </span>
-        <div className="flex items-center space-x-1.5">
+        <div className="flex items-center space-x-1">
           <button
+            type="button"
             onClick={importProjects}
-            className="text-[10px] bg-bg-hover text-text-accent border border-border-primary px-1.5 py-0.5 rounded hover:bg-bg-hover-light flex items-center space-x-1 cursor-pointer transition"
+            className="px-2 py-1 hover:bg-bg-hover text-text-secondary hover:text-text-primary border border-border-primary/60 rounded-md transition flex items-center space-x-1 text-[11px] cursor-pointer"
             title="Import existing project JSON files"
           >
-            <FolderOpenIcon size={10} />
+            <FolderOpenIcon size={12} className="text-text-accent" />
             <span>Import</span>
           </button>
           <button
+            type="button"
             onClick={() => createProject("Untitled Project")}
-            className="text-[10px] bg-bg-hover text-text-accent border border-border-primary px-1.5 py-0.5 rounded hover:bg-bg-hover-light flex items-center space-x-1 cursor-pointer transition"
+            className="px-2 py-1 hover:bg-bg-hover text-text-secondary hover:text-text-primary border border-border-primary/60 rounded-md transition flex items-center space-x-1 text-[11px] cursor-pointer"
             title="Create a new project"
           >
-            <Plus size={10} />
+            <Plus size={12} className="text-text-accent" />
             <span>New</span>
           </button>
         </div>

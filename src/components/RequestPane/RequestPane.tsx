@@ -113,6 +113,21 @@ export const RequestPane: React.FC = () => {
   const [isAuthDropdownOpen, setIsAuthDropdownOpen] = useState(false);
   const [showInheritedHeaders, setShowInheritedHeaders] = useState(true);
   const authDropdownRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isCompact, setIsCompact] = useState(false);
+
+  // Responsive container observer: switch to compact icon-only Add Extractor button when width < 580px
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const ro = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        setIsCompact(entry.contentRect.width < 580);
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
 
   // Scrollable & slidable tabs container state
   const tabsContainerRef = useRef<HTMLDivElement>(null);
@@ -364,7 +379,10 @@ export const RequestPane: React.FC = () => {
   };
 
   return (
-    <div className="flex-1 flex flex-col border border-border-primary bg-bg-secondary rounded-sm overflow-hidden">
+    <div
+      ref={containerRef}
+      className="flex-1 flex flex-col border border-border-primary bg-bg-secondary rounded-sm overflow-hidden"
+    >
       {/* Horizontal Tabs Header */}
       <div className="relative flex items-center bg-bg-tertiary h-9 overflow-hidden">
         {canScrollLeft && (
@@ -837,8 +855,8 @@ export const RequestPane: React.FC = () => {
         {/* Extractors Tab */}
         {activeTab === "extractors" && (
           <div className="animate-tab-fade space-y-4">
-            <div className="flex items-center justify-between border-b border-border-primary pb-3">
-              <div>
+            <div className="flex items-start justify-between border-b border-border-primary pb-3 gap-3">
+              <div className="min-w-0">
                 <div className="text-[11px] text-text-primary font-semibold uppercase tracking-wider">
                   Response Chaining & Extractors
                 </div>
@@ -849,10 +867,14 @@ export const RequestPane: React.FC = () => {
               <button
                 type="button"
                 onClick={handleAddExtractor}
-                className="flex items-center space-x-1.5 px-2.5 py-1 text-xs bg-bg-secondary hover:bg-bg-hover text-text-primary border border-border-primary rounded-sm transition cursor-pointer"
+                className={`h-7 flex items-center justify-center text-xs bg-bg-secondary hover:bg-bg-hover text-text-primary border border-border-primary rounded-sm transition cursor-pointer flex-shrink-0 whitespace-nowrap ${
+                  isCompact ? "w-7 p-0" : "px-2.5 space-x-1.5"
+                }`}
+                title="Add Extractor"
+                aria-label="Add Extractor"
               >
-                <Plus size={12} />
-                <span>Add Extractor</span>
+                <Plus size={isCompact ? 13 : 12} />
+                {!isCompact && <span>Add Extractor</span>}
               </button>
             </div>
 
@@ -876,12 +898,37 @@ export const RequestPane: React.FC = () => {
               </div>
             ) : (
               <div className="space-y-2">
-                <div className="grid grid-cols-12 gap-2 text-[10px] font-bold text-text-secondary uppercase px-2 py-1 bg-bg-secondary border border-border-primary rounded-sm">
-                  <div className="col-span-1 text-center">Active</div>
-                  <div className="col-span-3">Source</div>
-                  <div className="col-span-4">Property / Path</div>
-                  <div className="col-span-3">Target Variable</div>
-                  <div className="col-span-1 text-center">Action</div>
+                <div className="grid grid-cols-12 gap-2 text-[10px] font-bold text-text-secondary uppercase px-2 py-1.5 bg-bg-secondary border border-border-primary rounded-sm select-none items-center">
+                  <div
+                    className="col-span-1 min-w-0 text-center truncate-fade-center px-0.5"
+                    title="Active"
+                  >
+                    Active
+                  </div>
+                  <div
+                    className="col-span-3 min-w-0 truncate-fade-right px-0.5"
+                    title="Source"
+                  >
+                    Source
+                  </div>
+                  <div
+                    className="col-span-4 min-w-0 truncate-fade-right px-0.5"
+                    title="Property / Path"
+                  >
+                    Property / Path
+                  </div>
+                  <div
+                    className="col-span-3 min-w-0 truncate-fade-right px-0.5"
+                    title="Target Variable"
+                  >
+                    Target Variable
+                  </div>
+                  <div
+                    className="col-span-1 min-w-0 text-center truncate-fade-center px-0.5"
+                    title="Action"
+                  >
+                    Action
+                  </div>
                 </div>
 
                 <div className="space-y-1.5">
@@ -897,7 +944,7 @@ export const RequestPane: React.FC = () => {
                       >
                         <div className="grid grid-cols-12 gap-2 items-center">
                           {/* Toggle */}
-                          <div className="col-span-1 flex justify-center">
+                          <div className="col-span-1 min-w-0 flex justify-center">
                             <input
                               type="checkbox"
                               checked={ext.enabled}
@@ -910,7 +957,7 @@ export const RequestPane: React.FC = () => {
                           </div>
 
                           {/* Source Dropdown */}
-                          <div className="col-span-3">
+                          <div className="col-span-3 min-w-0">
                             <ExtractorSourceDropdown
                               source={ext.source}
                               onChange={(newSource) =>
@@ -920,7 +967,7 @@ export const RequestPane: React.FC = () => {
                           </div>
 
                           {/* Property Path */}
-                          <div className="col-span-4">
+                          <div className="col-span-4 min-w-0">
                             <input
                               type="text"
                               value={ext.property}
@@ -935,14 +982,14 @@ export const RequestPane: React.FC = () => {
                                   ? "e.g. Authorization or Set-Cookie"
                                   : "HTTP Status Code (e.g. 200)"
                               }
-                              className={`w-full bg-bg-primary text-text-primary border border-border-primary px-2 py-1 rounded-sm text-xs focus:outline-none focus:border-text-accent placeholder-text-secondary/40 ${
+                              className={`w-full min-w-0 bg-bg-primary text-text-primary border border-border-primary px-2 py-1 rounded-sm text-xs focus:outline-none focus:border-text-accent placeholder-text-secondary/40 ${
                                 ext.source === "status" ? "opacity-50 cursor-not-allowed" : ""
                               }`}
                             />
                           </div>
 
                           {/* Target Variable */}
-                          <div className="col-span-3 flex items-center space-x-1">
+                          <div className="col-span-3 min-w-0 flex items-center space-x-1">
                             <span className="text-text-secondary text-xs select-none">{"{{"}</span>
                             <input
                               type="text"
@@ -953,13 +1000,13 @@ export const RequestPane: React.FC = () => {
                                 })
                               }
                               placeholder="variableName"
-                              className="w-full bg-bg-primary text-text-primary border border-border-primary px-2 py-1 rounded-sm text-xs focus:outline-none focus:border-text-accent placeholder-text-secondary/40 text-amber-300 font-semibold"
+                              className="w-full min-w-0 bg-bg-primary text-text-primary border border-border-primary px-2 py-1 rounded-sm text-xs focus:outline-none focus:border-text-accent placeholder-text-secondary/40 text-amber-300 font-semibold"
                             />
                             <span className="text-text-secondary text-xs select-none">{"}}"}</span>
                           </div>
 
                           {/* Delete Action */}
-                          <div className="col-span-1 flex justify-center">
+                          <div className="col-span-1 min-w-0 flex justify-center">
                             <button
                               type="button"
                               onClick={() => handleDeleteExtractor(ext.id)}
@@ -972,25 +1019,27 @@ export const RequestPane: React.FC = () => {
                         </div>
 
                         {/* Live Resolution Preview */}
-                        <div className="flex items-center space-x-2 pl-9 text-[11px] text-text-secondary">
-                          <span className="text-[10px] uppercase font-bold text-text-secondary/70">
+                        <div className="flex items-start space-x-2 pl-9 text-[11px] text-text-secondary">
+                          <span className="text-[10px] uppercase font-bold text-text-secondary/70 whitespace-nowrap flex-shrink-0 select-none pt-0.5">
                             Live Preview:
                           </span>
-                          {!response ? (
-                            <span className="text-text-secondary/50 italic">
-                              (Send a request to preview extracted value)
-                            </span>
-                          ) : previewValue !== null ? (
-                            <span className="text-green-400 px-1.5 py-0.5 rounded font-mono break-all">
-                              {previewValue.length > 80
-                                ? `${previewValue.substring(0, 80)}...`
-                                : previewValue}
-                            </span>
-                          ) : (
-                            <span className="text-amber-400/80 italic">
-                              (Property not found in current response)
-                            </span>
-                          )}
+                          <div className="min-w-0 flex-1 break-words">
+                            {!response ? (
+                              <span className="text-text-secondary/50 italic">
+                                (Send a request to preview extracted value)
+                              </span>
+                            ) : previewValue !== null ? (
+                              <span className="text-green-400 px-1.5 py-0.5 rounded font-mono break-all inline-block">
+                                {previewValue.length > 80
+                                  ? `${previewValue.substring(0, 80)}...`
+                                  : previewValue}
+                              </span>
+                            ) : (
+                              <span className="text-amber-400/80 italic">
+                                (Property not found in current response)
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );

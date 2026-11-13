@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRequestStore } from "../../store/requestStore";
-import { X, Plus } from "lucide-react";
+import { X, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 
 export const TabBar: React.FC = () => {
   const { tabs, activeTabId, setActiveTab, closeTab, openTab, reorderTabs } = useRequestStore();
@@ -9,6 +9,55 @@ export const TabBar: React.FC = () => {
   const [startX, setStartX] = useState<number>(0);
   const [currentX, setCurrentX] = useState<number>(0);
   const [tabWidth, setTabWidth] = useState<number>(140);
+
+  // Scroll navigation state
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const checkTabsScroll = () => {
+    const el = tabsContainerRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 2);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 2);
+  };
+
+  useEffect(() => {
+    checkTabsScroll();
+    const el = tabsContainerRef.current;
+    if (!el) return;
+    el.addEventListener("scroll", checkTabsScroll);
+    const ro = new ResizeObserver(checkTabsScroll);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", checkTabsScroll);
+      ro.disconnect();
+    };
+  }, [tabs.length]);
+
+  // Auto-scroll active tab into view when active tab changes
+  useEffect(() => {
+    if (!activeTabId || !tabsContainerRef.current) return;
+    const activeEl = tabsContainerRef.current.querySelector<HTMLElement>(`[data-tab-id="${activeTabId}"]`);
+    if (activeEl) {
+      activeEl.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+    }
+  }, [activeTabId]);
+
+  const handleTabsWheel = (e: React.WheelEvent) => {
+    if (e.deltaY !== 0 && tabsContainerRef.current) {
+      tabsContainerRef.current.scrollLeft += e.deltaY;
+      checkTabsScroll();
+    }
+  };
+
+  const scrollLeft = () => {
+    tabsContainerRef.current?.scrollBy({ left: -140, behavior: "smooth" });
+  };
+
+  const scrollRight = () => {
+    tabsContainerRef.current?.scrollBy({ left: 140, behavior: "smooth" });
+  };
 
   // Listen to mousemove and mouseup events globally
   useEffect(() => {
@@ -75,9 +124,26 @@ export const TabBar: React.FC = () => {
   };
 
   return (
-    <div className="flex items-center w-full h-9 bg-bg-secondary select-none flex-shrink-0">
+    <div className="relative flex items-center w-full h-9 bg-bg-secondary select-none flex-shrink-0 overflow-hidden">
+      {/* Scroll Left Button */}
+      {canScrollLeft && (
+        <button
+          type="button"
+          onClick={scrollLeft}
+          className="absolute left-0 top-0 bottom-0 z-10 w-6 bg-gradient-to-r from-bg-secondary via-bg-secondary/95 to-transparent flex items-center justify-start pl-0.5 text-text-secondary hover:text-text-primary cursor-pointer transition-colors border-b border-b-border-primary"
+          title="Scroll tabs left"
+          aria-label="Scroll tabs left"
+        >
+          <ChevronLeft size={13} />
+        </button>
+      )}
+
       {/* Scrollable Tabs Container */}
-      <div className="flex items-center overflow-x-auto overflow-y-hidden h-full max-w-[calc(100%-40px)] scrollbar-none">
+      <div
+        ref={tabsContainerRef}
+        onWheel={handleTabsWheel}
+        className="flex items-center overflow-x-auto overflow-y-hidden h-full w-full scrollbar-none flex-nowrap"
+      >
         {tabs.map((tab, index) => {
           const isActive = tab.id === activeTabId;
           const method = tab.request.method;
@@ -92,6 +158,7 @@ export const TabBar: React.FC = () => {
           return (
             <div
               key={tab.id}
+              data-tab-id={tab.id}
               onMouseDown={(e) => handleMouseDown(e, index, e.currentTarget, tab.id)}
               onAuxClick={(e) => {
                 if (e.button === 1) {
@@ -100,7 +167,7 @@ export const TabBar: React.FC = () => {
                 }
               }}
               style={style}
-              className={`group flex items-center space-x-2 px-3 h-full border-r border-border-primary select-none text-[11px] font-semibold min-w-[120px] max-w-[160px] ${
+              className={`group flex items-center space-x-2 px-3 h-full border-r border-border-primary select-none text-[11px] font-semibold min-w-[120px] max-w-[160px] flex-shrink-0 ${
                 activeDragIndex !== null
                   ? isDragged
                     ? "cursor-grabbing bg-bg-primary text-text-accent"
@@ -154,10 +221,23 @@ export const TabBar: React.FC = () => {
         >
           <Plus size={14} />
         </button>
+
+        {/* Spacer filling remaining tabs bar width */}
+        <div className="flex-1 h-full border-b border-b-border-primary bg-bg-secondary/30 min-w-0" />
       </div>
 
-      {/* Spacer filling remaining tabs bar width */}
-      <div className="flex-1 h-full border-b border-b-border-primary bg-bg-secondary/30" />
+      {/* Scroll Right Button */}
+      {canScrollRight && (
+        <button
+          type="button"
+          onClick={scrollRight}
+          className="absolute right-0 top-0 bottom-0 z-10 w-6 bg-gradient-to-l from-bg-secondary via-bg-secondary/95 to-transparent flex items-center justify-end pr-0.5 text-text-secondary hover:text-text-primary cursor-pointer transition-colors border-b border-b-border-primary"
+          title="Scroll tabs right"
+          aria-label="Scroll tabs right"
+        >
+          <ChevronRight size={13} />
+        </button>
+      )}
     </div>
   );
 };

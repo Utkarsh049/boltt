@@ -399,3 +399,19 @@ html.theme-glass .flex.items-center.border-b.border-border-primary.bg-bg-primary
 .cm-foldGutter .cm-gutterElement span:not([title*="Unfold"]) {
   transform: translateY(-2.5px) !important;
 }
+
+/* Smooth fade truncation utilities */
+.truncate-fade-right {
+  overflow: hidden;
+  white-space: nowrap;
+  mask-image: linear-gradient(to right, black calc(100% - 12px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, black calc(100% - 12px), transparent 100%);
+}
+
+.truncate-fade-center {
+  overflow: hidden;
+  white-space: nowrap;
+  mask-image: linear-gradient(to right, transparent 0px, black 4px, black calc(100% - 4px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0px, black 4px, black calc(100% - 4px), transparent 100%);
+}
+

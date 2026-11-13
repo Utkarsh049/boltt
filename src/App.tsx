@@ -837,14 +837,14 @@ function App() {
             className="flex flex-col bg-bg-secondary h-full overflow-hidden"
           >
             {/* Sidebar Horizontal Options Tabs */}
-            <div className="flex border-b border-border-primary bg-bg-tertiary h-9 flex-shrink-0">
+            <div className="flex bg-bg-tertiary h-9 flex-shrink-0">
               <button
                 type="button"
                 onClick={() => setSidebarTab("workspace")}
-                className={`flex-1 flex items-center justify-center text-[11px] font-semibold transition px-2 min-w-0 cursor-pointer ${
+                className={`flex-1 flex items-center justify-center text-[11px] font-semibold transition px-2 min-w-0 cursor-pointer border-r border-r-border-primary ${
                   sidebarTab === "workspace"
-                    ? "bg-bg-secondary text-text-accent"
-                    : "text-text-secondary hover:text-text-primary"
+                    ? "bg-bg-secondary text-text-accent border-b border-b-bg-secondary"
+                    : "bg-bg-tertiary text-text-secondary hover:text-text-primary hover:bg-bg-hover/40 border-b border-b-border-primary"
                 }`}
               >
                 <FolderIcon size={13} className="flex-shrink-0" />
@@ -856,8 +856,8 @@ function App() {
                 onClick={() => setSidebarTab("history")}
                 className={`flex-1 flex items-center justify-center text-[11px] font-semibold transition px-2 min-w-0 cursor-pointer ${
                   sidebarTab === "history"
-                    ? "bg-bg-secondary text-text-accent"
-                    : "text-text-secondary hover:text-text-primary"
+                    ? "bg-bg-secondary text-text-accent border-b border-b-bg-secondary"
+                    : "bg-bg-tertiary text-text-secondary hover:text-text-primary hover:bg-bg-hover/40 border-b border-b-border-primary"
                 }`}
               >
                 <Clock size={13} className="flex-shrink-0" />

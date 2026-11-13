@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { UrlBar } from "./components/UrlBar/UrlBar";
 import { RequestPane } from "./components/RequestPane/RequestPane";
-import { Palette, RefreshCw, Folder as FolderIcon, Clock, Eye, EyeOff, Plus, Minus, Square, X, Trash2, Download, Search } from "lucide-react";
+import { Palette, RefreshCw, Folder as FolderIcon, Clock, Plus, Minus, Square, X, Trash2, Download, Search, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from "lucide-react";
 import "./App.css";
 import { Group, Panel, Separator, type PanelImperativeHandle } from "react-resizable-panels";
 import { ResponsePane } from "./components/ResponsePane/ResponsePane";
@@ -38,6 +38,8 @@ const getInitialWindowLabel = () => {
 function App() {
   const [windowLabel] = useState<string>(getInitialWindowLabel);
   const [sidebarTab, setSidebarTab] = useState<SidebarTab>("workspace");
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+  const sidebarPanelRef = useRef<PanelImperativeHandle>(null);
   const [isResponseCollapsed, setIsResponseCollapsed] = useState(false);
   const responsePanelRef = useRef<PanelImperativeHandle>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -334,6 +336,22 @@ function App() {
         return;
       }
 
+      // Toggle sidebar (Ctrl/Cmd + B)
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "b") {
+        (e as any).__bolttKeyHandled = true;
+        e.preventDefault();
+        toggleSidebar();
+        return;
+      }
+
+      // Toggle response pane (Ctrl/Cmd + J)
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "j") {
+        (e as any).__bolttKeyHandled = true;
+        e.preventDefault();
+        toggleResponsePane();
+        return;
+      }
+
       // switch tabs by index (Ctrl/Cmd + 1..9)
       if ((e.ctrlKey || e.metaKey) && e.key >= "1" && e.key <= "9") {
         e.preventDefault();
@@ -431,6 +449,17 @@ function App() {
       }
     }
   }, [response, isLoading]);
+
+  const toggleSidebar = () => {
+    const panel = sidebarPanelRef.current;
+    if (panel) {
+      if (panel.isCollapsed()) {
+        panel.expand();
+      } else {
+        panel.collapse();
+      }
+    }
+  };
 
   const toggleResponsePane = () => {
     const panel = responsePanelRef.current;
@@ -717,11 +746,15 @@ function App() {
           {/* 1. Sidebar Panel */}
           <Panel
             id="sidebar-panel"
-            defaultSize="250px"
-            minSize="300px"
-            maxSize="400px"
+            panelRef={sidebarPanelRef}
+            defaultSize="280px"
+            minSize="240px"
+            maxSize="450px"
             groupResizeBehavior="preserve-pixel-size"
             collapsible={true}
+            onResize={(size) => {
+              setIsSidebarCollapsed(size.inPixels === 0);
+            }}
             className="flex flex-col bg-bg-secondary h-full overflow-hidden"
           >
             {/* Sidebar Horizontal Options Tabs */}
@@ -790,29 +823,6 @@ function App() {
                  </div>
                </div>
              </div>
-
-            <div className="p-3 border-t border-border-primary text-[12px] text-text-secondary bg-bg-tertiary/20 flex-shrink-0 flex items-center justify-between">
-              <div>
-                Press <kbd className="bg-bg-hover px-1.5 py-1 rounded text-text-primary font-mono">Ctrl+Enter</kbd> to Send
-              </div>
-              <button
-                onClick={toggleResponsePane}
-                className="flex items-center space-x-1 px-1.5 py-0.5 bg-bg-hover hover:bg-bg-hover-light border border-border-primary text-text-primary rounded-sm transition cursor-pointer"
-                title={isResponseCollapsed ? "Expand Response Pane" : "Collapse Response Pane"}
-              >
-                {isResponseCollapsed ? (
-                  <>
-                    <Eye size={11} className="text-text-accent" />
-                    <span>Show Resp</span>
-                  </>
-                ) : (
-                  <>
-                    <EyeOff size={11} className="text-text-secondary" />
-                    <span>Hide Resp</span>
-                  </>
-                )}
-              </button>
-            </div>
           </Panel>
 
           {/* Resize Handle 1 */}
@@ -913,12 +923,81 @@ function App() {
 
         </Group>
       </div>
+
+      {/* Global Bottom Bar */}
+      <footer className="h-7 border-t border-border-primary bg-bg-secondary px-2.5 flex items-center justify-between flex-shrink-0 select-none text-[11px] text-text-secondary z-20 font-sans">
+        {/* Left: Sidebar toggle */}
+        <div className="flex items-center space-x-2 min-w-0">
+          <button
+            type="button"
+            onClick={toggleSidebar}
+            className={`flex items-center space-x-1.5 px-2 py-0.5 rounded transition-colors cursor-pointer text-[11px] ${
+              isSidebarCollapsed
+                ? "text-text-secondary hover:text-text-primary hover:bg-bg-hover"
+                : "text-text-primary hover:bg-bg-hover"
+            }`}
+            title={isSidebarCollapsed ? "Show Sidebar (Ctrl+B)" : "Hide Sidebar (Ctrl+B)"}
+          >
+            {isSidebarCollapsed ? (
+              <PanelLeftOpen size={13} className="text-text-secondary" />
+            ) : (
+              <PanelLeftClose size={13} className="text-text-accent" />
+            )}
+            <span>{isSidebarCollapsed ? "Show Sidebar" : "Hide Sidebar"}</span>
+          </button>
+        </div>
+
+        {/* Center: Send active request hint */}
+        <div className="flex items-center space-x-1.5 text-text-secondary text-[11px]">
+          <span>Press</span>
+          <kbd className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-bg-hover text-text-primary border border-border-primary/60 shadow-2xs">
+            Ctrl+Enter
+          </kbd>
+          <span>to Send</span>
+        </div>
+
+        {/* Right: Response pane toggle */}
+        <div className="flex items-center space-x-2 min-w-0 justify-end">
+          {tabs.length > 0 ? (
+            <button
+              type="button"
+              onClick={toggleResponsePane}
+              className={`flex items-center space-x-1.5 px-2 py-0.5 rounded transition-colors cursor-pointer text-[11px] ${
+                isResponseCollapsed
+                  ? "text-text-secondary hover:text-text-primary hover:bg-bg-hover"
+                  : "text-text-primary hover:bg-bg-hover"
+              }`}
+              title={isResponseCollapsed ? "Show Response (Ctrl+J)" : "Hide Response (Ctrl+J)"}
+            >
+              <span>{isResponseCollapsed ? "Show Response" : "Hide Response"}</span>
+              {isResponseCollapsed ? (
+                <PanelRightOpen size={13} className="text-text-secondary" />
+              ) : (
+                <PanelRightClose size={13} className="text-text-accent" />
+              )}
+            </button>
+          ) : (
+            <div className="text-[11px] text-text-secondary/40 select-none px-2 py-0.5">
+              No tabs open
+            </div>
+          )}
+        </div>
+      </footer>
+
       <SaveRequestModal />
       <EnvironmentModal />
       <UpdateToast />
       <ReleaseNotesModal />
       <ToastList />
-      <CommandPalette onNavigateSidebar={(tab) => setSidebarTab(tab)} />
+      <CommandPalette
+        onNavigateSidebar={(tab) => {
+          setSidebarTab(tab);
+          const panel = sidebarPanelRef.current;
+          if (panel && panel.isCollapsed()) {
+            panel.expand();
+          }
+        }}
+      />
     </div>
   );
 }

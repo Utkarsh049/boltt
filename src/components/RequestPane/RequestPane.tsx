@@ -19,6 +19,7 @@ import {
   User,
   ChevronDown,
   ChevronRight,
+  ChevronLeft,
   Check,
   Sparkles,
   Link2,
@@ -112,6 +113,75 @@ export const RequestPane: React.FC = () => {
   const [isAuthDropdownOpen, setIsAuthDropdownOpen] = useState(false);
   const [showInheritedHeaders, setShowInheritedHeaders] = useState(true);
   const authDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Scrollable & slidable tabs container state
+  const tabsContainerRef = useRef<HTMLDivElement>(null);
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(false);
+
+  const isDraggingTabsRef = useRef(false);
+  const startTabsXRef = useRef(0);
+  const scrollTabsLeftRef = useRef(0);
+  const hasDraggedTabsRef = useRef(false);
+
+  const checkTabsScroll = () => {
+    const el = tabsContainerRef.current;
+    if (!el) return;
+    setCanScrollLeft(el.scrollLeft > 2);
+    setCanScrollRight(el.scrollLeft < el.scrollWidth - el.clientWidth - 2);
+  };
+
+  useEffect(() => {
+    checkTabsScroll();
+    const el = tabsContainerRef.current;
+    if (!el) return;
+    el.addEventListener("scroll", checkTabsScroll);
+    const ro = new ResizeObserver(checkTabsScroll);
+    ro.observe(el);
+    return () => {
+      el.removeEventListener("scroll", checkTabsScroll);
+      ro.disconnect();
+    };
+  }, []);
+
+  const handleTabsWheel = (e: React.WheelEvent) => {
+    if (e.deltaY !== 0 && tabsContainerRef.current) {
+      tabsContainerRef.current.scrollLeft += e.deltaY;
+      checkTabsScroll();
+    }
+  };
+
+  const handleTabsMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0 || !tabsContainerRef.current) return;
+    isDraggingTabsRef.current = true;
+    hasDraggedTabsRef.current = false;
+    startTabsXRef.current = e.pageX - tabsContainerRef.current.offsetLeft;
+    scrollTabsLeftRef.current = tabsContainerRef.current.scrollLeft;
+  };
+
+  const handleTabsMouseMove = (e: React.MouseEvent) => {
+    if (!isDraggingTabsRef.current || !tabsContainerRef.current) return;
+    const x = e.pageX - tabsContainerRef.current.offsetLeft;
+    const walk = x - startTabsXRef.current;
+    if (Math.abs(walk) > 3) {
+      hasDraggedTabsRef.current = true;
+    }
+    tabsContainerRef.current.scrollLeft = scrollTabsLeftRef.current - walk;
+    checkTabsScroll();
+  };
+
+  const handleTabsMouseUp = () => {
+    isDraggingTabsRef.current = false;
+  };
+
+  const handleSelectTab = (tab: TabType, e: React.MouseEvent<HTMLButtonElement>) => {
+    if (hasDraggedTabsRef.current) {
+      hasDraggedTabsRef.current = false;
+      return;
+    }
+    setActiveTab(tab);
+    e.currentTarget.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "nearest" });
+  };
 
   const activeTabObj = tabs.find((t) => t.id === activeTabId);
   const bodyCache = activeTabObj?.bodyCache;
@@ -214,12 +284,12 @@ export const RequestPane: React.FC = () => {
   // Tab label helper
   const tabClass = (tab: TabType) => {
     const isActive = activeTab === tab;
-    return `h-9 px-4 flex items-center space-x-1.5 border border-transparent text-xs font-semibold select-none cursor-pointer transition-[color,background-color] duration-150 ${
+    return `h-full px-4 flex items-center space-x-1.5 text-xs font-semibold select-none cursor-pointer flex-shrink-0 whitespace-nowrap transition-[color,background-color] duration-150 ${
       isActive
-        ? `bg-bg-primary text-text-accent border-r-border-primary ${
-            tab === "params" ? "border-l-transparent" : "border-l-border-primary"
-          } -mb-[1px]`
-        : "text-text-secondary hover:text-text-primary"
+        ? `bg-bg-primary text-text-accent border-r border-r-border-primary ${
+            tab === "params" ? "border-l border-l-transparent" : "border-l border-l-border-primary"
+          } border-b border-b-bg-primary border-t border-t-transparent`
+        : "bg-bg-tertiary text-text-secondary hover:text-text-primary hover:bg-bg-hover/40 border-r border-r-border-primary border-l border-l-transparent border-b border-b-border-primary border-t border-t-transparent"
     }`;
   };
 
@@ -296,56 +366,92 @@ export const RequestPane: React.FC = () => {
   return (
     <div className="flex-1 flex flex-col border border-border-primary bg-bg-secondary rounded-sm overflow-hidden">
       {/* Horizontal Tabs Header */}
-      <div className="flex items-end border-b border-border-primary bg-bg-tertiary h-9">
-        <button onClick={() => setActiveTab("params")} className={tabClass("params")}>
-          <ListFilter size={13} />
-          <span>Params</span>
-          {activeParamsCount > 0 && (
-            <span className="bg-bg-hover text-text-accent text-[10px] px-1.5 rounded-full border border-border-primary">
-              {activeParamsCount}
-            </span>
-          )}
-        </button>
-        <button onClick={() => setActiveTab("headers")} className={tabClass("headers")}>
-          <Sliders size={13} />
-          <span>Headers</span>
-          {activeHeadersCount > 0 && (
-            <span className="bg-bg-hover text-text-accent text-[10px] px-1.5 rounded-full border border-border-primary">
-              {activeHeadersCount}
-            </span>
-          )}
-          {inheritedHeadersCount > 0 && (
-            <span
-              className="bg-bg-tertiary text-text-secondary text-[10px] px-1.5 rounded-full border border-border-primary font-mono"
-              title={`${inheritedHeadersCount} headers cascading from parent folders`}
-            >
-              +{inheritedHeadersCount}
-            </span>
-          )}
-        </button>
-        <button onClick={() => setActiveTab("body")} className={tabClass("body")}>
-          <Code2 size={13} />
-          <span>Body</span>
-          {activeBodyCount > 0 && (
-            <span className="w-1.5 h-1.5 bg-text-accent rounded-full"></span>
-          )}
-        </button>
-        <button onClick={() => setActiveTab("auth")} className={tabClass("auth")}>
-          <KeyRound size={13} />
-          <span>Authorization</span>
-          {isAuthActive && (
-            <span className="w-1.5 h-1.5 bg-text-accent rounded-full"></span>
-          )}
-        </button>
-        <button onClick={() => setActiveTab("extractors")} className={tabClass("extractors")}>
-          <Link2 size={13} />
-          <span>Extractors</span>
-          {activeExtractorsCount > 0 && (
-            <span className="bg-bg-hover text-text-accent text-[10px] px-1.5 rounded-full border border-border-primary font-mono">
-              {activeExtractorsCount}
-            </span>
-          )}
-        </button>
+      <div className="relative flex items-center bg-bg-tertiary h-9 overflow-hidden">
+        {canScrollLeft && (
+          <button
+            type="button"
+            onClick={() => tabsContainerRef.current?.scrollBy({ left: -110, behavior: "smooth" })}
+            className="absolute left-0 top-0 bottom-0 z-10 w-6 bg-gradient-to-r from-bg-tertiary via-bg-tertiary/90 to-transparent flex items-center justify-start pl-0.5 text-text-secondary hover:text-text-primary cursor-pointer transition-colors border-b border-b-border-primary"
+            title="Scroll tabs left"
+            aria-label="Scroll tabs left"
+          >
+            <ChevronLeft size={13} />
+          </button>
+        )}
+
+        <div
+          ref={tabsContainerRef}
+          onWheel={handleTabsWheel}
+          onMouseDown={handleTabsMouseDown}
+          onMouseMove={handleTabsMouseMove}
+          onMouseUp={handleTabsMouseUp}
+          onMouseLeave={handleTabsMouseUp}
+          className="flex items-stretch h-full overflow-x-auto scrollbar-none flex-nowrap w-full select-none cursor-grab active:cursor-grabbing"
+        >
+          <button onClick={(e) => handleSelectTab("params", e)} className={tabClass("params")}>
+            <ListFilter size={13} />
+            <span>Params</span>
+            {activeParamsCount > 0 && (
+              <span className="bg-bg-hover text-text-accent text-[10px] px-1.5 rounded-full border border-border-primary">
+                {activeParamsCount}
+              </span>
+            )}
+          </button>
+          <button onClick={(e) => handleSelectTab("headers", e)} className={tabClass("headers")}>
+            <Sliders size={13} />
+            <span>Headers</span>
+            {activeHeadersCount > 0 && (
+              <span className="bg-bg-hover text-text-accent text-[10px] px-1.5 rounded-full border border-border-primary">
+                {activeHeadersCount}
+              </span>
+            )}
+            {inheritedHeadersCount > 0 && (
+              <span
+                className="bg-bg-tertiary text-text-secondary text-[10px] px-1.5 rounded-full border border-border-primary font-mono"
+                title={`${inheritedHeadersCount} headers cascading from parent folders`}
+              >
+                +{inheritedHeadersCount}
+              </span>
+            )}
+          </button>
+          <button onClick={(e) => handleSelectTab("body", e)} className={tabClass("body")}>
+            <Code2 size={13} />
+            <span>Body</span>
+            {activeBodyCount > 0 && (
+              <span className="w-1.5 h-1.5 bg-text-accent rounded-full"></span>
+            )}
+          </button>
+          <button onClick={(e) => handleSelectTab("auth", e)} className={tabClass("auth")}>
+            <KeyRound size={13} />
+            <span>Authorization</span>
+            {isAuthActive && (
+              <span className="w-1.5 h-1.5 bg-text-accent rounded-full"></span>
+            )}
+          </button>
+          <button onClick={(e) => handleSelectTab("extractors", e)} className={tabClass("extractors")}>
+            <Link2 size={13} />
+            <span>Extractors</span>
+            {activeExtractorsCount > 0 && (
+              <span className="bg-bg-hover text-text-accent text-[10px] px-1.5 rounded-full border border-border-primary font-mono">
+                {activeExtractorsCount}
+              </span>
+            )}
+          </button>
+          {/* Spacer filling remaining tabs bar width with bottom border */}
+          <div className="flex-1 h-full border-b border-b-border-primary bg-bg-tertiary min-w-[20px]" />
+        </div>
+
+        {canScrollRight && (
+          <button
+            type="button"
+            onClick={() => tabsContainerRef.current?.scrollBy({ left: 110, behavior: "smooth" })}
+            className="absolute right-0 top-0 bottom-0 z-10 w-6 bg-gradient-to-l from-bg-tertiary via-bg-tertiary/90 to-transparent flex items-center justify-end pr-0.5 text-text-secondary hover:text-text-primary cursor-pointer transition-colors border-b border-b-border-primary"
+            title="Scroll tabs right"
+            aria-label="Scroll tabs right"
+          >
+            <ChevronRight size={13} />
+          </button>
+        )}
       </div>
 
       {/* Tab Panel Content */}

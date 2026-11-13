@@ -675,7 +675,7 @@ function App() {
             Boltt
           </span>
           {import.meta.env.DEV && (
-            <span className="text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded text-amber-400 border border-amber-500/30">
+            <span className="text-[10px] uppercase font-bold tracking-widest px-1.5 py-0.5 rounded text-amber-400 ">
               DEV
             </span>
           )}

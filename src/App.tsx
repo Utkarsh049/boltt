@@ -684,11 +684,11 @@ function App() {
           <button
             type="button"
             onClick={() => usePaletteStore.getState().open()}
-            className="flex items-center space-x-2 px-2.5 py-2 bg-bg-secondary hover:bg-bg-hover text-text-secondary hover:text-text-primary rounded border border-border-primary text-xs transition cursor-pointer"
+            className="hidden min-[1150px]:flex items-center space-x-2 px-2.5 py-2 bg-bg-secondary hover:bg-bg-hover text-text-secondary hover:text-text-primary rounded border border-border-primary text-xs transition cursor-pointer"
             title="Open Command Palette (Ctrl+K or Cmd+K)"
           >
             <Search size={13} className="text-text-accent" />
-            <span className="hidden sm:inline text-xs">Command Palette</span>
+            <span className="text-xs">Command Palette</span>
             <kbd className="font-mono text-[10px] px-1 py-0.2 rounded bg-bg-tertiary border border-border-primary text-text-tertiary">
               Ctrl+K
             </kbd>
@@ -774,12 +774,23 @@ function App() {
               <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full bg-text-accent animate-pulse" />
             )}
           </button>
-          <span className="text-xs select-none flex items-center space-x-1.5" title={isOnline ? "Connected to the internet" : "Disconnected from the internet"}>
-            <span className={`w-1.5 h-1.5 rounded-full ${isOnline ? "bg-[#4ade80]" : "bg-[#f87171]"}`} />
-            <span>Status:</span>
-            <strong className={isOnline ? "text-[#4ade80]" : "text-[#f87171]"}>
-              {isOnline ? "Online" : "Offline"}
-            </strong>
+          <span
+            className="text-xs select-none flex items-center space-x-1.5 cursor-default"
+            title={isOnline ? "Status: Online (Connected to the internet)" : "Status: Offline (Disconnected from the internet)"}
+          >
+            <span
+              className={`w-2 h-2 rounded-full flex-shrink-0 transition-colors ${
+                isOnline
+                  ? "bg-[#4ade80] shadow-[0_0_6px_rgba(74,222,128,0.35)]"
+                  : "bg-[#f87171] shadow-[0_0_6px_rgba(248,113,113,0.35)]"
+              }`}
+            />
+            <span className="hidden min-[1150px]:inline-flex items-center space-x-1">
+              <span>Status:</span>
+              <strong className={isOnline ? "text-[#4ade80]" : "text-[#f87171]"}>
+                {isOnline ? "Online" : "Offline"}
+              </strong>
+            </span>
           </span>
           <div className="flex items-center space-x-1 pl-2 border-l border-border-primary h-6">
             <button

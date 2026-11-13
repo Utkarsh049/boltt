@@ -1027,11 +1027,11 @@ function App() {
         </div>
 
         {/* Center: Send active request hint */}
-        <div className="flex items-center space-x-1.5 text-text-secondary text-[11px]">
+        <div className="flex items-center space-x-1 text-text-secondary text-[11px]">
           <span>Press</span>
-          <kbd className="px-1.5 py-0.5 rounded text-[10px] font-mono font-medium bg-bg-hover text-text-primary border border-border-primary/60 shadow-2xs">
+          <span className="font-mono font-semibold text-text-primary">
             Ctrl+Enter
-          </kbd>
+          </span>
           <span>to Send</span>
         </div>
 

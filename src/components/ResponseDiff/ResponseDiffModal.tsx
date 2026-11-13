@@ -741,12 +741,12 @@ export const ResponseDiffModal: React.FC<ResponseDiffModalProps> = ({
 
         {/* Header Diff Collapsible Drawer */}
         {isHeaderDrawerOpen && diffResult && (
-          <div className="border-b border-border-primary bg-bg-secondary/95 px-4 py-2.5 flex flex-col space-y-2 flex-shrink-0 animate-fade-in max-h-56 overflow-y-auto">
-            <div className="flex items-center justify-between text-xs">
+          <div className="border-b border-border-primary bg-bg-secondary/95 px-4 py-2.5 flex flex-col space-y-2 flex-shrink-0 animate-fade-in">
+            <div className="flex items-center justify-between text-xs flex-shrink-0">
               <span className="font-semibold text-text-primary">
                 Header Comparison ({diffResult.summary.headerDiffs.length} headers total)
               </span>
-              <label className="flex items-center space-x-1.5 cursor-pointer text-text-secondary hover:text-text-primary">
+              <label className="flex items-center gap-2 cursor-pointer text-text-secondary hover:text-text-primary select-none">
                 <input
                   type="checkbox"
                   checked={headerFilterOnlyChanges}
@@ -762,14 +762,14 @@ export const ResponseDiffModal: React.FC<ResponseDiffModalProps> = ({
                 No header differences found.
               </p>
             ) : (
-              <div className="border border-border-primary rounded overflow-hidden">
-                <table className="w-full text-left text-xs font-mono">
-                  <thead className="bg-bg-tertiary text-text-tertiary border-b border-border-primary text-[11px]">
+              <div className="border border-border-primary rounded overflow-y-auto overflow-x-auto max-h-52 bg-bg-primary/20">
+                <table className="w-full text-left text-xs font-mono border-collapse">
+                  <thead className="bg-bg-tertiary text-text-tertiary border-b border-border-primary text-[11px] sticky top-0 z-10 shadow-xs">
                     <tr>
-                      <th className="px-2.5 py-1 font-medium w-1/4">Header</th>
-                      <th className="px-2.5 py-1 font-medium w-1/3">Baseline</th>
-                      <th className="px-2.5 py-1 font-medium w-1/3">Current</th>
-                      <th className="px-2.5 py-1 font-medium text-right">State</th>
+                      <th className="px-2.5 py-1.5 font-medium w-1/4 bg-bg-tertiary">Header</th>
+                      <th className="px-2.5 py-1.5 font-medium w-1/3 bg-bg-tertiary">Baseline</th>
+                      <th className="px-2.5 py-1.5 font-medium w-1/3 bg-bg-tertiary">Current</th>
+                      <th className="px-2.5 py-1.5 font-medium text-right bg-bg-tertiary">State</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border-primary/40 bg-bg-primary/20">
@@ -796,11 +796,19 @@ export const ResponseDiffModal: React.FC<ResponseDiffModalProps> = ({
 
                       return (
                         <tr key={i} className={`hover:bg-bg-tertiary/40 transition ${rowBg}`}>
-                          <td className="px-2.5 py-1 font-semibold truncate max-w-[150px]">{h.key}</td>
-                          <td className="px-2.5 py-1 truncate max-w-[200px]">
+                          <td className="px-2.5 py-1 font-semibold truncate max-w-[150px]" title={h.key}>
+                            {h.key}
+                          </td>
+                          <td
+                            className="px-2.5 py-1 truncate max-w-[200px]"
+                            title={h.oldValue !== undefined ? String(h.oldValue) : undefined}
+                          >
                             {h.oldValue !== undefined ? h.oldValue : <span className="opacity-40">-</span>}
                           </td>
-                          <td className="px-2.5 py-1 truncate max-w-[200px]">
+                          <td
+                            className="px-2.5 py-1 truncate max-w-[200px]"
+                            title={h.newValue !== undefined ? String(h.newValue) : undefined}
+                          >
                             {h.newValue !== undefined ? h.newValue : <span className="opacity-40">-</span>}
                           </td>
                           <td className="px-2.5 py-1 text-right">

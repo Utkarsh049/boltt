@@ -981,7 +981,7 @@ export const RequestPane: React.FC = () => {
                               (Send a request to preview extracted value)
                             </span>
                           ) : previewValue !== null ? (
-                            <span className="text-green-400 bg-green-950/30 border border-green-800/40 px-1.5 py-0.5 rounded font-mono break-all">
+                            <span className="text-green-400 px-1.5 py-0.5 rounded font-mono break-all">
                               {previewValue.length > 80
                                 ? `${previewValue.substring(0, 80)}...`
                                 : previewValue}

@@ -205,7 +205,9 @@ export const UrlBar: React.FC = () => {
             onPaste={handlePaste}
             disabled={isLoading}
             placeholder="Enter request URL (e.g. https://httpbin.org/get) or paste cURL"
-            className={`w-full bg-bg-primary text-text-primary border px-3 pr-24 h-9 rounded-md text-xs font-mono focus:outline-none focus:border-text-accent placeholder-text-secondary/60 transition-colors ${
+            className={`w-full bg-bg-primary text-text-primary border px-3 ${
+              activeRequest.ssl_verify === false ? "pr-28" : "pr-9"
+            } h-9 rounded-md text-xs font-mono focus:outline-none focus:border-text-accent placeholder-text-secondary/60 transition-colors ${
               activeRequest.ssl_verify === false
                 ? "border-amber-500/60 focus:border-amber-500"
                 : "border-border-primary"
@@ -213,7 +215,7 @@ export const UrlBar: React.FC = () => {
           />
           
           {/* SSL verification button & indicator */}
-          <div className="absolute right-2 flex items-center space-x-1.5">
+          <div className="absolute inset-y-0 right-2 flex items-center space-x-1.5">
             {activeRequest.ssl_verify === false && (
               <span className="flex items-center space-x-1 px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/30 text-[9px] font-bold text-amber-400 font-mono">
                 <ShieldAlert size={10} />
@@ -235,7 +237,7 @@ export const UrlBar: React.FC = () => {
               </button>
               
               {isSslPopoverOpen && (
-                <div className="absolute right-0 top-full mt-4 w-56 bg-bg-secondary border border-border-primary rounded-md shadow-2xl p-3 z-50 flex flex-col space-y-2 font-sans select-none">
+                <div className="absolute right-0 top-full mt-1.5 w-56 bg-bg-secondary border border-border-primary rounded-md shadow-2xl p-3 z-50 flex flex-col space-y-2 font-sans select-none">
                   <div className="text-[10px] font-bold text-text-secondary uppercase tracking-wider">
                     SSL Settings
                   </div>

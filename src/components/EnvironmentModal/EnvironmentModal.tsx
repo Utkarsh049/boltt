@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useEnvStore, Environment, Variable, getGroupFromId } from "../../store/envStore";
 import { X, Plus, Trash2, Eye, EyeOff, Save, Key, Minus, Square, Lock, Unlock, ShieldCheck } from "lucide-react";
 import { getCurrentWindow } from "@tauri-apps/api/window";
+import { RestoreIcon } from "../Icons/RestoreIcon";
 
 export const EnvironmentModal: React.FC = () => {
   const environments = useEnvStore((state) => state.environments);
@@ -41,6 +42,7 @@ export const EnvironmentModal: React.FC = () => {
   };
 
   const [windowLabel] = useState<string>(getInitialWindowLabel);
+  const [isWindowMaximized, setIsWindowMaximized] = useState(false);
 
   const isEnvWindow = windowLabel.startsWith("env-");
   const initialGroup = isEnvWindow
@@ -110,16 +112,83 @@ export const EnvironmentModal: React.FC = () => {
     }
   };
 
+  // Track window maximize / restore state
+  useEffect(() => {
+    if (!isEnvWindow) return;
+    let unlisten: (() => void) | undefined;
+    let active = true;
+
+    const checkMaximized = async () => {
+      try {
+        const win = getCurrentWindow();
+        if (win && typeof win.isMaximized === "function") {
+          const isMax =
+            (await win.isMaximized()) ||
+            (typeof win.isFullscreen === "function" && (await win.isFullscreen()));
+          if (active) setIsWindowMaximized(!!isMax);
+        }
+      } catch {
+        if (typeof window !== "undefined") {
+          const isFull = !!document.fullscreenElement;
+          const isMax =
+            isFull ||
+            (window.innerWidth >= window.screen.availWidth &&
+              window.innerHeight >= window.screen.availHeight);
+          if (active) setIsWindowMaximized(isMax);
+        }
+      }
+    };
+
+    checkMaximized();
+
+    const setupListener = async () => {
+      try {
+        const win = getCurrentWindow();
+        if (win && typeof win.onResized === "function") {
+          unlisten = await win.onResized(async () => {
+            await checkMaximized();
+          });
+        }
+      } catch {
+        // Fallback for browser/testing
+      }
+    };
+
+    setupListener();
+
+    const handleBrowserResize = () => {
+      checkMaximized();
+    };
+    window.addEventListener("resize", handleBrowserResize);
+
+    return () => {
+      active = false;
+      if (unlisten) unlisten();
+      window.removeEventListener("resize", handleBrowserResize);
+    };
+  }, [isEnvWindow]);
+
   const handleToggleMaximize = async () => {
     try {
-      const window = getCurrentWindow();
-      if (await window.isMaximized()) {
-        await window.unmaximize();
+      const win = getCurrentWindow();
+      const isFull = typeof win.isFullscreen === "function" && (await win.isFullscreen());
+      const isMax = await win.isMaximized();
+
+      if (isFull) {
+        if (typeof win.setFullscreen === "function") {
+          await win.setFullscreen(false);
+        }
+        setIsWindowMaximized(false);
+      } else if (isMax) {
+        await win.unmaximize();
+        setIsWindowMaximized(false);
       } else {
-        await window.maximize();
+        await win.maximize();
+        setIsWindowMaximized(true);
       }
     } catch (err) {
       console.error("Failed to toggle maximize:", err);
+      setIsWindowMaximized((prev) => !prev);
     }
   };
 
@@ -371,9 +440,9 @@ export const EnvironmentModal: React.FC = () => {
             <button
               onClick={handleToggleMaximize}
               className="p-1 hover:bg-bg-hover rounded text-text-secondary hover:text-text-primary transition cursor-pointer flex items-center justify-center"
-              title="Maximize / Restore"
+              title={isWindowMaximized ? "Restore Down" : "Maximize"}
             >
-              <Square size={13} />
+              {isWindowMaximized ? <RestoreIcon size={13} /> : <Square size={13} />}
             </button>
             <button
               onClick={() => getCurrentWindow().close()}

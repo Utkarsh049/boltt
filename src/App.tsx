@@ -24,6 +24,7 @@ import { ToastList } from "./components/Toast/Toast";
 import { useToastStore } from "./store/toastStore";
 import { useUpdateStore } from "./store/updateStore";
 import { isCurlCommand } from "./utils/curl";
+import { RestoreIcon } from "./components/Icons/RestoreIcon";
 
 type SidebarTab = "workspace" | "history";
 
@@ -42,6 +43,7 @@ function App() {
   const sidebarPanelRef = useRef<PanelImperativeHandle>(null);
   const [isResponseCollapsed, setIsResponseCollapsed] = useState(false);
   const responsePanelRef = useRef<PanelImperativeHandle>(null);
+  const [isWindowMaximized, setIsWindowMaximized] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [isAppLoading, setIsAppLoading] = useState(true);
@@ -472,16 +474,82 @@ function App() {
     }
   };
 
+  // Track window maximize / restore state
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    let active = true;
+
+    const checkMaximized = async () => {
+      try {
+        const win = getCurrentWindow();
+        if (win && typeof win.isMaximized === "function") {
+          const isMax =
+            (await win.isMaximized()) ||
+            (typeof win.isFullscreen === "function" && (await win.isFullscreen()));
+          if (active) setIsWindowMaximized(!!isMax);
+        }
+      } catch {
+        if (typeof window !== "undefined") {
+          const isFull = !!document.fullscreenElement;
+          const isMax =
+            isFull ||
+            (window.innerWidth >= window.screen.availWidth &&
+              window.innerHeight >= window.screen.availHeight);
+          if (active) setIsWindowMaximized(isMax);
+        }
+      }
+    };
+
+    checkMaximized();
+
+    const setupListener = async () => {
+      try {
+        const win = getCurrentWindow();
+        if (win && typeof win.onResized === "function") {
+          unlisten = await win.onResized(async () => {
+            await checkMaximized();
+          });
+        }
+      } catch {
+        // Fallback for browser/testing
+      }
+    };
+
+    setupListener();
+
+    const handleBrowserResize = () => {
+      checkMaximized();
+    };
+    window.addEventListener("resize", handleBrowserResize);
+
+    return () => {
+      active = false;
+      if (unlisten) unlisten();
+      window.removeEventListener("resize", handleBrowserResize);
+    };
+  }, []);
+
   const handleToggleMaximize = async () => {
     try {
-      const window = getCurrentWindow();
-      if (await window.isMaximized()) {
-        await window.unmaximize();
+      const win = getCurrentWindow();
+      const isFull = typeof win.isFullscreen === "function" && (await win.isFullscreen());
+      const isMax = await win.isMaximized();
+
+      if (isFull) {
+        if (typeof win.setFullscreen === "function") {
+          await win.setFullscreen(false);
+        }
+        setIsWindowMaximized(false);
+      } else if (isMax) {
+        await win.unmaximize();
+        setIsWindowMaximized(false);
       } else {
-        await window.maximize();
+        await win.maximize();
+        setIsWindowMaximized(true);
       }
     } catch (err) {
       console.error("Failed to toggle maximize:", err);
+      setIsWindowMaximized((prev) => !prev);
     }
   };
 
@@ -724,9 +792,9 @@ function App() {
             <button
               onClick={handleToggleMaximize}
               className="p-1 hover:bg-bg-hover rounded text-text-secondary hover:text-text-primary transition cursor-pointer flex items-center justify-center"
-              title="Maximize / Restore"
+              title={isWindowMaximized ? "Restore Down" : "Maximize"}
             >
-              <Square size={13} />
+              {isWindowMaximized ? <RestoreIcon size={13} /> : <Square size={13} />}
             </button>
             <button
               onClick={() => getCurrentWindow().close()}
